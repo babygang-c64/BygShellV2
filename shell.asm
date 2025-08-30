@@ -39,7 +39,7 @@ start_cartridge:
     jsr bios.do_reset
     lda #23
     sta $d018
-    swi pstring_print,start_message
+    swi pprint,start_message
     jmp READY
 
 start_message:
@@ -52,6 +52,8 @@ basic_hook:
     php
     cmp #172
     beq process_shell
+    cmp #42
+    beq process_shell
     plp
     jmp GONE3
 
@@ -62,7 +64,6 @@ process_shell:
     ldx #1
 copy_command:
     sta buffer,x
-    sta $1000,x
     inx   
     jsr nchrget
     bcc copy_command
@@ -115,7 +116,7 @@ nchrget2:
     cmp #$3a
     beq nchrget_end
     clc
-    ldy #3
+    ldy #2
 test_char:
     cmp special_char,y
     beq modif_char
@@ -131,9 +132,9 @@ nchrget_end:
     rts
 
 special_char:
-    .byte 172,170,171,173
+    .byte 172,170,171
 new_char:
-    .text "*+-/"
+    .text "*+-"
 }
 
 //---------------------------------------------------------------
@@ -157,9 +158,14 @@ exec_command:
 {
     lda #MSG_NONE
     jsr SETMSG
+
+    jsr prep_params
     
     jsr cache_check
     bcs already_loaded
+    
+    jsr internal_command_check
+    bcs no_run
     
     ldx CURRDEVICE
     bne device_ok
@@ -168,11 +174,6 @@ device_ok:
     lda #1
     ldy #1
     jsr SETLFS
-
-    ldx #32
-    sec
-    swi str_split,buffer
-    sta nb_params
 
     lda buffer
     ldx #<buffer+1
@@ -186,6 +187,7 @@ device_ok:
 
 already_loaded:
     jsr start_command
+
 no_run:
     jmp exec_end
 load_error:
@@ -201,6 +203,19 @@ cache_check:
     mov r0,#buffer
     mov r1,#$c002
     swi str_cmp
+    rts
+}
+
+//---------------------------------------------------------------
+// prep_params : split and count parameters
+//---------------------------------------------------------------
+
+prep_params:
+{
+    ldx #32
+    sec
+    swi str_split,buffer
+    sta nb_params
     rts
 }
 
@@ -247,6 +262,101 @@ expand_end:
     and #$7f
     sec
     rts
+}
+
+//---------------------------------------------------------------
+// internal command check : if found, execute and returns C=1
+//---------------------------------------------------------------
+
+internal_command_check:
+{
+    mov r0, #internal_commands
+    mov r1, #buffer
+    swi lines_find
+    bcc not_found
+
+found:
+    dec nb_params
+    txa
+    asl
+    tax
+    lda internal_commands_jump,x
+    sta zr0l
+    lda internal_commands_jump+1,x
+    sta zr0h
+    jmp (zr0)
+
+not_found:
+    clc
+    rts
+}
+
+//---------------------------------------------------------------
+// list of internal commands
+//---------------------------------------------------------------
+
+internal_commands:
+    pstring("HELP")
+    pstring("M")
+    .byte 0
+
+internal_commands_jump:
+    .word do_help
+    .word do_memory
+
+internal_commands_help:
+    pstring("*HELP (COMMAND) : HELP ON COMMANDS")
+    pstring("*M <START> (END): MEM DUMP")
+    pstring("*<COMMAND>      : RUN EXTERNAL COMMAND")
+    .byte 0
+
+//---------------------------------------------------------------
+// help : internal help command
+//---------------------------------------------------------------
+
+do_help:
+{
+    lda nb_params
+    beq help_help
+    
+    mov r0, #buffer
+    swi str_next
+
+lookup:
+    mov r1, r0
+    mov r0, #internal_commands
+    
+    swi lines_find
+    bcc help_help
+    mov r0, #internal_commands_help
+    swi lines_goto
+    swi pprint_nl
+    sec
+    rts
+    
+help_help:    
+    swi pprint_lines,internal_commands_help
+    sec
+    rts
+}
+
+//---------------------------------------------------------------
+// memory : memory dump
+// parameters : 1st = start address (hex)
+// 2nd if present = end address, else prints 8 bytes 
+// of memory max
+//---------------------------------------------------------------
+
+
+do_memory:
+{
+    lda nb_params
+    beq help_mem
+    sec
+    rts
+help_mem:
+    mov r0, #buffer
+    jmp do_help.lookup
 }
 
 .fill $a000-*, $00

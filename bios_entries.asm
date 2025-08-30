@@ -10,7 +10,7 @@
     .label reset=9
     .label str_split=11
     .label str_len=13
-    .label pstring_print=15
+    .label pprint=15
     .label str_next=17
     .label file_open=19
     .label file_close=21
@@ -18,7 +18,7 @@
     .label param_init=25
     .label error=27
     .label pprint_int=29
-    .label pprinthex=31
+    .label pprint_hex=31
     .label key_wait=33
     .label buffer_read=35
     .label pprint_lines=37
@@ -26,6 +26,9 @@
     .label get_device_status=41
     .label pprinthex8a=43
     .label file_load=45
+    .label lines_find=47
+    .label lines_goto=49
+    .label pprint_nl=51
 }
 
 //===============================================================

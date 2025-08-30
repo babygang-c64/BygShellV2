@@ -84,7 +84,7 @@ pas_hexdump:
 
 affiche_ligne:
     jsr option_numero
-    swi pstring_print, work_buffer
+    swi pprint, work_buffer
 
     // option E = affiche $ en fin de ligne
     lda options_params
@@ -211,7 +211,7 @@ do_pagination:
 
     lda #0
     sta cpt_ligne
-    swi pstring_print, msg_suite
+    swi pprint, msg_suite
     swi key_wait
     stc is_break
     jsr efface_msg_suite
@@ -254,7 +254,7 @@ aff_line:
     push r0
     mov r0, r1
     sec
-    swi pprinthex
+    swi pprint_hex
     pop r0
     lda #32
     jsr CHROUT

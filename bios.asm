@@ -24,7 +24,7 @@
 .label reset=9
 .label str_split=11
 .label str_len=13
-.label pstring_print=15
+.label pprint=15
 .label str_next=17
 .label file_open=19
 .label file_close=21
@@ -32,7 +32,7 @@
 .label param_init=25
 .label error=27
 .label pprint_int=29
-.label pprinthex=31
+.label pprint_hex=31
 .label key_wait=33
 .label buffer_read=35
 .label pprint_lines=37
@@ -40,6 +40,9 @@
 .label get_device_status=41
 .label pprinthex8a=43
 .label file_load=45
+.label lines_find=47
+.label lines_goto=49
+.label pprint_nl=51
 
 // bios_jmp : bios jump table
 
@@ -47,7 +50,7 @@ bios_jmp:
     .word do_reset
     .word do_str_split
     .word do_str_len
-    .word do_pstring_print
+    .word do_pprint
     .word do_str_next
     .word do_file_open
     .word do_file_close
@@ -55,7 +58,7 @@ bios_jmp:
     .word do_param_init
     .word do_error
     .word do_pprint_int
-    .word do_pprinthex
+    .word do_pprint_hex
     .word do_key_wait
     .word do_buffer_read
     .word do_pprint_lines
@@ -63,6 +66,9 @@ bios_jmp:
     .word do_get_device_status
     .word do_pprinthex8a_swi
     .word do_file_load
+    .word do_lines_find
+    .word do_lines_goto
+    .word do_pprint_nl
 
 * = * "BIOS code"
 
@@ -105,9 +111,7 @@ copy_bios_exec:
 
 do_error:
 {
-    swi pstring_print
-    lda #13
-    jsr CHROUT
+    swi pprint_nl
     sec
     rts
 }
@@ -222,7 +226,8 @@ msg_option_error:
 //===============================================================
 // I/O routines
 //
-// pstring_print
+// pprint
+// pprint_nl
 // file_open
 // file_close
 // file_readline
@@ -383,12 +388,27 @@ stop:
 }
 
 //----------------------------------------------------
-// pstring_print : print PSTRING using basic ROM
+// pprint_nl : print PSTRING using basic ROM + CR
 // 
 // input : R0 = PSTRING
 //----------------------------------------------------
 
-do_pstring_print:
+do_pprint_nl:
+{
+ jsr do_pprint
+ lda #13
+ jsr CHROUT
+ clc
+ rts    
+}
+
+//----------------------------------------------------
+// pprint : print PSTRING using basic ROM
+// 
+// input : R0 = PSTRING
+//----------------------------------------------------
+
+do_pprint:
 {
     ldy #0
     mov a, (r0++)
@@ -581,7 +601,53 @@ fin_lecture:
 // str_pat
 // str_expand
 // str_next
+// lines_find
+// lines_goto
 //===============================================================
+
+
+//----------------------------------------------------
+// lines_goto : goto specific pstring in list
+// 
+// input : R0 = start of list, X = position
+// output : C=1 : found, C=0 : not found
+//----------------------------------------------------
+
+do_lines_goto:
+{
+    cpx #0
+    beq do_lines_find.found
+    swi str_next
+    bcs do_lines_find.not_found
+    dex
+    bcc do_lines_goto
+}
+
+//----------------------------------------------------
+// lines_find : find an entry in a list of pstrings
+//
+// input : R0 = 1st pstring of list, R1 = key
+// output : C=1 : found, C=0 : not found, X = index
+//----------------------------------------------------
+
+do_lines_find:
+{
+    ldx #0
+check:
+    swi str_cmp
+    bcs found
+    inx
+    swi str_next
+    bcs not_found
+    bcc check
+
+found:
+    sec
+    rts
+not_found:
+    clc
+    rts
+}
 
 //----------------------------------------------------
 // str_split : découpe une pstring en fonction d'un
@@ -721,7 +787,7 @@ pas_fini:
 // pprint_int
 // pprint_path
 // pprint
-// pprintnl
+// pprint_nl
 // pprint_hex
 // pprint_lines
 //===============================================================
@@ -737,9 +803,7 @@ do_pprint_lines:
     swi str_len
     beq fini
 print_lines:
-    swi pstring_print
-    lda #13
-    jsr CHROUT
+    swi pprint_nl
     swi str_next
     bcc print_lines
 fini:
@@ -922,11 +986,11 @@ cbit13:
 }
 
 //---------------------------------------------------------------
-// do_pprinthex : affiche en hexa format $xxxx la valeur en r0
+// do_pprint_hex : affiche en hexa format $xxxx la valeur en r0
 // si C=1, n'affiche pas le préfixe
 //---------------------------------------------------------------
 
-do_pprinthex:
+do_pprint_hex:
 {
     stx ztmp
     bcs no_prefix
