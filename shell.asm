@@ -350,16 +350,28 @@ help_help:
 
 do_memory:
 {
+    lda #8
+    sta bytes
     lda nb_params
     bne ok_params
     mov r0, #buffer
     jmp do_help.lookup
     
 ok_params:
-    lda #8
-    sta bytes
+    cmp #1
+    beq juste_8
     
-    juste_8:
+    mov r0, #buffer
+    swi str_next
+    push r0
+    swi str_next
+    swi hex2int
+    mov stop_address, r0
+    pop r0
+    swi hex2int
+    jmp boucle_hex
+    
+juste_8:
     mov r0, #buffer
     swi str_next
     swi hex2int
@@ -404,5 +416,5 @@ fin_hex:
 .label bytes = vars+2
 
 }
-
+shell_top:
 .fill $a000-*, $00
