@@ -1,0 +1,101 @@
+//===============================================================
+// KERNAL : C64 Kernal usefull calls and OS specific values
+//===============================================================
+
+#importonce
+
+//---------------------------------------------------------------
+// C64 Kernal usefull calls and OS specific values
+//---------------------------------------------------------------
+
+.label CHRGET = $0073
+.label VECT_BASICEXEC = $0308
+
+// Basic vectors
+
+.label NEWSTT  = $A7AE
+.label GONE3   = $A7E7
+.label READY   = $a474
+.label ERRORX  = $A43A
+.label STRPRT  = $ab21
+.label STRPRT4 = STRPRT+4
+.label RESLST  = $A09E
+.label CLR     = $A65E
+
+
+// Kernal vectors
+
+.label GETIN  = $FFE4
+.label SETNAM = $FFBD
+.label SETLFS = $ffba
+.label SETMSG = $ff90
+.label SECOND = $ff93
+.label TKSA   = $ff96
+.label acptr  = $ffa5
+.label CIOUT  = $ffa8
+.label UNTALK = $ffab
+.label UNLSTN = $ffae
+.label LISTEN = $ffb1
+.label TALK   = $ffb4
+.label READST = $ffb7
+.label OPEN   = $ffc0
+.label CLOSE  = $ffc3
+.label CHKIN  = $ffc6
+.label CHKOUT = $ffc9
+.label CLRCHN = $ffcc
+.label CHRIN  = $ffcf
+.label CHROUT = $ffd2
+.label LOAD   = $ffd5
+.label SAVE   = $ffd8
+.label STOP   = $ffe1
+.label CLALL  = $ffe7
+.label IECIN  = $ffa5
+.label UNTLK  = $FFAB
+.label CLEARSCREEN = $E544
+.label SCNKEY = $FF9F
+
+// Variables
+
+.label STATUS       = $90   // IEC status
+.label ST           = $90
+.label DFLTI        = $99   // Default input device
+.label DFLTO        = $9A   // Default output device
+.label MEMIO        = $35
+.label MEMSTD       = $37
+.label MEMIOKERNAL  = $36
+.label CURSOR_ONOFF = 204
+.label CURSOR_STATUS = 207
+.label LGRNAM        = $B7
+.label CURRDEVICE    = $BA  // Current device number
+.label NDX           = $c6  // text buffer index
+.label KEYPRESS     = $cb   // $3c, $3f, $01, $07 = space, r/s, enter, cursor down
+
+.label CURSOR_COLOR = 646
+
+// Definitions
+
+.const MSG_ALL = $C0
+.const MSG_NONE = $00
+.const MSG_ERR = $80
+
+
+// $FE00 : reset file info SETLFS
+// sta $b8 // file #
+// stx $ba // device #
+// sty $b9 // secondary
+
+// Keystrokes
+
+.label BACKSPACE=$14
+.label RIGHT=$1D
+.label UP=$91
+.label LEFT=$9D
+.label DOWN=$11
+.label INS=$94
+.label CTRLA=1      // unix style home
+.label CTRLE=5      // unix style end
+.label RUNSTOP=$03
+.label CTRLK=$0b    // delete to end of line
+.label CTRLO=$0f    // end key
+.label CTRLU=$15    // home key
+.label CTRLX=$18    
