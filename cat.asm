@@ -29,6 +29,7 @@ cat:
     .label OPT_P=8
     .label OPT_H=16
     .label OPT_A=32
+    .label OPT_PIPE=64
 
     // initialisation
     ldy #0
@@ -37,12 +38,17 @@ cat:
 
     sec
     swi param_init,buffer,options_cat
+    jcs error
 
     ldx nb_params
     jeq help
+
+    jsr check_pipe_option
+    jcs error
     
     // name = 1st parameter
     swi str_next,buffer
+
 
     sec
     jsr option_pagine
@@ -51,12 +57,28 @@ cat:
     clc
     swi file_open
     jcs error
+    
+    lda options_params
+    and #OPT_PIPE
+    beq not_pipe
+    
+    swi str_next,buffer
+    swi str_next
+    
+    ldx #5
+    sec
+    swi file_open
+    jcs error
+    
+    jsr option_pipe
+
+not_pipe:
 
     jsr option_start_address
 
 boucle_cat:
     jsr STOP
-    beq ok_close
+    jeq ok_close
 
     lda options_params
     and #OPT_H
@@ -67,8 +89,9 @@ boucle_cat:
     sta buffer_hexdump
     clc
     swi buffer_read, buffer_hexdump
-    
     bcs derniere_ligne_hex
+
+    jsr option_pipe
     jsr option_pagination
     bcs ok_close
 
@@ -76,6 +99,7 @@ boucle_cat:
     jmp boucle_cat
 
 derniere_ligne_hex:
+    jsr option_pipe
     swi print_hex_buffer
     jmp ok_close
     
@@ -84,6 +108,8 @@ pas_hexdump:
     jsr CHKIN
     swi file_readline, work_buffer
     bcs ok_close
+
+    jsr option_pipe
 
 affiche_ligne:
     jsr option_numero
@@ -111,6 +137,15 @@ help:
 ok_close:
     ldx #4
     swi file_close
+    lda options_params
+    and #OPT_PIPE
+    beq fini
+
+    lda #3
+    jsr CLRCHN
+    ldx #5
+    swi file_close
+fini:
     clc
     rts
 
@@ -118,6 +153,16 @@ error:
     jsr ok_close
     swi error,error_msg
     sec
+    rts
+
+option_pipe:
+    lda options_params
+    and #OPT_PIPE
+    beq pas_option_pipe
+
+    ldx #5
+    jsr CHKOUT
+pas_option_pipe:
     rts
 
 option_pagination:
@@ -152,18 +197,21 @@ pas_numero:
 
 
 help_msg:
-    pstring("*CAT <FILENAME> (-BENPHA)")
+    pstring("*CAT <FILENAME> (-BENPHA>) (OUTPUT)")
     pstring(" N = NUMBERS ALL LINES")
     pstring(" E = $ AT EOL")
     pstring(" B = NUMBERS NON EMPTY LINES")
     pstring(" P = PAGINATES OUTPUT")
     pstring(" H = HEXDUMP")
     pstring(" A = READS START ADDRESS FOR HEXDUMP")
+    pstring(" > = WRITE TO OUTPUT FILE")
     .byte 0
 error_msg:
     pstring("RUN ERROR")
+error_pipe_msg:
+    pstring("PIPE OPTION NEEDS OUTPUT")
 options_cat:
-    pstring("BENPHA")
+    pstring("BENPHA>")
     
 num_lignes:
     .word 0
@@ -243,7 +291,22 @@ msg_suite:
     pstring("<MORE>")
 }
 
+check_pipe_option:
+{
+    lda options_params
+    and #OPT_PIPE
+    beq pipe_check_ok
+    
+    cpx #2
+    beq pipe_check_ok
+    
+    swi error, error_pipe_msg
+    sec
+    rts
+    
+pipe_check_ok:
+    clc
+    rts
+}
 
 } // CAT namespace
-
-

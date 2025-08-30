@@ -498,7 +498,7 @@ do_pprint_nl:
 // input : R0 = PSTRING
 //----------------------------------------------------
 
-do_pprint:
+do_pprint_rom:
 {
     ldy #0
     mov a, (r0++)
@@ -506,6 +506,26 @@ do_pprint:
     mov $22, r0
     jsr STRPRT4
     dec r0
+    clc
+    rts
+}
+
+do_pprint:
+{
+    ldy #0
+    push r0
+    mov a, (r0)
+    beq vide
+    tax
+boucle:
+    iny
+    lda (zr0),y
+    jsr CHROUT
+    dex
+    bne boucle
+vide:
+    ldy #0
+    pop r0
     clc
     rts
 }
