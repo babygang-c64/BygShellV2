@@ -351,12 +351,58 @@ help_help:
 do_memory:
 {
     lda nb_params
-    beq help_mem
-    sec
-    rts
-help_mem:
+    bne ok_params
     mov r0, #buffer
     jmp do_help.lookup
+    
+ok_params:
+    lda #8
+    sta bytes
+    
+    juste_8:
+    mov r0, #buffer
+    swi str_next
+    swi hex2int
+    push r0
+    add r0, #8
+    mov stop_address, r0
+    pop r0
+
+boucle_hex:
+    mov r1, r0
+    ldx #0
+
+prep_buffer:
+    mov a, (r0++)
+    sta bytes+1,x
+    inx
+    cpx #8
+    bne prep_buffer
+    push r0
+    mov r0, #bytes
+    swi pprint_hex_buffer
+    pop r0
+
+    // check run/stop
+    jsr STOP
+    beq fin_hex
+
+    // il en reste ?
+    lda zr0h
+    cmp stop_address+1
+    bcc boucle_hex
+    lda zr0l
+    cmp stop_address
+    bcc boucle_hex
+
+fin_hex:
+    sec
+    rts
+
+.label stop_address = vars
+.label nb_bytes = vars+1
+.label bytes = vars+2
+
 }
 
 .fill $a000-*, $00

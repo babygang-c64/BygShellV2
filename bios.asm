@@ -43,6 +43,9 @@
 .label lines_find=47
 .label lines_goto=49
 .label pprint_nl=51
+.label hex2int=53
+.label pprint_hex_buffer=55
+
 
 // bios_jmp : bios jump table
 
@@ -69,6 +72,8 @@ bios_jmp:
     .word do_lines_find
     .word do_lines_goto
     .word do_pprint_nl
+    .word do_hex2int
+    .word do_pprint_hex_buffer
 
 * = * "BIOS code"
 
@@ -234,7 +239,92 @@ msg_option_error:
 // buffer_read
 // key_wait
 // file_load
+// pprint_hex_buffer
 //===============================================================
+
+//---------------------------------------------------------------
+// pprint_hex_buffer : hexdump buffer in r0, address r1
+//---------------------------------------------------------------
+
+do_pprint_hex_buffer:
+{
+    swi str_len 
+    sta nb_total
+    inc r0
+
+aff_line:
+    push r0
+    mov r0, r1
+    sec
+    swi pprint_hex
+    pop r0
+    lda #32
+    jsr CHROUT
+
+    push r0
+    ldx #8
+aff_bytes:
+    lda nb_total
+    bne pas_fini_hex
+
+    lda #'.'
+    jsr CHROUT
+    jsr CHROUT
+    jmp suite_hex
+
+pas_fini_hex:
+    dec nb_total
+    mov a, (r0++)
+    tay
+    swi pprinthex8a
+
+suite_hex:
+    lda #32
+    jsr CHROUT
+    dex
+    bne aff_bytes
+
+    pop r0
+    dec r0
+    ldx #8
+    jsr print_hex_text
+
+    lda #13
+    jsr CHROUT
+    add r1, #8
+    clc
+    rts
+
+print_hex_text:
+    swi str_len
+    sta nb_total
+    inc r0
+    
+    ldx #8
+aff_txt:
+    lda nb_total
+    beq aff_txt_fini
+    mov a, (r0++)
+    dec nb_total
+
+aff_txt_fini:
+    cmp #$20
+    bpl pas_moins
+    lda #'.'
+pas_moins:
+    cmp #$80
+    bcc pas_plus
+    cmp #$a0
+    bpl pas_plus
+    lda #'.'
+pas_plus:
+    jsr CHROUT
+    dex
+    bne aff_txt
+    rts
+
+.label nb_total = zr7l
+}
 
 //----------------------------------------------------
 // file_load : load file from disk to memory
@@ -1001,6 +1091,54 @@ no_prefix:
     jsr do_pprinthex8a
     jsr do_pprinthex8
     ldx ztmp
+    rts
+}
+
+//---------------------------------------------------------------
+// hex2int : conversion pstring 16bits hexa en entier
+// entrée : pstring dans R0, sortie : R0 = valeur
+// do_hex2int.conv_hex_byte
+//---------------------------------------------------------------
+
+do_hex2int:
+{
+    ldy #0
+    mov a, (r0++)
+    cmp #4
+    bne pas4car
+
+    jsr conv_hex_byte
+    pha
+    jsr conv_hex_byte
+    sta zr0l
+    pla
+    sta zr0h
+    clc
+    rts
+pas4car:
+    sec
+    rts
+
+conv_hex_byte:
+    jsr conv_hex_nibble
+    asl
+    asl
+    asl
+    asl
+    sta ztmp
+    jsr conv_hex_nibble
+    ora ztmp
+    rts
+
+conv_hex_nibble:
+    getbyte_r(0)
+    sec
+    sbc #$30
+    cmp #10
+    bcc pasAF
+    sec
+    sbc #7
+pasAF:
     rts
 }
 

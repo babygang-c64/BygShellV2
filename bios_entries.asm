@@ -29,6 +29,8 @@
     .label lines_find=47
     .label lines_goto=49
     .label pprint_nl=51
+    .label hex2int=53
+    .label print_hex_buffer=55
 }
 
 //===============================================================
