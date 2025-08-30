@@ -1,35 +1,92 @@
-* = $C000
+//----------------------------------------------------
+// hw : hello world external command example
+//
+//----------------------------------------------------
 
-.const buffer = $cf80
-.const LGRNAM = $b7
+//----------------------------------------------------
+// Imports: 
+// - BIOS call entries
+// - Macros for pseudo instructions support 
+//   (you have to run pkick.py to pre-process)
+// - Kernal entry points
+//----------------------------------------------------
 
-    ldx LGRNAM
-    inx
-    lda buffer,x
-    beq message_std
-    lda #<buffer
-    clc
-    adc #2
-    adc LGRNAM
-    sta boucle+1
-    lda #>buffer
-    sta boucle+2
+#import "bios_entries_pp.asm"
+#import "macros.asm"
+#import "kernal.asm"
 
-message_std:
-    ldx #0
-boucle:
-    lda message,x
-    beq fin
-    jsr $FFD2
-    inx
-    bne boucle
-fin:
-    lda #13
-    jsr $FFD2
+//-- Start address for external commands is always $C000
+//-- In $CF00 there is an internal variables space, with
+//-- parameter infos stored starting at $CF80 as a list 
+//-- of PSTRINGS
+//-- In $CFFE / $CFFF you have the options and parameters
+//-- number
+
+* = $c000
+
+//-- First word is the start address, then a PSTRING of the
+//-- command name for use with the command cache
+
+.word hw
+pstring("HW")
+
+//-- Good practice : wrap your code in a namespace
+
+hw:
+{
+    .label OPT_D=1
+
+    //-- init options
+    sec
+    swi param_init,buffer,options_hw
+    jcs help
+
+    //-- no parameters = print help
+    ldx nb_params
+    bne params_present
+    lda options_params
+    beq help
+
+params_present:
+
+    // message = 1st parameter, buffer is the parameters buffer
+    // at $CF80
+    swi str_next,buffer
+
+    //-- check options for OPT_D
+    lda options_params
+    and #OPT_D
+    beq no_option_d
+    
+    mov r0,#default_message
+    
+    //-- print the message
+no_option_d:
+    swi pprint_nl
+
+    //-- return with C=0 : OK
     clc
     rts
 
-message:
-    .byte 5
-    .text "HELLO WORLD"
-    .byte 154,0
+
+help:
+    swi pprint_lines, help_hw
+    clc
+    rts
+
+    //-- return with C=1 : ERROR
+    sec
+    rts
+
+default_message:
+    pstring("HELLO WORLD!")
+    
+    //-- options available
+options_hw:
+    pstring("D")
+
+help_hw:
+    pstring("*HW (MESSAGE) (-D) : PRINTS MESSAGE")
+    pstring(" D = PRINT DEFAULT MESSAGE")
+    .byte 0
+}

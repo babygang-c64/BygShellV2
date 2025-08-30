@@ -8,6 +8,7 @@
 // P = paginates output
 // H = hexdump
 // A = reads start address in file for hexdump
+// > = outputs to file
 //----------------------------------------------------
 
 #import "bios_entries_pp.asm"
