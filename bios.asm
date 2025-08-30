@@ -1005,7 +1005,6 @@ pas_test_padding:
 .label write_space = vars+3
 .label do_padding = vars+4
 .label int_conv = vars+8
-
 }
 
 //---------------------------------------------------------------
