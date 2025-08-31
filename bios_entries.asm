@@ -13,6 +13,7 @@
     .label str_len=13
     .label pprint=15
     .label str_next=17
+    .label param_next=17
     .label file_open=19
     .label file_close=21
     .label file_readline=23
@@ -32,6 +33,7 @@
     .label pprint_nl=51
     .label hex2int=53
     .label print_hex_buffer=55
+    .label param_top=57
 }
 
 //===============================================================

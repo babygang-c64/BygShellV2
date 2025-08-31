@@ -26,6 +26,7 @@
 .label str_len=13
 .label pprint=15
 .label str_next=17
+.label param_next=17
 .label file_open=19
 .label file_close=21
 .label file_readline=23
@@ -45,6 +46,7 @@
 .label pprint_nl=51
 .label hex2int=53
 .label pprint_hex_buffer=55
+.label param_top=57
 
 
 // bios_jmp : bios jump table
@@ -74,6 +76,7 @@ bios_jmp:
     .word do_pprint_nl
     .word do_hex2int
     .word do_pprint_hex_buffer
+    .word do_param_top
 
 * = * "BIOS code"
 
@@ -126,8 +129,28 @@ do_error:
 //
 // param_init
 // param_options
+// param_top
 // param_next
 //===============================================================
+
+
+//---------------------------------------------------------------
+// param_top : get the 1st parameter after command name
+//---------------------------------------------------------------
+
+do_param_top:
+{
+    swi param_next, buffer
+    rts    
+}
+
+//---------------------------------------------------------------
+// param_next : move to next parameter
+// input : R0 = current parameter
+// output : R0 on next parameter, C=1 if end
+// 
+// this only redirects to str_next
+//---------------------------------------------------------------
 
 //---------------------------------------------------------------
 // param_init : parameters and options init

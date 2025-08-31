@@ -50,8 +50,8 @@ hw:
 params_present:
 
     // message = 1st parameter, buffer is the parameters buffer
-    // at $CF80
-    swi str_next,buffer
+    // at $CF80.
+    swi param_top
 
     //-- check options for OPT_D
     lda options_params

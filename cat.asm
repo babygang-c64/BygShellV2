@@ -47,8 +47,7 @@ cat:
     jcs error
     
     // name = 1st parameter
-    swi str_next,buffer
-
+    swi param_top
 
     sec
     jsr option_pagine
@@ -62,8 +61,8 @@ cat:
     and #OPT_PIPE
     beq not_pipe
     
-    swi str_next,buffer
-    swi str_next
+    swi param_next,buffer
+    swi param_next
     
     ldx #5
     sec

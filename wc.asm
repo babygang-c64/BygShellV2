@@ -43,8 +43,7 @@ wc:
     jsr check_pipe_option
     jcs error
     
-    // name = 1st parameter
-    swi str_next,buffer
+    swi param_top
 
     ldx #4
     clc
@@ -55,8 +54,8 @@ wc:
     and #OPT_PIPE
     beq not_pipe
     
-    swi str_next,buffer
-    swi str_next
+    swi param_top
+    swi param_next
     
     ldx #5
     sec
