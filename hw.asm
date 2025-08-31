@@ -35,6 +35,7 @@ pstring("HW")
 hw:
 {
     .label OPT_D=1
+    .label work_buffer = $ce00
 
     //-- init options
     sec
@@ -62,7 +63,11 @@ params_present:
     
     //-- print the message
 no_option_d:
-    swi pprint_nl
+
+    mov r1, #work_buffer
+    swi str_expand
+
+    swi pprint_nl, work_buffer
 
     //-- return with C=0 : OK
     clc

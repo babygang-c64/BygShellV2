@@ -52,6 +52,7 @@
 .label pipe_end=61
 .label pipe_output=63
 .label str_pat=65
+.label str_expand=67
 
 
 // bios_jmp : bios jump table
@@ -86,6 +87,7 @@ bios_jmp:
     .word do_pipe_end
     .word do_pipe_output
     .word do_str_pat
+    .word do_str_expand
 
 
 * = * "BIOS code"
@@ -857,6 +859,70 @@ fin_lecture:
 // lines_find
 // lines_goto
 //===============================================================
+
+//---------------------------------------------------------------
+// str_expand : expands quoted string
+//
+// input : R0 string to expand, R1 destination
+// sortie : C=1 if quoted string, otherwise C=0
+//---------------------------------------------------------------
+
+do_str_expand:
+{
+    txa
+    pha
+    ldy #0
+    push r1
+    mov a,(r0++)
+    beq fini
+    tax
+    mov a,(r0)
+    cmp #34
+    beq quoted
+    
+    inc r1
+copy_same:
+    lda (zr0),y
+    sta (zr1),y
+    iny
+    dex
+    bne copy_same
+
+fini:
+    pop r1
+    jsr write_length
+    pla
+    tax
+    clc
+    rts
+
+write_length:
+    tya
+    ldy #0
+    mov (r1), a
+    rts
+
+quoted:
+    inc r0
+    inc r1
+    dex
+copy_expand:
+    lda (zr0),y
+    cmp #34
+    beq fin_expand
+    sta (zr1),y
+    iny
+    dex
+    bne copy_expand
+
+fin_expand:
+    pop r1
+    jsr write_length
+    pla
+    tax
+    sec
+    rts
+}
 
 //---------------------------------------------------------------
 // str_pat : pattern matching, C=1 si OK, C=0 sinon
