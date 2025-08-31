@@ -39,13 +39,12 @@ cat:
     sec
     swi param_init,buffer,options_cat
     jcs error
+    swi pipe_init
+    jcs error
 
     ldx nb_params
     jeq help
 
-    jsr check_pipe_option
-    jcs error
-    
     // name = 1st parameter
     swi param_top
 
@@ -57,22 +56,6 @@ cat:
     swi file_open
     jcs error
     
-    lda options_params
-    and #OPT_PIPE
-    beq not_pipe
-    
-    swi param_next,buffer
-    swi param_next
-    
-    ldx #5
-    sec
-    swi file_open
-    jcs error
-    
-    jsr option_pipe
-
-not_pipe:
-
     jsr option_start_address
 
 boucle_cat:
@@ -90,7 +73,7 @@ boucle_cat:
     swi buffer_read, buffer_hexdump
     bcs derniere_ligne_hex
 
-    jsr option_pipe
+    swi pipe_output
     jsr option_pagination
     bcs ok_close
 
@@ -98,7 +81,7 @@ boucle_cat:
     jmp boucle_cat
 
 derniere_ligne_hex:
-    jsr option_pipe
+    swi pipe_output
     swi print_hex_buffer
     jmp ok_close
     
@@ -108,7 +91,7 @@ pas_hexdump:
     swi file_readline, work_buffer
     bcs ok_close
 
-    jsr option_pipe
+    swi pipe_output
 
 affiche_ligne:
     jsr option_numero
@@ -134,15 +117,8 @@ help:
     rts
 
 ok_close:
+    swi pipe_end
     ldx #4
-    swi file_close
-    lda options_params
-    and #OPT_PIPE
-    beq fini
-
-    lda #3
-    jsr CLRCHN
-    ldx #5
     swi file_close
 fini:
     clc
@@ -152,16 +128,6 @@ error:
     jsr ok_close
     swi error,error_msg
     sec
-    rts
-
-option_pipe:
-    lda options_params
-    and #OPT_PIPE
-    beq pas_option_pipe
-
-    ldx #5
-    jsr CHKOUT
-pas_option_pipe:
     rts
 
 option_pagination:
@@ -207,8 +173,6 @@ help_msg:
     .byte 0
 error_msg:
     pstring("RUN ERROR")
-error_pipe_msg:
-    pstring("PIPE OPTION NEEDS OUTPUT")
 options_cat:
     pstring("BENPHA")
     
@@ -288,24 +252,6 @@ is_break:
     .byte 0
 msg_suite:
     pstring("<MORE>")
-}
-
-check_pipe_option:
-{
-    lda options_params
-    and #OPT_PIPE
-    beq pipe_check_ok
-    
-    cpx #2
-    beq pipe_check_ok
-    
-    swi error, error_pipe_msg
-    sec
-    rts
-    
-pipe_check_ok:
-    clc
-    rts
 }
 
 } // CAT namespace
