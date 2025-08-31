@@ -18,10 +18,15 @@ search:
     .label work_buffer = $ce00
     
     .label OPT_N=1
+    .label OPT_L=2
+    .label OPT_V=4
+    .label OPT_C=8
 
     ldy #0
     sty line
     sty line+1
+    sty count
+    sty count+1
 
     sec
     swi param_init,buffer,options_list
@@ -56,10 +61,16 @@ boucle_read:
     swi str_pat, work_buffer
     bcc not_found
 
+    inc count
+    
+    lda options_params
+    and #OPT_C
+    bne boucle_read
+
     swi pipe_output
 
     lda options_params
-    and #OPT_N
+    and #OPT_N+OPT_L
     beq pas_opt_n
     
     mov r0, line
@@ -67,7 +78,14 @@ boucle_read:
     swi pprint_int
     lda #32
     jsr CHROUT
+    lda options_params
+    and #OPT_L
+    beq pas_opt_n
 
+    lda #13
+    jsr CHROUT
+    jmp boucle_read
+    
 pas_opt_n:
     swi pprint_nl,work_buffer
 not_found:    
@@ -79,6 +97,19 @@ help:
     rts
 
 ok_close:
+
+    lda options_params
+    and #OPT_C
+    beq pas_opt_c
+
+    mov r0, count
+    ldx #%10011111
+    swi pprint_int
+    lda #13
+    jsr CHROUT
+    
+pas_opt_c:
+
     ldx #4
     swi file_close
     swi pipe_end
@@ -94,14 +125,20 @@ error:
 help_msg:
     pstring("*SEARCH <STRING> <FILE> (-)")
     pstring(" N = PRINT LINE NUMBER")
+    pstring(" L = PRINT LINE NUMBER ONLY")
+    pstring(" V = LINES NOT MATCHING")
+    pstring(" C = COUNT LINES MATCHING")
+    
     .byte 0
 
 error_msg:
     pstring("RUN ERROR")
 options_list:
-    pstring("N")
+    pstring("NLVC")
 
 line:
+    .word 0
+count:
     .word 0
 } // search
 
