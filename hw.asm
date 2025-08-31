@@ -36,7 +36,7 @@ hw:
 {
     .label OPT_D=1
     .label work_buffer = $ce00
-
+    
     //-- init options
     sec
     swi param_init,buffer,options_hw

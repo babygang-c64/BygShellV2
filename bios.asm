@@ -906,10 +906,15 @@ quoted:
     inc r0
     inc r1
     dex
+
 copy_expand:
     lda (zr0),y
+    cmp #'%'
+    beq do_special
     cmp #34
     beq fin_expand
+
+copy_next:
     sta (zr1),y
     iny
     dex
@@ -922,6 +927,19 @@ fin_expand:
     tax
     sec
     rts
+
+do_special:
+    inc r0
+    lda (zr0),y
+    cmp #'%'
+    beq copy_next
+    cmp #39
+    bne not_quote
+    lda #34
+    jmp copy_next
+not_quote:
+    lda #'?'
+    jmp copy_next
 }
 
 //---------------------------------------------------------------
@@ -1147,7 +1165,7 @@ do_str_split:
     dey
     mov r1, r0
     inc r0
-
+    
 parcours:
     lda lgr_total
     beq fini
@@ -1157,6 +1175,7 @@ parcours:
     lda quotes
     eor #$80
     sta quotes
+    
 test_sep:
     cmp separateur
     bne pas_process_sep
