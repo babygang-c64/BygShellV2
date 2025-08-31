@@ -34,6 +34,9 @@
     .label hex2int=53
     .label print_hex_buffer=55
     .label param_top=57
+    .label pipe_init=59
+    .label pipe_end=61
+    .label pipe_output=63
 }
 
 //===============================================================

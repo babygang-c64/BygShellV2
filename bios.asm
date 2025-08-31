@@ -13,6 +13,7 @@
 .label buffer=$cf80
 .label nb_params=$cfff
 .label options_params=$cffe
+.label OPT_PIPE=$80
 
 .namespace bios 
 {
@@ -47,6 +48,9 @@
 .label hex2int=53
 .label pprint_hex_buffer=55
 .label param_top=57
+.label pipe_init=59
+.label pipe_end=61
+.label pipe_output=63
 
 
 // bios_jmp : bios jump table
@@ -77,6 +81,10 @@ bios_jmp:
     .word do_hex2int
     .word do_pprint_hex_buffer
     .word do_param_top
+    .word do_pipe_init
+    .word do_pipe_end
+    .word do_pipe_output
+
 
 * = * "BIOS code"
 
@@ -112,7 +120,7 @@ copy_bios_exec:
 }
 
 //---------------------------------------------------------------
-// error : error message
+// error : error message, also closes pipe output
 //
 // Input : r0: PSTRING of error message
 //---------------------------------------------------------------
@@ -120,6 +128,7 @@ copy_bios_exec:
 do_error:
 {
     swi pprint_nl
+    jsr do_pipe_end
     sec
     rts
 }
@@ -128,11 +137,101 @@ do_error:
 // Parameters routines
 //
 // param_init
-// param_options
 // param_top
 // param_next
+// pipe_init
+// pipe_output
+// pipe_end
 //===============================================================
 
+//---------------------------------------------------------------
+// pipe_init : check if there is a pipe option, if yes open the
+//             output file
+//
+// input : should call param_init before
+// output : C=0 OK, C=1 Error
+// todo ? flag to bypass nb_params check for CMD > OUT syntax
+//---------------------------------------------------------------
+
+do_pipe_init:
+{
+    jsr check_pipe_option
+    bcs error
+    
+option_ok:
+    lda options_params
+    and #OPT_PIPE
+    beq ok
+
+    // get output name = last parameter
+    ldx nb_params
+    swi lines_goto, buffer
+    
+    // open file for write
+    ldx #5
+    sec
+    swi file_open
+    bcs error
+    jsr do_pipe_output
+ok:
+    clc
+    rts
+
+check_pipe_option:
+    lda options_params
+    and #OPT_PIPE
+    beq ok
+    
+    ldx nb_params
+    cpx #2
+    bpl ok
+    sec
+    rts
+    
+error:
+    swi error, error_pipe_msg
+    sec
+    rts
+
+error_pipe_msg:
+    pstring("PIPE OPTION ERROR")
+}
+
+//---------------------------------------------------------------
+// pipe_end : close output file
+//---------------------------------------------------------------
+
+do_pipe_end:
+{
+    lda options_params
+    and #OPT_PIPE
+    beq pas_option_pipe
+
+    lda #3
+    jsr CLRCHN
+    ldx #5
+    swi file_close
+pas_option_pipe:
+    clc
+    rts    
+}
+
+//---------------------------------------------------------------
+// pipe_output : make sure to prrint to output file
+//---------------------------------------------------------------
+
+do_pipe_output:
+{
+    lda options_params
+    and #OPT_PIPE
+    beq pas_option_pipe
+
+    ldx #5
+    jsr CHKOUT
+pas_option_pipe:
+    clc
+    rts
+}
 
 //---------------------------------------------------------------
 // param_top : get the 1st parameter after command name
@@ -623,7 +722,7 @@ not_only_read:
     rts
 
 error:
-    ldx CURRDEVICE
+    ldx canal
     jsr do_file_close
     sec
     rts
