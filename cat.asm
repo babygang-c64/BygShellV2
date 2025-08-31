@@ -30,7 +30,6 @@ cat:
     .label OPT_P=8
     .label OPT_H=16
     .label OPT_A=32
-    .label OPT_PIPE=64
 
     // initialisation
     ldy #0
@@ -212,7 +211,7 @@ error_msg:
 error_pipe_msg:
     pstring("PIPE OPTION NEEDS OUTPUT")
 options_cat:
-    pstring("BENPHA>")
+    pstring("BENPHA")
     
 num_lignes:
     .word 0

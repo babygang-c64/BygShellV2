@@ -135,17 +135,22 @@ do_error:
 // input : R0 = command start, C=0 : pas d'options, sinon 
 // R1 = options PSTRING
 // output : R0 = 1st parameter, A : options, X = Nb of params
+// 
+// options detected if string starts with - and with > for the
+// global OPT_PIPE option
 //---------------------------------------------------------------
 
 do_param_init:
 {
+    .label OPT_PIPE=128
+
     stc avec_options
     ldy #0
     sty options_params
     sty nb_params
 
     swi str_next
-    bcs fin_params
+    jcs fin_params
 
     mov r2, r0
 process_params:
@@ -162,6 +167,10 @@ lecture_param:
     mov a, (r0)
     cmp #'-'
     beq process_option
+    
+    cmp #'>'
+    beq process_option_pipe
+    
     inc nb_params
 
 copy_param:
@@ -183,6 +192,16 @@ process_option:
     dex
     bne process_option
     dec r2
+    jmp process_params
+
+process_option_pipe:
+    inc r0
+    dec r2
+    lda #OPT_PIPE
+    ora options_params
+    sta options_params
+    dex
+    bne option_error
     jmp process_params
 
 fin_params:

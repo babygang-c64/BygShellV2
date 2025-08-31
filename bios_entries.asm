@@ -2,6 +2,7 @@
 .label buffer=$cf80
 .label nb_params=$cfff
 .label options_params=$cffe
+.label OPT_PIPE=128
 
 .namespace bios 
 {

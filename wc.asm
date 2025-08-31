@@ -23,7 +23,6 @@ wc:
     .label OPT_L=1
     .label OPT_W=2
     .label OPT_C=4
-    .label OPT_PIPE=8
 
     // initialisation
     ldy #0
@@ -181,7 +180,7 @@ error_msg:
 error_pipe_msg:
     pstring("PIPE OPTION NEEDS OUTPUT")
 options_wc:
-    pstring("LWC>")
+    pstring("LWC")
     
 num_lines:
     .word 0
