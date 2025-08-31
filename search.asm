@@ -53,14 +53,16 @@ boucle_read:
     ldx #4
     jsr CHKIN
     swi file_readline, work_buffer
-    bcs ok_close
+    jcs ok_close
     incw line
 
     swi param_top
     mov r1, r0
     swi str_pat, work_buffer
+    jsr option_v
     bcc not_found
 
+found:
     inc count
     
     lda options_params
@@ -88,7 +90,8 @@ boucle_read:
     
 pas_opt_n:
     swi pprint_nl,work_buffer
-not_found:    
+    
+not_found:
     jmp boucle_read
 
 help:
@@ -97,7 +100,6 @@ help:
     rts
 
 ok_close:
-
     lda options_params
     and #OPT_C
     beq pas_opt_c
@@ -109,11 +111,22 @@ ok_close:
     jsr CHROUT
     
 pas_opt_c:
-
     ldx #4
     swi file_close
     swi pipe_end
     clc
+    rts
+
+option_v:
+    stc test_v
+    lda options_params
+    and #OPT_V
+    beq not_option_v
+    lda test_v
+    eor #1
+    sta test_v
+not_option_v:
+    ldc test_v
     rts
 
 error:
@@ -128,7 +141,6 @@ help_msg:
     pstring(" L = PRINT LINE NUMBER ONLY")
     pstring(" V = LINES NOT MATCHING")
     pstring(" C = COUNT LINES MATCHING")
-    
     .byte 0
 
 error_msg:
@@ -140,5 +152,7 @@ line:
     .word 0
 count:
     .word 0
+test_v:
+    .byte 0
 } // search
 
