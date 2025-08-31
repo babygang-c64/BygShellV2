@@ -37,6 +37,7 @@
     .label pipe_init=59
     .label pipe_end=61
     .label pipe_output=63
+    .label str_pat=65
 }
 
 //===============================================================

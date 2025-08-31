@@ -1,0 +1,107 @@
+//----------------------------------------------------
+// search : find content in file(s)
+//
+// options : 
+//----------------------------------------------------
+
+#import "bios_entries_pp.asm"
+#import "macros.asm"
+#import "kernal.asm"
+
+* = $c000
+
+.word search
+pstring("SEARCH")
+
+search:
+{
+    .label work_buffer = $ce00
+    
+    .label OPT_N=1
+
+    ldy #0
+    sty line
+    sty line+1
+
+    sec
+    swi param_init,buffer,options_list
+    jcs error
+    swi pipe_init
+    jcs error
+    swi pipe_output
+    
+    ldx nb_params
+    jeq help
+
+    swi param_top
+    swi param_next
+    ldx #4
+    clc
+    swi file_open
+    jcs error
+    
+
+boucle_read:
+    jsr STOP
+    jeq ok_close
+
+    ldx #4
+    jsr CHKIN
+    swi file_readline, work_buffer
+    bcs ok_close
+    incw line
+
+    swi param_top
+    mov r1, r0
+    swi str_pat, work_buffer
+    bcc not_found
+
+    swi pipe_output
+
+    lda options_params
+    and #OPT_N
+    beq pas_opt_n
+    
+    mov r0, line
+    ldx #%10011111
+    swi pprint_int
+    lda #32
+    jsr CHROUT
+
+pas_opt_n:
+    swi pprint_nl,work_buffer
+not_found:    
+    jmp boucle_read
+
+help:
+    swi pprint_lines,help_msg
+    sec
+    rts
+
+ok_close:
+    ldx #4
+    swi file_close
+    swi pipe_end
+    clc
+    rts
+
+error:
+    jsr ok_close
+    swi error,error_msg
+    sec
+    rts
+    
+help_msg:
+    pstring("*SEARCH <STRING> <FILE> (-)")
+    pstring(" N = PRINT LINE NUMBER")
+    .byte 0
+
+error_msg:
+    pstring("RUN ERROR")
+options_list:
+    pstring("N")
+
+line:
+    .word 0
+} // search
+

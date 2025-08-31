@@ -51,6 +51,7 @@
 .label pipe_init=59
 .label pipe_end=61
 .label pipe_output=63
+.label str_pat=65
 
 
 // bios_jmp : bios jump table
@@ -84,6 +85,7 @@ bios_jmp:
     .word do_pipe_init
     .word do_pipe_end
     .word do_pipe_output
+    .word do_str_pat
 
 
 * = * "BIOS code"
@@ -856,6 +858,163 @@ fin_lecture:
 // lines_goto
 //===============================================================
 
+//---------------------------------------------------------------
+// str_pat : pattern matching, C=1 si OK, C=0 sinon
+// r0 : chaine à tester
+// r1 : pattern
+//---------------------------------------------------------------
+
+do_str_pat:
+{
+    .label zstring = zr0
+    .label zwild = zr1
+    .label multiple = '*'
+    .label single = '#'
+
+
+    
+    ldy #0
+    lax (zstring),y
+    inx
+    stx lgr_string
+    lax (zwild),y
+    inx
+    stx lgr_wild
+    
+    lda lgr_string
+    cmp lgr_wild
+    bpl lgr_ok
+    clc
+    rts
+    
+lgr_ok:
+    iny
+    sty pos_wild
+    sty pos_string
+    sty pos_cp
+    sty pos_mp
+
+while1:
+    lda pos_string
+    cmp lgr_string
+    beq end_while1
+
+    ldy pos_wild
+    lda (zwild),y
+    cmp #multiple
+    beq end_while1
+
+    ldy pos_wild
+    lda (zwild),y
+    ldy pos_string
+    cmp (zstring),y
+    beq suite_while1
+    cmp #single
+    beq suite_while1
+    clc
+    rts
+
+suite_while1:
+    inc pos_wild
+    inc pos_string
+    jmp while1
+
+end_while1:
+
+while2:
+    lda pos_string
+    cmp lgr_string
+    beq end_while2
+
+    ldy pos_wild
+    //cmp lgr_wild
+    //beq pas_etoile
+    lda (zwild),y
+    cmp #multiple
+    bne pas_etoile
+
+    inc pos_wild
+    lda pos_wild
+    cmp lgr_wild
+    bne suite
+    sec
+    rts
+suite:
+    lda pos_wild
+    sta pos_mp
+    ldy pos_string
+    iny
+    sty pos_cp
+    jmp while2
+
+pas_etoile:
+    ldy pos_wild
+    //cpy lgr_wild
+    //beq end_while2
+
+    lda (zwild),y
+    cmp #single
+    beq ok_comp
+    ldy pos_string
+    cpy lgr_string
+    beq end_while2
+    cmp (zstring),y
+    beq ok_comp
+    
+not_ok_comp:
+    lda pos_mp
+    sta pos_wild
+    inc pos_cp
+    lda pos_cp
+    sta pos_string
+    jmp while2
+
+ok_comp:
+    inc pos_wild
+    inc pos_string
+    lda pos_wild
+    cmp lgr_wild
+    beq ok_wild
+    bcs ko_inc
+ok_wild:
+    lda pos_string
+    cmp lgr_string
+    beq ok_string
+    bcs ko_inc
+ok_string:
+    jmp while2
+ko_inc:
+    sec
+    rts
+end_while2:
+
+while3:
+    ldy pos_wild
+    cpy lgr_wild
+    beq fini_wild
+    lda (zwild),y
+    cmp #multiple
+    bne end_while3
+    inc pos_wild
+    jmp while3
+
+end_while3:
+    lda pos_wild
+    cmp lgr_wild
+    beq fini_wild
+    clc
+    rts
+fini_wild:
+    sec
+    rts
+
+.label lgr_string = vars
+.label lgr_wild = vars+1
+.label pos_wild = vars+2
+.label pos_string = vars+3
+.label pos_cp = vars+4
+.label pos_mp = vars+5
+}
 
 //----------------------------------------------------
 // lines_goto : goto specific pstring in list
