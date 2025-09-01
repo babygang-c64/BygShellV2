@@ -35,17 +35,22 @@ start_cartridge:
     sta VECT_BASICEXEC
     lda #>basic_hook
     sta VECT_BASICEXEC+1
-    
+
+    lda #7
+    sta CURSOR_COLOR
+
     jsr bios.do_reset
     lda #23
     sta $d018
-    swi pprint,start_message
+    swi pprint_nl,start_message
+    lda #1
+    sta CURSOR_COLOR
     jmp READY
 
 start_message:
     .byte 16
     .byte $0d
-    .text "*BYG SHELL V2.0"
+    .text "*BYG-SHELL V2.0"
 
 basic_hook:
     jsr CHRGET
@@ -305,8 +310,8 @@ internal_commands_jump:
     .word do_memory
 
 internal_commands_help:
-    pstring("*HELP (COMMAND) : HELP ON COMMANDS")
-    pstring("*M <START> (END): MEM DUMP")
+    pstring("*HELP [COMMAND] : HELP ON COMMANDS")
+    pstring("*M <START> [END]: MEM DUMP")
     pstring("*<COMMAND>      : RUN EXTERNAL COMMAND")
     .byte 0
 

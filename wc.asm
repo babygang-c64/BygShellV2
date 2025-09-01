@@ -86,8 +86,8 @@ ok_close:
 
 error:
     jsr ok_close
-    swi error,error_msg
-    sec
+    clc
+    swi error
     rts
 
 write_results:
@@ -135,15 +135,12 @@ write_number:
 
 
 help_msg:
-    pstring("*WC <FILENAME> (-LWC>) (OUTPUT)")
+    pstring("*WC <FILENAME> [-LWC]")
     pstring(" L = COUNT LINES")
     pstring(" W = COUNT WORDS")
     pstring(" C = COUNT BYTES")
-    pstring(" > = WRITE TO OUTPUT FILE")
     .byte 0
 
-error_msg:
-    pstring("RUN ERROR")
 options_wc:
     pstring("LWC")
     

@@ -131,20 +131,18 @@ not_option_v:
 
 error:
     jsr ok_close
-    swi error,error_msg
-    sec
+    clc
+    swi error
     rts
     
 help_msg:
-    pstring("*SEARCH <STRING> <FILE> (-)")
+    pstring("*SEARCH <STRING> <FILE> [-NLVC]")
     pstring(" N = PRINT LINE NUMBER")
     pstring(" L = PRINT LINE NUMBER ONLY")
     pstring(" V = LINES NOT MATCHING")
     pstring(" C = COUNT LINES MATCHING")
     .byte 0
 
-error_msg:
-    pstring("RUN ERROR")
 options_list:
     pstring("NLVC")
 

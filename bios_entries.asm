@@ -1,3 +1,7 @@
+#importonce
+
+.encoding "ascii"
+
 .label vars=$cf00
 .label buffer=$cf80
 .label nb_params=$cfff
@@ -43,6 +47,9 @@
     .label str_cpy=71
     .label str_cat=73
     .label str_ins=75
+    .label directory_open=77
+    .label directory_get_entry=79
+    .label directory_close=81
 }
 
 //===============================================================

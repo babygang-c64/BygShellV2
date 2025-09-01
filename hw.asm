@@ -37,6 +37,38 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
     
+    
+    swi directory_open
+    clc
+    swi directory_get_entry,work_buffer
+dir:
+    sec
+    swi directory_get_entry,work_buffer,filter
+    bcs fin_dir
+    cmp #0
+    beq dir
+
+    txa
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+    swi pprint_nl
+    
+    jmp dir
+
+fin_dir:
+    swi pprint_nl,fin_msg
+    swi directory_close
+    clc
+    rts
+type:
+    .byte 0
+fin_msg:
+    pstring("--FINI--")
+filter:
+    pstring("*.ASM")
+    
+
     //-- init options
     sec
     swi param_init,buffer,options_hw
@@ -91,7 +123,7 @@ options_hw:
     pstring("D")
 
 help_hw:
-    pstring("*HW (MESSAGE) (-D) : PRINTS MESSAGE")
+    pstring("*HW [MESSAGE] [-D] : PRINTS MESSAGE")
     pstring(" D = PRINT DEFAULT MESSAGE")
     .byte 0
 }

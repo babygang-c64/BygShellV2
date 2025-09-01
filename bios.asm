@@ -7,6 +7,8 @@
 
 #importonce
 
+.encoding "ascii"
+
 * = * "bios vectors"
 
 .label vars=$cf00
@@ -58,6 +60,9 @@
 .label str_cpy=71
 .label str_cat=73
 .label str_ins=75
+.label directory_open=77
+.label directory_get_entry=79
+.label directory_close=81
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -98,6 +103,9 @@ bios_jmp:
     .word do_str_cpy
     .word do_str_cat
     .word do_str_ins
+    .word do_directory_open
+    .word do_directory_get_entry
+    .word do_directory_close
 
 * = * "BIOS code"
 
@@ -135,14 +143,178 @@ copy_bios_exec:
 //---------------------------------------------------------------
 // error : error message, also closes pipe output
 //
-// Input : r0: PSTRING of error message
+// Input : r0: PSTRING of error message or default if C=0
 //---------------------------------------------------------------
 
 do_error:
 {
-    swi pprint_nl
+    bcs not_default
+    mov r0, #error_default
+not_default:
+    lda CURSOR_COLOR
+    pha
+    lda #7
+    sta CURSOR_COLOR
+    swi pprint
+    swi pprint_nl,error_msg
+    pla
+    sta CURSOR_COLOR
     jsr do_pipe_end
     sec
+    rts
+error_default:
+    pstring("SHELL")
+error_msg:
+    pstring(" ERROR")
+}
+
+//===============================================================
+// directory routines :
+//
+// directory_open
+// directory_set_filter
+// directory_get_entry
+// directory_close
+// 
+// Uses channel #7 : 7,<device>,0
+//===============================================================
+
+//---------------------------------------------------------------
+// directory_open : reads directory
+//
+// output C=1 = error
+//---------------------------------------------------------------
+
+do_directory_open:
+{
+    lda #1
+    ldx #<dirname
+    ldy #>dirname
+    jsr SETNAM
+    lda #$60
+    sta $b9
+    jsr $f3d5 // open
+    jsr $f219 // chkin IEC
+    
+    // skip 4 bytes
+    jsr $ee13 // chrin iec
+    jsr $ee13 // chrin iec
+    clc
+    rts
+
+dirname:
+    .byte '$'
+}
+
+//---------------------------------------------------------------
+// directory_get_entry : reads one directory entry, output in r0
+//
+// ouput :
+// C=1 : end, R0 = name, A = type
+//---------------------------------------------------------------
+
+do_directory_get_entry:
+{
+    stc is_filter
+    push r0
+    
+get_entry:
+    ldy #0
+    sty in_quotes
+    sty type
+    tya
+    mov (r0++),a
+    
+    // skip 2 bytes
+    jsr $ee13
+    jsr $ee13
+    
+    lda STATUS
+    bne fini
+    
+    // size
+    jsr $ee13
+    jsr $ee13
+    
+    ldx #0
+read_name:
+    jsr $ee13
+    beq end_name
+    cmp #34
+    bne not_quote
+
+    inc in_quotes
+    jmp read_name
+
+not_quote:
+    ldy in_quotes
+    beq read_name
+    cpy #1
+    beq next_char
+    ldy type
+    bne read_name
+    cmp #32
+    beq read_name
+    sta type
+    jmp read_name
+
+next_char:
+    ldy #0
+    inx
+    mov (r0++),a
+    jmp read_name
+
+end_name:
+    pop r0
+    txa
+    ldy #0
+    mov (r0),a
+    
+    ldc is_filter
+    bcc no_filter
+    swi str_pat
+    lda #0
+    bcc no_filter
+    lda #1
+
+no_filter:
+    ldx type
+    clc
+    rts
+
+fini:
+    pop r0
+    sec
+    rts
+
+printcomp:
+    push r0
+    swi pprint
+    lda #'='
+    jsr CHROUT
+    mov r0,r1
+    swi pprint_nl
+    swi key_wait
+    pop r0
+
+    clc
+    rts
+
+.label in_quotes=vars
+.label type=vars+1
+.label is_filter=vars+2
+}
+
+//---------------------------------------------------------------
+// directory_close : closes directory
+//---------------------------------------------------------------
+
+do_directory_close:
+{
+    jsr $edef // untalk
+    jsr $f642 // close
+    jsr $f6f3 // restore 
+    clc
     rts
 }
 
@@ -202,12 +374,12 @@ check_pipe_option:
     rts
     
 error:
-    swi error, error_pipe_msg
     sec
+    swi error, error_pipe_msg
     rts
 
 error_pipe_msg:
-    pstring("PIPE OPTION ERROR")
+    pstring("PIPE OPTION")
 }
 
 //---------------------------------------------------------------
@@ -384,6 +556,7 @@ ok_option:
     clc
     rts
 option_error:
+    sec
     swi error,msg_option_error
     rts
 

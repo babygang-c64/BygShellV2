@@ -126,8 +126,8 @@ fini:
 
 error:
     jsr ok_close
-    swi error,error_msg
-    sec
+    clc
+    swi error
     rts
 
 option_pagination:
@@ -162,17 +162,15 @@ pas_numero:
 
 
 help_msg:
-    pstring("*CAT <FILENAME> (-BENPHA>) (OUTPUT)")
+    pstring("*CAT <FILENAME> [-BENPHA]")
     pstring(" N = NUMBERS ALL LINES")
     pstring(" E = $ AT EOL")
     pstring(" B = NUMBERS NON EMPTY LINES")
     pstring(" P = PAGINATES OUTPUT")
     pstring(" H = HEXDUMP")
-    pstring(" A = READS START ADDRESS FOR HEXDUMP")
-    pstring(" > = WRITE TO OUTPUT FILE")
+    pstring(" A = START ADDRESS FOR HEXDUMP")
     .byte 0
-error_msg:
-    pstring("RUN ERROR")
+
 options_cat:
     pstring("BENPHA")
     
