@@ -39,6 +39,18 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    swi set_basic_string,string_sh
+
+    clc
+    rts    
+string_sh:
+    .text "SH$"
+    .byte 5
+    .word string_storage
+string_storage:
+    .text "HELLO"
+
+    
     sec
     swi param_init,buffer,options_hw
 

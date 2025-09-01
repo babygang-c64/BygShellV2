@@ -52,6 +52,8 @@
     .label directory_get_entry=79
     .label directory_close=81
     .label param_process=83
+    .label set_basic_string=85
+
 }
 
 //===============================================================

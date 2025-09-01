@@ -65,6 +65,7 @@
 .label directory_get_entry=79
 .label directory_close=81
 .label param_process=83
+.label set_basic_string=85
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -109,6 +110,7 @@ bios_jmp:
     .word do_directory_get_entry
     .word do_directory_close
     .word do_param_process
+    .word do_set_basic_string
 
 * = * "BIOS code"
 
@@ -169,6 +171,38 @@ error_default:
     pstring("SHELL")
 error_msg:
     pstring(" ERROR")
+}
+
+
+//---------------------------------------------------------------
+// set_basic_string
+//
+// R0 = descripteur variable
+//---------------------------------------------------------------
+
+do_set_basic_string:
+{
+    lda $7a
+    pha
+    lda $b
+    pha
+    
+    mov $7a,r0
+    jsr $b08b
+    sta $49
+    sty $4a
+    push r0
+    add r0, #3
+    mov $64,r0
+    jsr $aa52
+    pop r0
+    
+    pla
+    sta $7b
+    pla
+    sta $7a
+    clc
+    rts
 }
 
 //===============================================================
