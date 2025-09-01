@@ -36,19 +36,18 @@ wc:
     ldx nb_params
     jeq help
 
-//    swi param_top
     ldy #0
     sec
 boucle_params:
     swi param_process,params_buffer
     bcs fin_params
 
-    swi pprint_nl
     jsr do_wc
     clc
     jmp boucle_params
 
 fin_params:
+    swi pipe_end
     clc
     rts
 
@@ -98,7 +97,6 @@ ok_close:
 
     ldx #4
     swi file_close
-    swi pipe_end
     clc
     rts
 
