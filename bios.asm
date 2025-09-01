@@ -17,8 +17,9 @@
 
 .namespace bios 
 {
-
+//===============================================================
 // BIOS functions list
+//===============================================================
 
 .label bios_exec=$cf70
 
@@ -53,9 +54,14 @@
 .label pipe_output=63
 .label str_pat=65
 .label str_expand=67
+.label is_filter=69
+.label str_cpy=71
+.label str_cat=73
+.label str_ins=75
 
-
+//===============================================================
 // bios_jmp : bios jump table
+//===============================================================
 
 bios_jmp:
     .word do_reset
@@ -88,7 +94,10 @@ bios_jmp:
     .word do_pipe_output
     .word do_str_pat
     .word do_str_expand
-
+    .word do_is_filter
+    .word do_str_cpy
+    .word do_str_cat
+    .word do_str_ins
 
 * = * "BIOS code"
 
@@ -274,6 +283,7 @@ do_param_init:
     ldy #0
     sty options_params
     sty nb_params
+    sty append_mode
 
     swi str_next
     jcs fin_params
@@ -283,7 +293,7 @@ process_params:
     sty lgr_param
     mov r3, r2
     swi str_len
-    beq fin_params
+    jeq fin_params
 
     tax
     inc r0
@@ -322,6 +332,14 @@ process_option:
 
 process_option_pipe:
     inc r0
+    mov a,(r0)
+    cmp #'>'
+    bne not_append_mode
+    lda #1
+    sta append_mode
+    inc r0
+    dex
+not_append_mode:
     dec r2
     lda #OPT_PIPE
     ora options_params
@@ -333,6 +351,9 @@ process_option_pipe:
 fin_params:
     lda #0
     mov (r2), a
+    
+    jsr update_output_name
+    
     lda options_params
     ldx nb_params
     clc
@@ -366,9 +387,53 @@ option_error:
     swi error,msg_option_error
     rts
 
-.label avec_options = vars
-.label lgr_param = vars+1
 
+//-- update output name if present :
+//-- insert @: in from of name
+//-- add ,s,w or ,s,a to name
+
+update_output_name:
+    lda options_params
+    and #OPT_PIPE
+    bne do_update
+    rts
+    
+do_update:
+    ldx nb_params
+    swi lines_goto, buffer
+    
+    // insert prefix
+    ldx #1
+    mov r1,#prefix_pipe
+    swi str_ins
+
+    // add suffix
+    mov r1,#suffix_pipe
+    swi str_cat
+    
+    // if append, update suffix
+    lda append_mode
+    beq not_append
+    
+    swi str_len
+    tay
+    lda #'A'
+    mov (r0),a
+    ldy #0
+not_append:
+    rts
+
+.label avec_options = vars+4
+.label lgr_param = vars+5
+.label append_mode = vars+6
+
+prefix_pipe:
+    .byte 2
+    .byte 64
+    .byte ':'
+    pstring("@:")
+suffix_pipe:
+    pstring(",S,W")
 msg_option_error:
     pstring("INVALID OPTION")
 }
@@ -844,21 +909,184 @@ fin_lecture:
 // pstring routines
 //
 // str_split
-// str_empty
 // str_cmp
 // str_cpy
 // str_cat
 // str_ins
-// str_del
-// str_chr
-// str_rchr
-// str_ncpy
 // str_pat
 // str_expand
 // str_next
 // lines_find
 // lines_goto
+// is_filter
+//
+// manque :
+//
+// str_empty
+// str_del
+// str_chr
+// str_rchr
+// str_ncpy
 //===============================================================
+
+//---------------------------------------------------------------
+// str_cpy : copie pstring en r0 vers destination en r1
+// en sortie A = longueur + 1 = longueur copiée
+//---------------------------------------------------------------
+
+do_str_cpy:
+{
+    swi str_len
+    pha
+    tay
+copie:
+    lda (zr0),y
+    sta (zr1),y
+    dey
+    bpl copie
+    pla
+    clc
+    adc #1
+    ldy #0
+    rts
+}
+
+//---------------------------------------------------------------
+// str_cat : ajoute une chaine
+// r0 = r0 + r1
+// sortie Y = 0
+//---------------------------------------------------------------
+
+do_str_cat:
+{
+    // pos_new = écriture = lgr + 1
+    ldy #0    
+    lda (zr0),y
+    tay
+    iny
+    sty pos_new
+
+    // pos_copie = lecture = 1
+    // lgr_ajout = nb de caractères à copier
+    ldy #0
+    lda (zr1),y
+    sta lgr_ajout
+    iny
+    sty pos_copie
+
+copie:
+    ldy pos_copie
+    lda (zr1),y
+    ldy pos_new
+    sta (zr0),y
+    inc pos_new
+    inc pos_copie
+    dec lgr_ajout
+    bne copie
+
+    // mise à jour longueur = position écriture suivante - 1
+    dec pos_new
+    lda pos_new
+    ldy #0
+    sta (zr0),y
+    clc
+    rts
+
+.label pos_copie = vars
+.label pos_new = vars+1
+.label lgr_ajout = vars+2
+}
+
+//---------------------------------------------------------------
+// str_ins : insère dans r0 la chaine r1 en position X
+//
+// R0 is preserved, use X=1 for 1st char of pstring
+//---------------------------------------------------------------
+
+do_str_ins:
+{
+    // 1. décale la fin de chaine pour faire de la place
+    // 2. copie r1 en position X
+    // 3. mise à jour lgr = +lgr r1
+
+    stx pos_copie
+    swi str_len
+    sta pos_lecture
+    push r0
+    mov r0, r1
+    swi str_len
+    sta lgr_r1
+    pop r0
+    lda pos_lecture
+    clc
+    adc lgr_r1
+    sta pos_ecriture
+    lda pos_lecture
+    sec
+    sbc pos_copie
+    tax
+    lda #1
+    sta pos_lecture_copie
+
+decale:
+    ldy pos_lecture
+    mov a, (r0)
+    ldy pos_ecriture
+    mov (r0), a
+    dec pos_lecture
+    dec pos_ecriture
+    dex
+    bpl decale
+
+    ldx lgr_r1
+copie:
+    ldy pos_lecture_copie
+    mov a, (r1)
+    ldy pos_copie
+    mov (r0), a
+    inc pos_lecture_copie
+    inc pos_copie
+    dex
+    bne copie
+
+    swi str_len
+    clc
+    adc lgr_r1
+    mov (r0), a
+    ldy #0
+    
+    clc
+    rts
+
+.label pos_lecture = vars
+.label pos_ecriture = vars+1
+.label pos_copie = vars+2
+.label pos_lecture_copie = vars+3
+.label lgr_r1 = vars+4
+}
+
+//---------------------------------------------------------------
+// is_filter : C=1 if string in R0 contains filter chars (? or *)
+//---------------------------------------------------------------
+
+do_is_filter:
+{
+    swi str_len
+    tay
+test_str:
+    lda (zr0),y
+    cmp #'*'
+    beq filtre_trouve    
+    cmp #'?'
+    beq filtre_trouve    
+    dey
+    bne test_str
+    clc
+    rts
+filtre_trouve:
+    sec
+    rts
+}
 
 //---------------------------------------------------------------
 // str_expand : expands quoted string

@@ -39,6 +39,10 @@
     .label pipe_output=63
     .label str_pat=65
     .label str_expand=67
+    .label is_filter=69
+    .label str_cpy=71
+    .label str_cat=73
+    .label str_ins=75
 }
 
 //===============================================================
