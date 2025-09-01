@@ -47,7 +47,7 @@ cat:
 
     // name = 1st parameter
     swi param_top
-
+    
     sec
     jsr option_pagine
 

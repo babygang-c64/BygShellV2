@@ -19,19 +19,12 @@ pstring("WC")
 wc:
 {
     .label work_buffer = $ce00
+    .label params_buffer = $cd00
     
     .label OPT_L=1
     .label OPT_W=2
     .label OPT_C=4
 
-    // initialisation
-    ldy #0
-    sty num_lines
-    sty num_lines+1
-    sty num_words
-    sty num_words+1
-    sty num_bytes
-    sty num_bytes+1
 
     sec
     swi param_init,buffer,options_wc
@@ -43,12 +36,37 @@ wc:
     ldx nb_params
     jeq help
 
-    swi param_top
+//    swi param_top
+    ldy #0
+    sec
+boucle_params:
+    swi param_process,params_buffer
+    bcs fin_params
+
+    swi pprint_nl
+    jsr do_wc
+    clc
+    jmp boucle_params
+
+fin_params:
+    clc
+    rts
+
+do_wc:
+    // initialisation
+    ldy #0
+    sty num_lines
+    sty num_lines+1
+    sty num_words
+    sty num_words+1
+    sty num_bytes
+    sty num_bytes+1
+
+    mov filename,r0
     ldx #4
     clc
     swi file_open
     jcs error
-    
 
 boucle_wc:
     jsr STOP
@@ -122,10 +140,14 @@ ko_words:
 ok_bytes:
     mov r0, num_bytes
     jsr write_number
-ko_bytes:
 
-    lda #13
-    jmp CHROUT
+ko_bytes:
+    mov r0,filename
+    lda #32
+    jsr CHROUT
+    swi pprint_nl
+    clc
+    rts
 
 write_number:
     ldx #%10011111
@@ -149,6 +171,8 @@ num_lines:
 num_words:
     .word 0
 num_bytes:
+    .word 0
+filename:
     .word 0
 
 } // WC namespace

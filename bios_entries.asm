@@ -6,6 +6,7 @@
 .label buffer=$cf80
 .label nb_params=$cfff
 .label options_params=$cffe
+.label scan_params=$cffd
 .label OPT_PIPE=128
 
 .namespace bios 
@@ -50,6 +51,7 @@
     .label directory_open=77
     .label directory_get_entry=79
     .label directory_close=81
+    .label param_process=83
 }
 
 //===============================================================

@@ -15,6 +15,7 @@
 .label buffer=$cf80
 .label nb_params=$cfff
 .label options_params=$cffe
+.label scan_params=$cffd
 .label OPT_PIPE=$80
 
 .namespace bios 
@@ -63,6 +64,7 @@
 .label directory_open=77
 .label directory_get_entry=79
 .label directory_close=81
+.label param_process=83
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -106,6 +108,7 @@ bios_jmp:
     .word do_directory_open
     .word do_directory_get_entry
     .word do_directory_close
+    .word do_param_process
 
 * = * "BIOS code"
 
@@ -185,7 +188,7 @@ error_msg:
 // output C=1 = error
 //---------------------------------------------------------------
 
-do_directory_open:
+do_directory_open_old:
 {
     lda #1
     ldx #<dirname
@@ -213,7 +216,7 @@ dirname:
 // C=1 : end, R0 = name, A = type
 //---------------------------------------------------------------
 
-do_directory_get_entry:
+do_directory_get_entry_old:
 {
     stc is_filter
     push r0
@@ -224,7 +227,7 @@ get_entry:
     sty type
     tya
     mov (r0++),a
-    
+
     // skip 2 bytes
     jsr $ee13
     jsr $ee13
@@ -309,7 +312,7 @@ printcomp:
 // directory_close : closes directory
 //---------------------------------------------------------------
 
-do_directory_close:
+do_directory_close_old:
 {
     jsr $edef // untalk
     jsr $f642 // close
@@ -318,11 +321,138 @@ do_directory_close:
     rts
 }
 
+//---------------------------------------------------------------
+// directory_open : reads directory
+//
+// output C=1 = error
+//---------------------------------------------------------------
+
+do_directory_open:
+{
+    clc
+    ldx #9
+    swi file_open,dirname
+    
+    ldx #9
+    jsr CHKIN
+    
+    // skip 2 bytes
+    jsr CHRIN
+    jsr CHRIN
+    clc
+    rts
+
+dirname:
+    pstring("$")
+}
+
+//---------------------------------------------------------------
+// directory_get_entry : reads one directory entry, output in r0
+//
+// ouput :
+// C=1 : end, R0 = name, A = type
+//---------------------------------------------------------------
+
+do_directory_get_entry:
+{
+    stc is_filter
+    push r0
+    
+get_entry:
+    ldy #0
+    sty in_quotes
+    sty type
+    tya
+    mov (r0++),a
+
+    ldx #9
+    jsr CHKIN
+    // skip 2 bytes
+    jsr CHRIN
+    jsr CHRIN
+    
+    lda STATUS
+    bne fini
+    
+    // size
+    jsr CHRIN
+    jsr CHRIN
+    
+    ldx #0
+read_name:
+    jsr CHRIN
+    beq end_name
+    cmp #34
+    bne not_quote
+
+    inc in_quotes
+    jmp read_name
+
+not_quote:
+    ldy in_quotes
+    beq read_name
+    cpy #1
+    beq next_char
+    ldy type
+    bne read_name
+    cmp #32
+    beq read_name
+    sta type
+    jmp read_name
+
+next_char:
+    ldy #0
+    inx
+    mov (r0++),a
+    jmp read_name
+
+end_name:
+    pop r0
+    txa
+    ldy #0
+    mov (r0),a
+    
+    ldc is_filter
+    bcc no_filter
+    swi str_pat
+    lda #0
+    bcc no_filter
+    lda #1
+
+no_filter:
+    ldx type
+    clc
+    rts
+
+fini:
+    pop r0
+    sec
+    rts
+
+.label in_quotes=vars
+.label type=vars+1
+.label is_filter=vars+2
+}
+
+//---------------------------------------------------------------
+// directory_close : closes directory
+//---------------------------------------------------------------
+
+do_directory_close:
+{
+    ldx #9
+    swi file_close
+    clc
+    rts
+}
+
+
 //===============================================================
 // Parameters routines
 //
 // param_init
 // param_top
+// param_scan
 // param_next
 // pipe_init
 // pipe_output
@@ -415,6 +545,82 @@ do_pipe_output:
     jsr CHKOUT
 pas_option_pipe:
     clc
+    rts
+}
+
+//---------------------------------------------------------------
+// param_process : returns in R0 each param, including 
+//                 directory mapping
+//
+// input : C=1 for init, C=0 after, R0 = work buffer
+// output : C=1 for finished, R0 = current parameter
+//---------------------------------------------------------------
+
+do_param_process:
+{
+    bcc pas_init
+    
+    // init
+
+    lda nb_params
+    sta scan_params
+    inc scan_params
+    lda options_params
+    and #OPT_PIPE
+    beq pas_init
+    dec scan_params
+
+pas_init:
+    mov r4, r0
+    dec scan_params
+    lda scan_params
+    and #$7f
+    jeq fini    
+    
+    tax
+    swi lines_goto,buffer
+    swi is_filter
+    bcc no_filter
+
+    lda scan_params
+    and #$80
+    bne deja_dir
+    
+    // filter : open dir
+    lda scan_params
+    ora #$80
+    sta scan_params
+    
+    push r0
+    swi directory_open
+    clc
+    mov r0,r4
+    swi directory_get_entry
+    pop r0
+
+deja_dir:
+    inc scan_params
+    mov r1,r0
+next_dir:
+    sec
+    mov r0, r4
+    swi directory_get_entry
+    bcs fini_dir
+    cmp #0
+    beq next_dir
+
+no_filter:
+    clc
+    rts
+
+fini_dir:
+    swi directory_close
+    lda scan_params
+    and #$7f
+    sta scan_params
+
+fini:
+    sec
     rts
 }
 
@@ -933,9 +1139,13 @@ do_file_open:
     ldy zr0h
     jsr SETNAM
 
+    // if directory, secondary = 0
     ldy #0
-    mov a, (r0++)
+    mov a, (r0)
+    cmp #'$'
+    beq is_dir
     ldy canal
+is_dir:
 
     // open X,dev,X (ou 0 si directory)
     // canal secondaire = identique à primaire, attention

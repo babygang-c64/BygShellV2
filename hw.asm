@@ -32,28 +32,39 @@ pstring("HW")
 
 //-- Good practice : wrap your code in a namespace
 
+.label params_buffer=$ce00
+
 hw:
 {
     .label OPT_D=1
     .label work_buffer = $ce00
+
+    sec
+    swi param_init,buffer,options_hw
+
+    sec
+boucle_params:
+    swi param_process,params_buffer
+    bcs fin_params
+    swi pprint_nl
+    clc
+    jmp boucle_params
+
+fin_params:
+    clc
+    rts
     
-    
+test_dir:
+
     swi directory_open
     clc
     swi directory_get_entry,work_buffer
 dir:
-    sec
-    swi directory_get_entry,work_buffer,filter
+    clc
+    swi directory_get_entry,work_buffer
     bcs fin_dir
-    cmp #0
-    beq dir
 
-    txa
-    jsr CHROUT
-    lda #32
-    jsr CHROUT
-    swi pprint_nl
-    
+    swi pprint_nl,work_buffer
     jmp dir
 
 fin_dir:
@@ -67,6 +78,7 @@ fin_msg:
     pstring("--FINI--")
 filter:
     pstring("*.ASM")
+
     
 
     //-- init options
