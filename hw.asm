@@ -45,11 +45,11 @@ hw:
     rts    
 string_sh:
     .text "SH$"
-    .byte 5
+    .byte 15
     .word string_storage
 string_storage:
-    .text "HELLO"
-
+    .text "HELLO BYGSHELL!"
+    .fill 64,0
     
     sec
     swi param_init,buffer,options_hw

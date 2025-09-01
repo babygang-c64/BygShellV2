@@ -184,7 +184,7 @@ do_set_basic_string:
 {
     lda $7a
     pha
-    lda $b
+    lda $7b
     pha
     
     mov $7a,r0
