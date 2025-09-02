@@ -23,7 +23,8 @@ pstring("CAT")
 cat:
 {
     .label work_buffer = $ce00
-    
+    .label params_buffer = $cd00
+
     .label OPT_B=1
     .label OPT_E=2
     .label OPT_N=4
@@ -31,10 +32,6 @@ cat:
     .label OPT_H=16
     .label OPT_A=32
 
-    // initialisation
-    ldy #0
-    sty num_lignes
-    sty num_lignes+1
 
     sec
     swi param_init,buffer,options_cat
@@ -45,8 +42,29 @@ cat:
     ldx nb_params
     jeq help
 
+    ldy #0
+    sec
+boucle_params:
+    swi param_process,params_buffer
+    bcs fin_params
+
+    jsr do_cat
+    clc
+    jmp boucle_params
+
+fin_params:
+    swi pipe_end
+    clc
+    rts
+
+do_cat:
+    // initialisation
+    ldy #0
+    sty num_lignes
+    sty num_lignes+1
+
     // name = 1st parameter
-    swi param_top
+    //swi param_top
     
     sec
     jsr option_pagine
