@@ -39,60 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    swi set_basic_string,string_sh
-
-    clc
-    rts    
-string_sh:
-    .text "SH$"
-    .byte 15
-    .word string_storage
-string_storage:
-    .text "HELLO BYGSHELL!"
-    .fill 64,0
-    
-    sec
-    swi param_init,buffer,options_hw
-
-    sec
-boucle_params:
-    swi param_process,params_buffer
-    bcs fin_params
-    swi pprint_nl
-    clc
-    jmp boucle_params
-
-fin_params:
-    clc
-    rts
-    
-test_dir:
-
-    swi directory_open
-    clc
-    swi directory_get_entry,work_buffer
-dir:
-    clc
-    swi directory_get_entry,work_buffer
-    bcs fin_dir
-
-    swi pprint_nl,work_buffer
-    jmp dir
-
-fin_dir:
-    swi pprint_nl,fin_msg
-    swi directory_close
-    clc
-    rts
-type:
-    .byte 0
-fin_msg:
-    pstring("--FINI--")
-filter:
-    pstring("*.ASM")
-
-    
-
     //-- init options
     sec
     swi param_init,buffer,options_hw

@@ -1,7 +1,7 @@
 # BygShell
 Shell like commands for the C64
 
-Code and bugs by papapower@babygang
+Code and bugs by papapower@babygang, tests / ideas & support joy@babygang
 2023-2025
 
 work in progress, you've been warned !
