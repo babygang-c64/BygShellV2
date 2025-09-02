@@ -32,7 +32,6 @@ cat:
     .label OPT_H=16
     .label OPT_A=32
 
-
     sec
     swi param_init,buffer,options_cat
     jcs error

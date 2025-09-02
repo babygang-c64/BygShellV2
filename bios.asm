@@ -464,11 +464,12 @@ do_param_process:
     and #OPT_PIPE
     beq pas_init
     dec scan_params
+    lda scan_params
 
 pas_init:
     mov r4, r0
-    dec scan_params
-    lda scan_params
+
+    jsr dec_params
     and #$7f
     jeq fini    
     
@@ -513,9 +514,25 @@ fini_dir:
     lda scan_params
     and #$7f
     sta scan_params
+    dec scan_params
+    clc
+    jmp do_param_process
 
 fini:
     sec
+    rts
+    
+dec_params:
+    ldy scan_params
+    lda scan_params
+    and #$7f
+    sta scan_params
+    dec scan_params
+    tya
+    and #$80
+    ora scan_params
+    sta scan_params
+    ldy #0
     rts
 }
 
