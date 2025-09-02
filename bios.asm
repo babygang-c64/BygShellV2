@@ -1146,7 +1146,14 @@ do_file_close:
 {
     txa
     jsr CLOSE
+    
+    lda options_params
+    and #OPT_PIPE
+    bne option_pipe
+
     jsr CLRCHN
+
+option_pipe:
     clc
     rts
 }

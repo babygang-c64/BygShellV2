@@ -5,6 +5,7 @@
 // L = count lines
 // W = count words
 // C = count bytes
+// Q = no filename
 //----------------------------------------------------
 
 #import "bios_entries_pp.asm"
@@ -24,7 +25,7 @@ wc:
     .label OPT_L=1
     .label OPT_W=2
     .label OPT_C=4
-
+    .label OPT_Q=8
 
     sec
     swi param_init,buffer,options_wc
@@ -108,7 +109,7 @@ error:
 
 write_results:
     lda options_params
-    and #$7f
+    and #$77
     beq ok_lines
     and #OPT_L
     beq ko_lines
@@ -116,10 +117,10 @@ write_results:
 ok_lines:
     mov r0, num_lines
     jsr write_number
-ko_lines:
 
+ko_lines:
     lda options_params
-    and #$7f
+    and #$77
     beq ok_words
     and #OPT_W
     beq ko_words
@@ -127,10 +128,10 @@ ko_lines:
 ok_words:
     mov r0, num_words
     jsr write_number
-ko_words:
 
+ko_words:
     lda options_params
-    and #$7f
+    and #$77
     beq ok_bytes
     and #OPT_C
     beq ko_bytes
@@ -140,12 +141,25 @@ ok_bytes:
     jsr write_number
 
 ko_bytes:
+    lda nb_params
+    cmp #1
+    beq no_name
+
+    lda options_params
+    and #OPT_Q
+    bne no_name
+
     mov r0,filename
     lda #32
     jsr CHROUT
-    swi pprint_nl
+    swi pprint
+
+no_name:
+    lda #13
+    jsr CHROUT
     clc
     rts
+
 
 write_number:
     ldx #%10011111
@@ -155,14 +169,15 @@ write_number:
 
 
 help_msg:
-    pstring("*WC <FILENAME> [-LWC]")
+    pstring("*WC <FILENAME> [-LWCQ]")
     pstring(" L = COUNT LINES")
     pstring(" W = COUNT WORDS")
     pstring(" C = COUNT BYTES")
+    pstring(" Q = NO NAME")
     .byte 0
 
 options_wc:
-    pstring("LWC")
+    pstring("LWCQ**")
     
 num_lines:
     .word 0
