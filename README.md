@@ -8,6 +8,8 @@ work in progress, you've been warned !
 
 ## WTF is that again ?
 
+![Startup screen](images/screenshot_startup_screen.png)
+
 Here you go, a new shell extension for the C64 by the Babygang, as if 2025 wasn't already too bad...
 Well, well, after spending (too) many hours on the 1st version I still wasn't happy with the result and
 starting to find it way too big and complicated, so I got back to the drawing board in order to try to
@@ -31,6 +33,8 @@ When a command is not found in the internal commands list then a lookup is done 
 time beeing, if the currrent device is not defined, tries on disk #8.
 
 There are no more shell scripts as you can use the commands within BASIC programs baby !
+
+![External commands](images/screenshot_external_commands.png)
 
 All commands should load to $C000 and start with :
 
