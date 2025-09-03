@@ -134,7 +134,6 @@ help:
     rts
 
 ok_close:
-    swi pipe_end
     ldx #4
     swi file_close
 fini:

@@ -48,6 +48,7 @@ ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write shell_pp.prg "shell" -silent
 
 ${VICE_PATH}/c1541 -attach ${disk} -write test.txt "test" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cartridge_header.asm "crt.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cat.asm "cat.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write samsara.koa "samsara.koa" -silent
@@ -58,4 +59,4 @@ build_command wc
 build_command search
 build_command hw
 build_command koala
-
+build_command head

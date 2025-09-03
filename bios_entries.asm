@@ -7,6 +7,7 @@
 .label nb_params=$cfff
 .label options_params=$cffe
 .label scan_params=$cffd
+.label options_values=$cfe0
 .label OPT_PIPE=128
 
 .namespace bios 
@@ -53,7 +54,7 @@
     .label directory_close=81
     .label param_process=83
     .label set_basic_string=85
-
+    .label param_get_value=87
 }
 
 //===============================================================

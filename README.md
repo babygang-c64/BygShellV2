@@ -630,6 +630,18 @@ count lines / words / bytes of files
     Q = don't print filename
 ```
 
+**SEARCH**
+```
+*search <pattern> <file> [<file> ...]
+
+search for pattern in files
+    options :
+    N = print line number
+    L = print only line number
+    V = lines not matching
+    C = count lines matching
+```
+
 **KOALA**
 ```
 *koala <image>

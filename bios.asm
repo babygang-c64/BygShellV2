@@ -16,6 +16,7 @@
 .label nb_params=$cfff
 .label options_params=$cffe
 .label scan_params=$cffd
+.label options_values=$cfe0
 .label OPT_PIPE=$80
 
 .namespace bios 
@@ -66,6 +67,7 @@
 .label directory_close=81
 .label param_process=83
 .label set_basic_string=85
+.label param_get_value=87
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -111,6 +113,7 @@ bios_jmp:
     .word do_directory_close
     .word do_param_process
     .word do_set_basic_string
+    .word do_param_get_value
 
 * = * "BIOS code"
 
@@ -349,10 +352,50 @@ do_directory_close:
 // param_top
 // param_scan
 // param_next
+// param_get_value
 // pipe_init
 // pipe_output
 // pipe_end
 //===============================================================
+
+//---------------------------------------------------------------
+// param_get_value : returns value of parameter if it exists
+//
+// input : X = parameter name
+// ouput : R0 = value, C=1 if found, C=0 if not found
+//---------------------------------------------------------------
+
+do_param_get_value:
+{
+    ldy #0
+lookup:
+    txa
+    cmp options_values,y
+    beq found
+    lda options_values,y
+    beq not_found
+    iny
+    iny
+    iny
+    jmp lookup
+
+found:
+    iny
+    lda options_values,y
+    sta zr0l
+    iny
+    lda options_values,y
+    sta zr0h
+    ldy #0
+    sec
+    rts
+    
+not_found:
+    mov r0,#0
+    ldy #0
+    clc
+    rts
+}
 
 //---------------------------------------------------------------
 // pipe_init : check if there is a pipe option, if yes open the
@@ -574,7 +617,9 @@ do_param_init:
     sty options_params
     sty nb_params
     sty append_mode
-
+    sty ptr_values
+    sty options_values
+    
     swi str_next
     jcs fin_params
 
@@ -613,6 +658,10 @@ copy_param:
 process_option:
     inc r0
     mov a, (r0)
+    cmp #'='
+    bne no_value
+    jsr extract_value
+no_value:
     jsr lookup_option
     bcs option_error
     dex
@@ -654,6 +703,7 @@ lookup_option:
     bne lookup_ok
     rts
 lookup_ok:
+    sta last_option
     pha
     mov a, (r1)
     tay
@@ -678,6 +728,50 @@ option_error:
     swi error,msg_option_error
     rts
 
+//-- extract_value : if option with =,
+//-- retrieve option and value
+
+extract_value:
+
+    push r1
+
+    mov r1, #0
+    inc r0
+    dex
+    dex
+
+read_number:
+    mov a,(r0++)
+    jsr is_digit
+    bcc end_number
+    jsr mult10
+    sec
+    sbc #$30
+    add r1, a
+    dex
+    bne read_number
+    inx
+    
+end_number:    
+    ldy ptr_values
+    lda last_option
+    sta options_values,y
+    iny
+    lda zr1l
+    sta options_values,y
+    iny
+    lda zr1h
+    sta options_values,y
+    iny
+    sty ptr_values
+    lda #0
+    sta options_values,y
+    tay
+    
+    pop r1
+    
+    mov a,(r0)
+    rts
 
 //-- update output name if present :
 //-- insert @: in from of name
@@ -717,6 +811,8 @@ not_append:
 .label avec_options = vars+4
 .label lgr_param = vars+5
 .label append_mode = vars+6
+.label last_option = vars+7
+.label ptr_values = vars+8
 
 prefix_pipe:
     .byte 2
@@ -2184,6 +2280,23 @@ bit_list:
 }
 
 //---------------------------------------------------------------
+// which bit ? returns bit number of A into Y
+// returns 1 to 7, 0 if not found
+//---------------------------------------------------------------
+
+which_bit:
+{
+    ldy #7
+lookup_bit:
+    and set_bit.bit_list,y
+    bne found
+    bpl lookup_bit
+found:
+    iny
+    rts
+}
+
+//---------------------------------------------------------------
 // is_digit : C=1 if A is a digit, else C=0
 //---------------------------------------------------------------
 
@@ -2194,5 +2307,35 @@ is_digit:
     adc #$ff-'9'
     adc #'9'-'0'+1
     pla
+    rts
+}
+
+//---------------------------------------------------------------
+// mult10 : multiply R1 by 10, result in R1
+//---------------------------------------------------------------
+
+mult10:
+{
+    pha
+
+    lda zr1h
+    pha
+    
+    lda zr1l
+    jsr mult2
+    jsr mult2
+    adc zr1l
+    sta zr1l
+    pla
+    adc zr1h
+    sta zr1h
+    jsr mult2
+
+    pla
+    rts
+
+mult2:
+    asl zr1l
+    rol zr1h
     rts
 }

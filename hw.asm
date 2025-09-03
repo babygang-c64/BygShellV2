@@ -90,7 +90,7 @@ default_message:
     
     //-- options available
 options_hw:
-    pstring("D")
+    pstring("DTNM")
 
 help_hw:
     pstring("*HW [MESSAGE] [-D] : PRINTS MESSAGE")
