@@ -5,6 +5,7 @@
 // N = number of lines to print
 // Q = don't print filename
 // V = always print filename
+// P = paginate
 //----------------------------------------------------
 
 #import "bios_entries_pp.asm"
@@ -53,6 +54,8 @@ no_value:
 boucle_params:
     swi param_process,params_buffer
     bcs fin_params
+
+    jsr option_name
 
     jsr do_head
     clc
@@ -137,6 +140,49 @@ nb_lignes:
     .byte 0
 nb_lignes_max:
     .byte 0
+
+
+//----------------------------------------------------
+// do_name : affichage du nom
+//----------------------------------------------------
+
+option_name:
+{
+    lda options_params
+    and #OPT_V
+    bne do_name
+    lda nb_params
+    cmp #1
+    bne not_one
+    rts
+
+not_one:
+    lda options_params
+    and #OPT_Q
+    beq do_name
+    rts
+
+do_name:
+    lda #13
+    jsr CHROUT
+    lda #'='
+    jsr CHROUT
+    jsr CHROUT
+    lda #'>'
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+    swi pprint
+    lda #32
+    jsr CHROUT
+    lda #'<'
+    jsr CHROUT
+    lda #'='
+    jsr CHROUT
+    jsr CHROUT
+    lda #13
+    jmp CHROUT
+}
 
 //----------------------------------------------------
 // option_pagine : pagination option processing for

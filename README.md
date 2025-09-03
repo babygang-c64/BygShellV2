@@ -642,6 +642,14 @@ search for pattern in files
     C = count lines matching
 ```
 
+**HEAD**
+```
+*head <file> [<file> ...]
+
+print first lines of files
+    options :
+    N = change max lines number
+```
 **KOALA**
 ```
 *koala <image>
