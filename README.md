@@ -53,14 +53,15 @@ All external commands can :
 
 ## Internal commands
 
-- HELP
-- M
+- HELP : lists the internal commands and retrieves help for internal commands
+- M : memory dump
 
 ## Data structures and provided "framework"
 
 Note : this is beeing reviewed as a lot has moved, not all functions are available in the BIOS,
 new ones are there, and the 16 bit registers have been moved around in the ZP space in order to
-avoid conflicting with BASIC which uses a lot of those.
+avoid conflicting with BASIC which uses a lot of those. That's breaking some of the existing 
+macros for registers other than R0 and R1
 
 ### 16 bit registers
 ```
@@ -649,7 +650,11 @@ search for pattern in files
 print first lines of files
     options :
     N = change max lines number
+    Q = no filename
+    V = always print filename
+    P = paginate output
 ```
+
 **KOALA**
 ```
 *koala <image>

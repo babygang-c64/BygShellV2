@@ -60,3 +60,4 @@ build_command search
 build_command hw
 build_command koala
 build_command head
+build_command edit

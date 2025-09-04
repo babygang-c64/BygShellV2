@@ -81,7 +81,6 @@ boucle_head:
     jsr STOP
     jeq ok_close
 
-pas_hexdump:    
     ldx #4
     jsr CHKIN
     swi file_readline, work_buffer

@@ -1,0 +1,547 @@
+//----------------------------------------------------
+// edit : edit files
+//
+// options : 
+//----------------------------------------------------
+
+#import "bios_entries_pp.asm"
+#import "macros.asm"
+#import "kernal.asm"
+
+* = $c000
+
+.word edit
+pstring("EDIT")
+
+
+edit:
+{
+    .label work_buffer = $ce00
+    .label params_buffer = $cd00
+
+    .label OPT_N=1
+    
+    sec
+    swi param_init,buffer,options_edit
+    jcs error
+    
+    ldx nb_params
+//    jeq help
+
+    // editor init
+    ldy #0
+    jsr init
+
+    // load file
+    
+    ldy #0
+    sec
+    swi param_process,params_buffer
+
+    swi pprint_nl
+
+    ldx #4
+    clc
+    swi file_open
+    jcs error
+
+
+get_lines:
+    ldx #4
+    jsr CHKIN
+    swi file_readline, work_buffer
+    jcs ok_close
+//    swi pprint_nl
+    jsr string_add
+//    swi pprint_hex
+//    lda #13
+//    jsr CHROUT
+
+    incw total_lines
+    jmp get_lines
+
+ok_close:
+    ldx #4
+    swi file_close
+
+    jsr status_line
+    clc
+    rts
+
+string1:
+    pstring("UN DEUX TROIS")
+string2:
+    pstring("QUATRE 4 CINQ ET SIX")
+string3:
+    pstring("FINI!")
+
+options_edit:
+    pstring("H")
+
+filename:
+    pstring("FILENAME")
+
+init:
+    sty cursor_x
+    sty cursor_y
+    sty current_line
+    sty current_line+1
+    sty total_lines
+    sty total_lines+1
+    jsr bam_init
+    lda #147
+    jsr CHROUT
+    jsr status_line
+    jmp move_cursor
+
+error:
+    sec
+    rts
+    
+cursor_x:
+    .byte 0
+cursor_y:
+    .byte 0
+max_x:
+    .byte 39
+max_y:
+    .byte 23
+current_line:
+    .word 0
+total_lines:
+    .word 0
+
+//====================================================
+// Editor code
+//====================================================
+
+status_line:
+{
+    ldx #24
+    ldy #0
+    clc
+    jsr PLOT
+    lda #LIGHT_GRAY
+    jsr CHROUT
+    lda #RVSON
+    jsr CHROUT
+    
+    ldy CURRDEVICE
+    swi pprinthex8a
+    lda #':'
+    jsr CHROUT
+    
+    mov r0,#filename
+    swi pprint
+    mov a,(r0)
+    tay
+complete_name:
+    lda #32
+    jsr CHROUT
+    iny
+    cpy #16
+    bne complete_name
+
+    lda #32
+    jsr CHROUT
+
+    lda #'('
+    jsr CHROUT
+    ldy #0
+    sty zr0h
+    lda cursor_x
+    sta zr0l
+    ldx #%00000011
+    swi pprint_int
+    lda #','
+    jsr CHROUT
+    lda cursor_y
+    sta zr0l
+    swi pprint_int
+    lda #')'
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+    
+    mov r0,current_line
+    ldx #%11001111
+    swi pprint_int
+    lda #'/'
+    jsr CHROUT
+    mov r0,total_lines
+    swi pprint_int
+
+    lda #32
+    jsr CHROUT
+    jsr CHROUT
+
+    lda #RVSOFF
+    jsr CHROUT
+    lda #WHITE
+    jsr CHROUT
+    lda #'*'
+    jsr status_changed
+    clc
+    rts
+}
+
+status_changed:
+{
+    ora #$80
+    sta $0400+39+40*24
+    lda #15
+    sta $d800+39+40*24
+    rts
+}
+
+move_cursor:
+{
+    ldy cursor_x
+    ldx cursor_y
+    clc
+    jsr PLOT
+    clc
+    rts
+}
+
+//====================================================
+// memory management
+//
+// blocks allocation, memory starts at $0800 to $77ff
+//  BAM bitmap for 128 x 256 bytes blocks
+//
+//
+// 1 block =
+//  - byte max free space
+//  - lines :
+//      pstring
+//      zero ending string
+//
+// lines : list of block pointers at $7800
+//====================================================
+
+.label memory_start=$0800
+.label nb_bam=14
+
+bam:
+    .fill nb_bam,0
+bam_free:
+    .byte nb_bam*8
+bam_allocated:
+    .byte 0
+
+//---------------------------------------------------------------
+// bam_init : reset bam
+//---------------------------------------------------------------
+
+bam_init:
+    ldy #0
+    tya
+clear_bam:
+    sta bam,y
+    iny
+    cpy #nb_bam
+    bne clear_bam
+    lda #nb_bam
+    sta bam_free
+    ldy #0
+    sty bam_allocated
+    rts
+    
+//---------------------------------------------------------------
+// set_bit : sets bit #Y to 1 into A
+//---------------------------------------------------------------
+
+bit_list:
+    .byte 1,2,4,8,16,32,64,128
+
+set_bit:
+{
+    ora bit_list,y
+    rts
+}
+
+//---------------------------------------------------------------
+// next_free_bit : lookup for 1st unset bit in A, return into Y
+//---------------------------------------------------------------
+
+next_free_bit:
+{
+    ldy #7
+    sta ztmp
+lookup:
+    and bit_list,y
+    beq is_free
+    lda ztmp
+    dey
+    bpl lookup
+is_free:
+    rts
+}
+
+//----------------------------------------------------
+// bam_next : get first / next allocated block
+//
+// input : C=1 start, C=0 continue
+// output : R0 = block, C=1 KO, C=0 OK
+//----------------------------------------------------
+
+bam_next:
+{
+    bcc not_first
+    mov r0, #memory_start
+    lda #0
+    sta bit_bam
+    sta pos_bam
+    lda #'*'
+    jsr CHROUT
+    lda #'1'
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+
+not_first:
+    ldx pos_bam
+    lda bam,x
+    ldy bit_bam
+    cpy #8
+    beq not_found
+    
+    and bit_list,y
+    bne found
+
+    inc zr0h
+    iny
+    sty bit_bam
+    ldy bit_bam
+    cpy #8
+    bne not_first
+
+not_found:
+    ldy #0
+    sty bit_bam
+    inc pos_bam
+    
+    lda pos_bam
+    lda bam_allocated
+    
+    lda pos_bam
+    cmp bam_allocated
+    bne not_first
+    
+    lda zr0l
+    sta $1000
+    lda zr0h
+    sta $1001
+    lda #'*'
+    jsr CHROUT
+    lda #'B'
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    sec
+    rts
+    
+found:
+    inc bit_bam
+    clc
+    rts
+
+pos_bam:
+    .byte 0
+bit_bam:
+    .byte 0
+}
+
+//----------------------------------------------------
+// bam_get : allocate one block if possible
+//
+// output : R0 = allocated block, C=1 = KO, C=0 = OK
+//----------------------------------------------------
+
+bam_get:
+{
+    lda bam_free
+    beq error
+    
+    mov r0, #memory_start
+    ldx #0
+    
+bam_next:
+    lda bam,x
+    cmp #$ff
+    bne new_block
+    
+    add r0, #$0800
+    inx
+    bne bam_next
+
+new_block:
+    jsr next_free_bit
+    lda bam,x
+    jsr set_bit
+    sta bam,x
+
+    dec bam_free
+    inc bam_allocated
+    
+    tya
+    clc
+    adc zr0h
+    sta zr0h
+
+    lda #'Y'
+    jsr CHROUT
+    tya
+    clc
+    adc #$30
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+
+    lda #'X'
+    jsr CHROUT
+    txa
+    clc
+    adc #$30
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    
+    ldy #0
+    lda #255
+    mov (r0),a
+    clc
+    rts
+
+error:
+    sec
+    rts
+}
+
+//----------------------------------------------------
+// malloc : return R0 to space with free X bytes
+//
+// output : C=1 KO, C=0 OK
+//----------------------------------------------------
+
+malloc:
+{
+    stx how_much
+   // lookup all allocated blocks first to see if one
+   // has enough space left
+   
+   ldy #0
+   mov r0,#memory_start
+
+scan_bam:
+    lda bam,y
+    beq new_block
+    
+    sec
+test_bam:
+    jsr bam_next
+    bcs new_block
+    
+    ldy #0
+    mov a,(r0)
+//    pha
+//    swi pprint_hex
+//    pla
+    cmp how_much
+    bcc test_bam
+
+ok_size:
+    sta bam_available
+    lda #0
+    sec
+    sbc bam_available
+    pha
+    
+    sec
+    lda bam_available
+    sbc how_much
+    sta bam_available
+    mov (r0),a
+    
+    pla
+    clc
+    add r0,a
+
+//    lda #'M'
+//    jsr CHROUT
+//    swi pprint_hex
+//    lda #13
+//    jsr CHROUT
+    
+    clc
+    rts
+    
+    // no space free in allocated blocs, allocate a new block,
+    // the new block free space is 255-X
+
+new_block: 
+    lda #'N'
+    jsr CHROUT
+    lda #'E'
+    jsr CHROUT
+    lda #'W'
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    
+    jsr bam_get
+    lda #255
+    sec
+    sbc how_much
+    mov (r0),a
+    inc r0
+    
+    lda #'N'
+    jsr CHROUT
+    swi pprint_hex
+    lda #13
+    jsr CHROUT
+    clc
+    rts
+
+how_much:
+    .byte 0
+bam_available:
+    .byte 0
+}
+
+//----------------------------------------------------
+// string_add : add one pstring to memory
+//
+// input : r0 = pstring
+// output : pstring is stored, with a trailing zero
+//----------------------------------------------------
+
+string_add:
+{
+    // alloc space for string length + 2 (lenght byte
+    // and trailing zero)
+
+    mov a, (r0)
+    tax
+    inx
+    inx
+    push r0
+    jsr malloc
+
+    mov r1, r0
+    pop r0
+    swi str_cpy
+
+    // add a zero at target (r1) + strlen + 1
+    mov a, (r1)
+    tay
+    iny
+    lda #0
+    sta (zr1l),y
+    tay
+    rts
+}
+
+}

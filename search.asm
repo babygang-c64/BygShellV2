@@ -44,7 +44,6 @@ search:
     clc
     swi file_open
     jcs error
-    
 
 boucle_read:
     jsr STOP

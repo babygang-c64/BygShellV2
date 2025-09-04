@@ -51,6 +51,7 @@
 .label CLALL  = $ffe7
 .label IECIN  = $ffa5
 .label UNTLK  = $FFAB
+.label PLOT   = $FFF0
 .label CLEARSCREEN = $E544
 .label SCNKEY = $FF9F
 
@@ -99,3 +100,7 @@
 .label CTRLO=$0f    // end key
 .label CTRLU=$15    // home key
 .label CTRLX=$18    
+.label RVSON=18
+.label RVSOFF=146
+.label WHITE=5
+.label LIGHT_GRAY=155
