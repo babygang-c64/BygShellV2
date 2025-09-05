@@ -214,6 +214,14 @@ not_up:
     lda cursor_y
     cmp #23
     beq scroll_down
+    
+    lda total_lines+1
+    bne not_small
+    lda cursor_y
+    cmp total_lines
+    beq not_down
+
+not_small:
     inc cursor_y
     jmp nav_cursor
 
@@ -236,7 +244,38 @@ do_scroll_down:
     sta BLNSW
     cli
 
+    // CTRL+A or U = start of line
 not_down:
+    cmp #CTRLA
+    beq start_of_line
+    cmp #CTRLU
+    bne not_start
+start_of_line:
+    lda #0
+    sta cursor_x
+    jmp nav_cursor
+
+    // CTRL+O or E = end of line
+not_start:
+    cmp #CTRLO
+    beq end_of_line
+    cmp #CTRLE
+    bne not_end
+end_of_line:
+    ldy #40
+find_end:
+    dey
+    beq found_end
+    lda (PNT),y
+    cmp #32
+    beq find_end
+    iny
+found_end:
+    dey
+    sty cursor_x
+    jmp nav_cursor
+    
+not_end:
 
 end:
     clc
@@ -245,6 +284,7 @@ end:
 nav_cursor:
     sei
     jsr unblink_cursor
+    jsr status_cursor
     jsr move_cursor
     lda #0
     sta BLNSW
@@ -402,6 +442,39 @@ goto_line:
     sta zr0h
     pla
     sta zr0l    
+    rts
+}
+
+//----------------------------------------------------
+// status_cursor : print the cursor position in
+// the status line
+//----------------------------------------------------
+
+status_cursor:
+{
+    ldx #24
+    ldy #21
+    clc
+    jsr PLOT
+    lda #LIGHT_GRAY
+    jsr CHROUT
+    lda #RVSON
+    jsr CHROUT
+    ldy #0
+    sty zr0h
+    lda cursor_x
+    sta zr0l
+    ldx #%00000011
+    swi pprint_int
+    lda #','
+    jsr CHROUT
+    lda cursor_y
+    sta zr0l
+    swi pprint_int
+    lda #RVSOFF
+    jsr CHROUT
+    lda #WHITE
+    jsr CHROUT
     rts
 }
 

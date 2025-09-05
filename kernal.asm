@@ -74,6 +74,7 @@
 .label BLNSW         = $cc  // cursor blink control
 .label BLNON         = $cf  // cursor blink on flag
 .label GDBLN         = $ce  // character under cursor
+.label PNT           = $d1  // address of current screen line
 .label GDCOL         = 647  // character under cursor color
 .label CURSOR_COLOR  = 646  // write color
 
