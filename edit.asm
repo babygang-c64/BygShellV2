@@ -85,11 +85,12 @@ ok_close:
     
     jsr status_line
     jsr move_cursor
-    lda $0400
-    ora #$80
-    sta $0400
+    
+    lda #0
+    sta BLNSW
 wait:
-    jmp wait
+    jsr navigation
+    bcc wait
     
     clc
     rts
@@ -148,12 +149,143 @@ progress:
 //====================================================
 
 //----------------------------------------------------
+// navigation : process the navigation keys
+//----------------------------------------------------
+
+navigation:
+{
+    swi key_wait
+    cmp #LEFT
+    bne not_left
+    
+    lda cursor_x
+    cmp #0
+    beq not_left
+    dec cursor_x
+    jmp nav_cursor
+    
+    // Cursor Right
+not_left:
+    cmp #RIGHT
+    bne not_right
+
+    lda cursor_x
+    cmp #39
+    beq not_right
+    inc cursor_x
+    jmp nav_cursor
+
+    // Cursor UP ?
+not_right:
+    cmp #UP
+    bne not_up
+
+    lda cursor_y
+    cmp #0
+    beq scroll_up
+    dec cursor_y
+    jmp nav_cursor
+    
+scroll_up:
+    lda current_line
+    cmp #0
+    bne do_scroll_up
+    lda current_line+1
+    cmp #0
+    bne do_scroll_up
+    jmp end
+    
+do_scroll_up:
+    sei
+    jsr unblink_cursor
+    decw current_line
+    jsr fill_screen
+    jsr move_cursor
+    lda #0
+    sta BLNSW
+    cli
+    jmp end    
+
+    // Cursor DOWN ?
+not_up:
+    cmp #DOWN
+    bne not_down
+
+    lda cursor_y
+    cmp #23
+    beq scroll_down
+    inc cursor_y
+    jmp nav_cursor
+
+scroll_down:
+    lda current_line
+    cmp total_lines
+    bne do_scroll_down
+    lda current_line+1
+    cmp total_lines+1
+    bne do_scroll_down
+    jmp not_down
+    
+do_scroll_down:
+    sei
+    jsr unblink_cursor
+    incw current_line
+    jsr fill_screen
+    jsr move_cursor
+    lda #0
+    sta BLNSW
+    cli
+
+not_down:
+
+end:
+    clc
+    rts
+
+nav_cursor:
+    sei
+    jsr unblink_cursor
+    jsr move_cursor
+    lda #0
+    sta BLNSW
+    cli
+    clc
+    rts
+}
+
+//----------------------------------------------------
+// unblink cursor
+//----------------------------------------------------
+
+unblink_cursor:
+{
+    lda #1
+    sta BLNSW
+    lda BLNON
+    beq blink_off
+    
+    ldy #0
+    sty BLNON
+    lda GDBLN
+    ldx GDCOL
+    jmp DSPP
+blink_off:
+    rts
+}
+//----------------------------------------------------
 // fill_screen : print all lines starting at 
 // current_line on screen
 //----------------------------------------------------
 
 fill_screen:
 {
+    lda #0
+    sta screen_write
+    sta screen_write2
+    lda #4
+    sta screen_write+1
+    sta screen_write2+1
+    
     mov r0,current_line
     mov r1,r0
     jsr goto_line
@@ -174,7 +306,26 @@ next_line:
 
 write_line:
     mov a,(r0++)
-    jsr CHROUT
+    cmp #$41
+    bcc not_letter
+    cmp #$5B
+    bcs not_letter
+    sec
+    sbc #$40
+    jmp not_uppercase
+
+not_letter:
+    cmp #97
+    bcc not_uppercase
+    cmp #122
+    bcs not_uppercase
+    sec
+    sbc #$60
+not_uppercase:
+    sta screen_write:$0400
+    incw screen_write
+    incw screen_write2
+    //jsr CHROUT
     inc pos_x
     lda pos_x
     cmp #40
@@ -184,7 +335,11 @@ write_line:
 
 pad_line:
     lda #32
-    jsr CHROUT
+    sta screen_write2:$0400
+    incw screen_write
+    incw screen_write2
+    
+    //jsr CHROUT
     inc pos_x
     lda pos_x
     cmp #40

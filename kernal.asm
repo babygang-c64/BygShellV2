@@ -25,6 +25,7 @@
 
 // Kernal vectors
 
+.label DSPP   = $EA13   // print character at screen pos
 .label GETIN  = $FFE4
 .label SETNAM = $FFBD
 .label SETLFS = $ffba
@@ -57,21 +58,24 @@
 
 // Variables
 
-.label STATUS       = $90   // IEC status
-.label ST           = $90
-.label DFLTI        = $99   // Default input device
-.label DFLTO        = $9A   // Default output device
-.label MEMIO        = $35
-.label MEMSTD       = $37
-.label MEMIOKERNAL  = $36
-.label CURSOR_ONOFF = 204
+.label STATUS        = $90   // IEC status
+.label ST            = $90
+.label DFLTI         = $99   // Default input device
+.label DFLTO         = $9A   // Default output device
+.label MEMIO         = $35
+.label MEMSTD        = $37
+.label MEMIOKERNAL   = $36
+.label CURSOR_ONOFF  = 204
 .label CURSOR_STATUS = 207
 .label LGRNAM        = $B7
 .label CURRDEVICE    = $BA  // Current device number
 .label NDX           = $c6  // text buffer index
-.label KEYPRESS     = $cb   // $3c, $3f, $01, $07 = space, r/s, enter, cursor down
-
-.label CURSOR_COLOR = 646
+.label KEYPRESS      = $cb  // $3c, $3f, $01, $07 = space, r/s, enter, cursor down
+.label BLNSW         = $cc  // cursor blink control
+.label BLNON         = $cf  // cursor blink on flag
+.label GDBLN         = $ce  // character under cursor
+.label GDCOL         = 647  // character under cursor color
+.label CURSOR_COLOR  = 646  // write color
 
 // Definitions
 

@@ -1049,7 +1049,6 @@ do_key_wait:
     txa
     pha
     ldx DFLTI
-    stx $1000
     lda #0
     sta DFLTI
 wait_key:
