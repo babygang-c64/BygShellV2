@@ -268,15 +268,37 @@ find_end:
     beq found_end
     lda (PNT),y
     cmp #32
+    bne found_the_end
     beq find_end
+found_the_end:
+    cpy #39
+    beq found_end
     iny
 found_end:
-    dey
     sty cursor_x
     jmp nav_cursor
     
+    // CTRL+W : next word
 not_end:
-
+    cmp #CTRLW
+    bne end
+    ldy cursor_x
+search_word:
+    lda (PNT),y
+    cmp #32
+    beq found_word
+    iny
+    cpy #39
+    bne search_word
+    jmp end
+found_word:
+    iny
+    lda (PNT),y
+    cmp #32
+    beq end
+    sty cursor_x
+    jmp nav_cursor
+        
 end:
     clc
     rts

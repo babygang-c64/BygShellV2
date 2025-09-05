@@ -105,6 +105,7 @@
 .label CTRLO=$0f    // end key
 .label CTRLU=$15    // home key
 .label CTRLX=$18    
+.label CTRLW=23
 .label RVSON=18
 .label RVSOFF=146
 .label WHITE=5
