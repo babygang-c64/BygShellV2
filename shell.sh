@@ -25,7 +25,7 @@ build_command()
 {
     CMD=$1
     uv run ppkick.py ${CMD}.asm ${CMD}_pp.asm
-    kickass ${CMD}_pp.asm
+    kickass ${CMD}_pp.asm $2
     ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}_pp.prg ${CMD} -silent
 }
 
@@ -60,4 +60,4 @@ build_command search
 build_command hw
 build_command koala
 build_command head
-build_command edit
+build_command edit -symbolfile

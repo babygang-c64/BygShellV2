@@ -18,6 +18,7 @@ edit:
 {
     .label work_buffer = $ce00
     .label params_buffer = $cd00
+    .label lines_ptr = $7800
 
     .label OPT_N=1
     
@@ -38,57 +39,75 @@ edit:
     sec
     swi param_process,params_buffer
 
-    swi pprint_nl
+    mov r1,#filename
+    swi str_cpy
 
     ldx #4
     clc
     swi file_open
     jcs error
 
-
-get_lines:
     ldx #4
     jsr CHKIN
+
+get_lines:
     swi file_readline, work_buffer
     jcs ok_close
-//    swi pprint_nl
-    jsr string_add
-//    swi pprint_hex
-//    lda #13
-//    jsr CHROUT
 
+    //swi pprint_nl
+    jsr string_add
+
+    // record line ptr
+    mov r1,tmp_line
+    mov (r1), r0
+    incw tmp_line
+    incw tmp_line
+    
     incw total_lines
+    inc progress
+    lda progress
+    cmp #8
+    bne get_lines
+    lda #0
+    sta progress
+    jsr status_line
     jmp get_lines
 
 ok_close:
     ldx #4
     swi file_close
-
+    mov r0,#tmp_line
+    lda #0
+    mov (r0++),a
+    mov (r0),a
     jsr status_line
+    jsr move_cursor
     clc
     rts
 
-string1:
-    pstring("UN DEUX TROIS")
-string2:
-    pstring("QUATRE 4 CINQ ET SIX")
-string3:
-    pstring("FINI!")
-
+max:
+    .byte 0
+affiche:
+    .byte 0
 options_edit:
     pstring("H")
 
 filename:
-    pstring("FILENAME")
+    pstring("----FILENAME----")
 
 init:
+    sty affiche
+    sty progress
     sty cursor_x
     sty cursor_y
     sty current_line
     sty current_line+1
     sty total_lines
     sty total_lines+1
+    sty lines_ptr
+    sty lines_ptr+1
     jsr bam_init
+    mov tmp_line,#lines_ptr
     lda #147
     jsr CHROUT
     jsr status_line
@@ -110,6 +129,10 @@ current_line:
     .word 0
 total_lines:
     .word 0
+tmp_line:
+    .word 0
+progress:
+    .byte 0
 
 //====================================================
 // Editor code
@@ -135,6 +158,8 @@ status_line:
     swi pprint
     mov a,(r0)
     tay
+    cpy #16
+    beq ok_name
 complete_name:
     lda #32
     jsr CHROUT
@@ -142,6 +167,7 @@ complete_name:
     cpy #16
     bne complete_name
 
+ok_name:
     lda #32
     jsr CHROUT
 
@@ -293,12 +319,6 @@ bam_next:
     lda #0
     sta bit_bam
     sta pos_bam
-    lda #'*'
-    jsr CHROUT
-    lda #'1'
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
 
 not_first:
     ldx pos_bam
@@ -329,16 +349,6 @@ not_found:
     cmp bam_allocated
     bne not_first
     
-    lda zr0l
-    sta $1000
-    lda zr0h
-    sta $1001
-    lda #'*'
-    jsr CHROUT
-    lda #'B'
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
     sec
     rts
     
@@ -389,24 +399,6 @@ new_block:
     clc
     adc zr0h
     sta zr0h
-
-    lda #'Y'
-    jsr CHROUT
-    tya
-    clc
-    adc #$30
-    jsr CHROUT
-    lda #32
-    jsr CHROUT
-
-    lda #'X'
-    jsr CHROUT
-    txa
-    clc
-    adc #$30
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
     
     ldy #0
     lda #255
@@ -445,9 +437,6 @@ test_bam:
     
     ldy #0
     mov a,(r0)
-//    pha
-//    swi pprint_hex
-//    pla
     cmp how_much
     bcc test_bam
 
@@ -468,12 +457,6 @@ ok_size:
     clc
     add r0,a
 
-//    lda #'M'
-//    jsr CHROUT
-//    swi pprint_hex
-//    lda #13
-//    jsr CHROUT
-    
     clc
     rts
     
@@ -481,15 +464,6 @@ ok_size:
     // the new block free space is 255-X
 
 new_block: 
-    lda #'N'
-    jsr CHROUT
-    lda #'E'
-    jsr CHROUT
-    lda #'W'
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
-    
     jsr bam_get
     lda #255
     sec
@@ -497,11 +471,6 @@ new_block:
     mov (r0),a
     inc r0
     
-    lda #'N'
-    jsr CHROUT
-    swi pprint_hex
-    lda #13
-    jsr CHROUT
     clc
     rts
 
@@ -541,6 +510,7 @@ string_add:
     lda #0
     sta (zr1l),y
     tay
+    mov r0, r1
     rts
 }
 

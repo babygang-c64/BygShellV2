@@ -587,8 +587,10 @@ no_jump:
     ldy #0
     lda zr0+2*reg
     sta (zr0+2*reg_dest),y
+    iny
     lda zr0h+2*reg
-    sta (zr0h+2*reg_dest),y
+    sta (zr0+2*reg_dest),y
+    dey
 }
 
 //---------------------------------------------------------------
