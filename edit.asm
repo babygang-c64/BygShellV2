@@ -57,7 +57,7 @@ get_lines:
     //swi pprint_nl
     jsr string_add
 
-    // record line ptr
+    // store line ptr
     mov r1,tmp_line
     mov (r1), r0
     incw tmp_line
@@ -80,8 +80,17 @@ ok_close:
     lda #0
     mov (r0++),a
     mov (r0),a
+    
+    jsr fill_screen
+    
     jsr status_line
     jsr move_cursor
+    lda $0400
+    ora #$80
+    sta $0400
+wait:
+    jmp wait
+    
     clc
     rts
 
@@ -137,6 +146,113 @@ progress:
 //====================================================
 // Editor code
 //====================================================
+
+//----------------------------------------------------
+// fill_screen : print all lines starting at 
+// current_line on screen
+//----------------------------------------------------
+
+fill_screen:
+{
+    mov r0,current_line
+    mov r1,r0
+    jsr goto_line
+    
+    ldx #0
+    ldy #0
+    sty pos_y
+    sty pos_x
+    clc
+    jsr PLOT
+    
+    ldy #0
+next_line:
+    mov a,(r0++)
+    cmp #0
+    beq pad_line
+    tax
+
+write_line:
+    mov a,(r0++)
+    jsr CHROUT
+    inc pos_x
+    lda pos_x
+    cmp #40
+    beq end_line
+    dex
+    bne write_line
+
+pad_line:
+    lda #32
+    jsr CHROUT
+    inc pos_x
+    lda pos_x
+    cmp #40
+    bne pad_line
+
+end_line:
+    ldy #0
+    sty pos_x
+    inc pos_y
+    lda pos_y
+    cmp #24
+    beq end_screen
+    
+    inc r1
+    lda zr1l
+    cmp total_lines
+    bne not_total
+    lda zr1h
+    cmp total_lines+1
+    bne not_total
+end_screen:
+    rts
+
+not_total:
+    mov r0,r1
+    jsr goto_line
+
+    jmp next_line
+
+pos_x:
+    .byte 0
+pos_y:
+    .byte 0
+}
+
+//----------------------------------------------------
+// goto_line : get pointer of specific line
+//
+// input : line number in R0
+// output : line buffer in R0
+//----------------------------------------------------
+
+goto_line:
+{
+    asl zr0l
+    rol zr0h
+    clc
+    lda zr0l
+    adc #<lines_ptr
+    sta zr0l
+    lda zr0h
+    adc #>lines_ptr
+    sta zr0h
+    ldy #0
+    lda (zr0l),y
+    pha
+    iny
+    lda (zr0l),y
+    dey
+    sta zr0h
+    pla
+    sta zr0l    
+    rts
+}
+
+//----------------------------------------------------
+// status_line : print the bottom status line
+//----------------------------------------------------
 
 status_line:
 {
