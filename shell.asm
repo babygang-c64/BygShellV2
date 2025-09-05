@@ -315,6 +315,7 @@ internal_commands_help:
     pstring("*<COMMAND>      : RUN EXTERNAL COMMAND")
     .byte 0
 
+
 //---------------------------------------------------------------
 // help : internal help command
 //---------------------------------------------------------------

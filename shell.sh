@@ -53,6 +53,7 @@ ${VICE_PATH}/c1541 -attach ${disk} -write cartridge_header.asm "crt.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cat.asm "cat.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write samsara.koa "samsara.koa" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write image.koa "image.koa" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write "jiffymon v2" "jiffymonv2" -silent
 
 build_command cat
 build_command wc
@@ -60,4 +61,5 @@ build_command search
 build_command hw
 build_command koala
 build_command head
+build_command mon
 build_command edit -symbolfile
