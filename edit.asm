@@ -111,6 +111,7 @@ filename:
     pstring("----FILENAME----")
 
 init:
+    sty view_offset
     sty affiche
     sty progress
     sty cursor_x
@@ -148,6 +149,8 @@ tmp_line:
     .word 0
 progress:
     .byte 0
+view_offset:
+    .byte 0
 
 //====================================================
 // Editor code
@@ -166,6 +169,20 @@ navigation:
     rts
 
 not_quit:
+
+    cmp #'M'
+    bne not_m
+    inc view_offset
+    sei
+    jsr unblink_cursor
+    jsr fill_screen
+    jsr move_cursor
+    lda #0
+    sta BLNSW
+    cli
+    jmp end
+
+not_m:
     cmp #LEFT
     bne not_left
     
@@ -214,7 +231,6 @@ do_scroll_up:
     sei
     jsr unblink_cursor
     decw current_line
-    lda #0
     jsr fill_screen
     jsr move_cursor
     lda #0
@@ -256,7 +272,6 @@ do_scroll_down:
     sei
     jsr unblink_cursor
     incw current_line
-    lda #0
     jsr fill_screen
     jsr move_cursor
     lda #0
@@ -376,7 +391,6 @@ blink_off:
 
 fill_screen:
 {
-    sta offset
     lda #0
     sta pos_x
     sta pos_y
@@ -394,18 +408,22 @@ fill_screen:
     ldy #0
 next_line:
     mov a,(r0++)
+
     cmp max_offset
     bcc smaller
     sta max_offset
 smaller:
+    
+    sec
+    sbc view_offset
+    tax
+    
     cmp #0
     beq pad_line
-    cmp offset
-    bcc pad_line
-    tax
+    bmi pad_line
 
 write_line:
-    ldy offset
+    ldy view_offset
     mov a,(r0++)
     cmp #$41
     bcc not_letter
@@ -472,8 +490,6 @@ pos_x:
     .byte 0
 pos_y:
     .byte 0
-offset:
-    .byte 0
 max_offset:
     .byte 0
 }
@@ -526,6 +542,8 @@ status_cursor:
     ldy #0
     sty zr0h
     lda cursor_x
+    clc
+    adc view_offset
     sta zr0l
     ldx #%00000011
     swi pprint_int
