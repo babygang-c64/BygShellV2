@@ -81,6 +81,7 @@ ok_close:
     mov (r0++),a
     mov (r0),a
     
+    lda #0
     jsr fill_screen
     
     jsr status_line
@@ -88,10 +89,14 @@ ok_close:
     
     lda #0
     sta BLNSW
-wait:
-    jsr navigation
-    bcc wait
     
+main_loop:
+    jsr navigation
+    bcc main_loop
+    
+    lda #147
+    jsr CHROUT
+    jsr CLRCHN
     clc
     rts
 
@@ -155,6 +160,12 @@ progress:
 navigation:
 {
     swi key_wait
+    cmp #CTRLX
+    bne not_quit
+    sec
+    rts
+
+not_quit:
     cmp #LEFT
     bne not_left
     
@@ -164,7 +175,9 @@ navigation:
     dec cursor_x
     jmp nav_cursor
     
+    //--------------------------------
     // Cursor Right
+    //--------------------------------
 not_left:
     cmp #RIGHT
     bne not_right
@@ -175,7 +188,9 @@ not_left:
     inc cursor_x
     jmp nav_cursor
 
+    //--------------------------------
     // Cursor UP ?
+    //--------------------------------
 not_right:
     cmp #UP
     bne not_up
@@ -199,6 +214,7 @@ do_scroll_up:
     sei
     jsr unblink_cursor
     decw current_line
+    lda #0
     jsr fill_screen
     jsr move_cursor
     lda #0
@@ -206,7 +222,9 @@ do_scroll_up:
     cli
     jmp end    
 
+    //--------------------------------
     // Cursor DOWN ?
+    //--------------------------------
 not_up:
     cmp #DOWN
     bne not_down
@@ -238,13 +256,17 @@ do_scroll_down:
     sei
     jsr unblink_cursor
     incw current_line
+    lda #0
     jsr fill_screen
     jsr move_cursor
     lda #0
     sta BLNSW
     cli
+    jmp end
 
+    //--------------------------------
     // CTRL+A or U = start of line
+    //--------------------------------
 not_down:
     cmp #CTRLA
     beq start_of_line
@@ -255,7 +277,9 @@ start_of_line:
     sta cursor_x
     jmp nav_cursor
 
+    //--------------------------------
     // CTRL+O or E = end of line
+    //--------------------------------
 not_start:
     cmp #CTRLO
     beq end_of_line
@@ -278,7 +302,9 @@ found_end:
     sty cursor_x
     jmp nav_cursor
     
+    //--------------------------------
     // CTRL+W : next word
+    //--------------------------------
 not_end:
     cmp #CTRLW
     bne end
@@ -299,9 +325,18 @@ found_word:
     sty cursor_x
     jmp nav_cursor
         
+    //--------------------------------
+    // end, return
+    //--------------------------------
+        
 end:
     clc
     rts
+
+    //--------------------------------
+    // nav_cursor : change cursor
+    // position
+    //--------------------------------
 
 nav_cursor:
     sei
@@ -341,7 +376,11 @@ blink_off:
 
 fill_screen:
 {
+    sta offset
     lda #0
+    sta pos_x
+    sta pos_y
+    sta max_offset
     sta screen_write
     sta screen_write2
     lda #4
@@ -352,21 +391,21 @@ fill_screen:
     mov r1,r0
     jsr goto_line
     
-    ldx #0
-    ldy #0
-    sty pos_y
-    sty pos_x
-    clc
-    jsr PLOT
-    
     ldy #0
 next_line:
     mov a,(r0++)
+    cmp max_offset
+    bcc smaller
+    sta max_offset
+smaller:
     cmp #0
     beq pad_line
+    cmp offset
+    bcc pad_line
     tax
 
 write_line:
+    ldy offset
     mov a,(r0++)
     cmp #$41
     bcc not_letter
@@ -379,7 +418,7 @@ write_line:
 not_letter:
     cmp #97
     bcc not_uppercase
-    cmp #122
+    cmp #123
     bcs not_uppercase
     sec
     sbc #$60
@@ -387,7 +426,6 @@ not_uppercase:
     sta screen_write:$0400
     incw screen_write
     incw screen_write2
-    //jsr CHROUT
     inc pos_x
     lda pos_x
     cmp #40
@@ -401,7 +439,6 @@ pad_line:
     incw screen_write
     incw screen_write2
     
-    //jsr CHROUT
     inc pos_x
     lda pos_x
     cmp #40
@@ -434,6 +471,10 @@ not_total:
 pos_x:
     .byte 0
 pos_y:
+    .byte 0
+offset:
+    .byte 0
+max_offset:
     .byte 0
 }
 

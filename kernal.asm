@@ -58,6 +58,7 @@
 
 // Variables
 
+.label COUNT         = $0B   // buffer length
 .label STATUS        = $90   // IEC status
 .label ST            = $90
 .label DFLTI         = $99   // Default input device
@@ -104,7 +105,7 @@
 .label CTRLK=$0b    // delete to end of line
 .label CTRLO=$0f    // end key
 .label CTRLU=$15    // home key
-.label CTRLX=$18    
+.label CTRLX=$18
 .label CTRLW=23
 .label RVSON=18
 .label RVSOFF=146
