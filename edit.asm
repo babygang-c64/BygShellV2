@@ -113,6 +113,7 @@ filename:
 
 init:
     sty view_offset
+    sty is_editing
     sty affiche
     sty progress
     sty cursor_x
@@ -151,6 +152,8 @@ tmp_line:
 progress:
     .byte 0
 view_offset:
+    .byte 0
+is_editing:
     .byte 0
 
 //====================================================
@@ -273,7 +276,7 @@ not_up:
     clc
     adc #1
     cmp total_lines
-    beq end
+    jeq end
 
 not_small:
     inc cursor_y
@@ -336,7 +339,7 @@ found_end:
     //--------------------------------
 not_end:
     cmp #CTRLW
-    bne end
+    bne not_ctrlw
     ldy cursor_x
 search_word:
     lda (PNT),y
@@ -353,7 +356,17 @@ found_word:
     beq end
     sty cursor_x
     jmp nav_cursor
-        
+
+    //--------------------------------
+    // other key ? start edit
+    //--------------------------------
+not_ctrlw:
+    lda is_editing
+    bne already_editing
+    inc is_editing
+    jsr status_changed
+already_editing:
+
     //--------------------------------
     // end, return
     //--------------------------------
@@ -677,7 +690,6 @@ ok_name:
     jsr CHROUT
     lda #WHITE
     jsr CHROUT
-    lda #'*'
     jsr status_changed
     clc
     rts
@@ -685,6 +697,13 @@ ok_name:
 
 status_changed:
 {
+    lda is_editing
+    beq not_editing
+    lda #'*'
+    bne update
+not_editing:
+    lda #'-'
+update:
     ora #$80
     sta $0400+39+40*24
     lda #15
