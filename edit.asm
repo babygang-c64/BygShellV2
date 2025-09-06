@@ -19,6 +19,7 @@ edit:
     .label work_buffer = $ce00
     .label params_buffer = $cd00
     .label lines_ptr = $7800
+    .label buffer_edit = $7880  // relocate ?
 
     .label OPT_N=1
     
@@ -85,7 +86,7 @@ ok_close:
     jsr fill_screen
     
     jsr status_line
-    jsr move_cursor
+    jsr navigation.nav_cursor
     
     lda #0
     sta BLNSW
@@ -163,24 +164,30 @@ view_offset:
 navigation:
 {
     swi key_wait
+    
+    //--------------------------------
+    // CTRL-X : Quit editor
+    //--------------------------------
+
     cmp #CTRLX
     bne not_quit
     sec
     rts
 
-not_quit:
+    //--------------------------------
+    // CTRL-M : test for view offset
+    //--------------------------------
 
+not_quit:
     cmp #'M'
     bne not_m
     inc view_offset
-    sei
-    jsr unblink_cursor
-    jsr fill_screen
-    jsr move_cursor
-    lda #0
-    sta BLNSW
-    cli
+    jsr update_screen
     jmp end
+
+    //--------------------------------
+    // Cursor Left
+    //--------------------------------
 
 not_m:
     cmp #LEFT
@@ -188,7 +195,15 @@ not_m:
     
     lda cursor_x
     cmp #0
+    bne ok_dec
+
+    lda view_offset
     beq not_left
+    dec view_offset
+    jsr update_screen
+    jmp end
+
+ok_dec:
     dec cursor_x
     jmp nav_cursor
     
@@ -201,7 +216,16 @@ not_left:
 
     lda cursor_x
     cmp #39
+    bne ok_inc
+    
+    lda view_offset
+    cmp #80
     beq not_right
+    inc view_offset
+    jsr update_screen
+    jmp end
+
+ok_inc:
     inc cursor_x
     jmp nav_cursor
 
@@ -228,15 +252,9 @@ scroll_up:
     jmp end
     
 do_scroll_up:
-    sei
-    jsr unblink_cursor
     decw current_line
-    jsr fill_screen
-    jsr move_cursor
-    lda #0
-    sta BLNSW
-    cli
-    jmp end    
+    jsr update_screen
+    jmp nav_cursor
 
     //--------------------------------
     // Cursor DOWN ?
@@ -252,8 +270,10 @@ not_up:
     lda total_lines+1
     bne not_small
     lda cursor_y
+    clc
+    adc #1
     cmp total_lines
-    beq not_down
+    beq end
 
 not_small:
     inc cursor_y
@@ -266,18 +286,12 @@ scroll_down:
     lda current_line+1
     cmp total_lines+1
     bne do_scroll_down
-    jmp not_down
+    jmp end
     
 do_scroll_down:
-    sei
-    jsr unblink_cursor
     incw current_line
-    jsr fill_screen
-    jsr move_cursor
-    lda #0
-    sta BLNSW
-    cli
-    jmp end
+    jsr update_screen
+    jmp nav_cursor
 
     //--------------------------------
     // CTRL+A or U = start of line
@@ -362,6 +376,22 @@ nav_cursor:
     sta BLNSW
     cli
     clc
+    rts
+}
+
+//----------------------------------------------------
+// update_screen : repaint the screen
+//----------------------------------------------------
+
+update_screen:
+{
+    sei
+    jsr unblink_cursor
+    jsr fill_screen
+    jsr move_cursor
+    lda #0
+    sta BLNSW
+    cli
     rts
 }
 
@@ -525,8 +555,8 @@ goto_line:
 }
 
 //----------------------------------------------------
-// status_cursor : print the cursor position in
-// the status line
+// status_cursor : print the cursor position and line
+// number in the status line
 //----------------------------------------------------
 
 status_cursor:
@@ -552,6 +582,23 @@ status_cursor:
     lda cursor_y
     sta zr0l
     swi pprint_int
+    lda #')'
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+    
+    ldx cursor_y
+    mov r0,current_line
+    inx
+    txa
+    add r0,a
+    ldx #%11001111
+    swi pprint_int
+    lda #'/'
+    jsr CHROUT
+    mov r0,total_lines
+    swi pprint_int
+
     lda #RVSOFF
     jsr CHROUT
     lda #WHITE
