@@ -147,6 +147,8 @@ current_line:
     .word 0
 total_lines:
     .word 0
+cmp_line:
+    .word 0
 tmp_line:
     .word 0
 progress:
@@ -283,10 +285,10 @@ not_small:
     jmp nav_cursor
 
 scroll_down:
-    lda current_line
+    lda cmp_line
     cmp total_lines
     bne do_scroll_down
-    lda current_line+1
+    lda cmp_line+1
     cmp total_lines+1
     bne do_scroll_down
     jmp end
@@ -605,6 +607,7 @@ status_cursor:
     inx
     txa
     add r0,a
+    mov cmp_line,r0
     ldx #%11001111
     swi pprint_int
     lda #'/'
