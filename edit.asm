@@ -198,6 +198,8 @@ save_file:
 
     lda #211
     sta $0400+39+40*24
+    lda #7
+    sta $d800+39+40*24
 
     jsr check_edit_end
 
@@ -217,6 +219,12 @@ write_line:
     mov r0,current_line
     jsr goto_line
     swi pprint_nl
+    lda color_pos
+    and #3
+    tax
+    lda color_cycle,x
+    sta $d800+39+40*24
+    inc color_pos
     incw current_line
     lda current_line
     cmp total_lines
@@ -229,12 +237,22 @@ write_line:
     swi file_close
     lda #0
     sta is_edited
+    sta current_line
+    sta current_line+1
     lda #'-'+$80
     sta $0400+39+40*24
+    lda #15
+    sta $d800+39+40*24
+
 
 not_changed:
     clc
     rts
+
+color_pos:
+    .byte 0
+color_cycle:
+    .byte 7,2,1
 }
 
 //====================================================
