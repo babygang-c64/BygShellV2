@@ -157,6 +157,8 @@ view_offset:
     .byte 0
 is_editing:
     .byte 0
+edited_line:
+    .word 0
 
 //====================================================
 // Editor code
@@ -367,6 +369,9 @@ not_ctrlw:
     bne already_editing
     inc is_editing
     jsr status_changed
+    
+    jsr edit_line_init
+
 already_editing:
 
     //--------------------------------
@@ -391,6 +396,44 @@ nav_cursor:
     sta BLNSW
     cli
     clc
+    rts
+}
+
+//----------------------------------------------------
+// edit_line_init : start editing line
+//
+// edited_line = source of line to edit
+// update line reference with work_buffer
+// copy source line to work_buffer
+//----------------------------------------------------
+
+edit_line_init:
+{
+    mov r0,current_line
+    lda cursor_y
+    add r0, a
+    jsr goto_line
+    
+    // ici r0 = edited_line
+    
+    mov edited_line,r0
+    
+    mov r1,goto_line.ptr
+    
+    // manque : mov (r1),#addr
+    ldy #0
+    lda #<work_buffer
+    sta (zr1l),y
+    iny
+    lda #>work_buffer
+    sta (zr1l),y
+    dey
+
+    // copy OK
+    mov edited_line, r0
+    mov r1,#work_buffer
+    swi str_cpy
+    
     rts
 }
 
@@ -554,9 +597,12 @@ goto_line:
     lda zr0l
     adc #<lines_ptr
     sta zr0l
+    sta ptr
+
     lda zr0h
     adc #>lines_ptr
     sta zr0h
+    sta ptr+1
     ldy #0
     lda (zr0l),y
     pha
@@ -567,6 +613,8 @@ goto_line:
     pla
     sta zr0l    
     rts
+ptr:
+    .word 0
 }
 
 //----------------------------------------------------
