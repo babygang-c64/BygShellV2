@@ -1339,6 +1339,7 @@ fin_lecture:
 do_str_del:
 {
     // 0 123456789 : 3, 4 -> 0 123 4567 89 -> 0 12389
+    
     // début Y+1
     sty nb_supp
     inx

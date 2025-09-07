@@ -663,9 +663,12 @@ edit_line_process:
     
     // not at start : remove from string
 not_backspace_start:
+    mov r0,#work_buffer
     ldy #1
     ldx cursor_x
-    swi str_del, #work_buffer
+    dex
+    swi str_del
+    inc work_buffer
 
 backspace_at_end:
     dec work_buffer
