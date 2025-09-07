@@ -196,6 +196,9 @@ save_file:
     lda is_edited
     beq not_changed
 
+    lda #211
+    sta $0400+39+40*24
+
     jsr check_edit_end
 
     mov r0,#filename
@@ -209,22 +212,11 @@ save_file:
     lda #0
     sta current_line
     sta current_line+1
-    lda #'S'+$80
-    sta $0400+39+40*24
 
 write_line:
     mov r0,current_line
     jsr goto_line
     swi pprint_nl
-    lda $0400+39+40*24
-    cmp #'S'+$80
-    bne change1
-    lda #' '+$80
-    bne change2
-change1:
-    lda #'S'+$80
-change2:
-    sta $0400+39+40*24
     incw current_line
     lda current_line
     cmp total_lines
@@ -271,7 +263,7 @@ navigation:
     
     lda #1
     sta master_key
-    lda #'M'+$80
+    lda #77+128
     sta $0400+38+40*24
     clc
     rts
@@ -678,7 +670,7 @@ backspace_at_end:
     jmp navigation.cursor_left
     
 backspace_suppress_line:
-
+    jmp end
     
 not_backspace:
 
@@ -1020,7 +1012,7 @@ not_lowercase:
     cmp #65+26+128
     bcs not_uppercase
     sec
-    sbc #$60
+    sbc #$80
 not_uppercase:
     rts
 }
