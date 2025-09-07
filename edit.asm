@@ -114,6 +114,7 @@ filename:
 init:
     sty view_offset
     sty is_editing
+    sty is_edited
     sty affiche
     sty progress
     sty cursor_x
@@ -156,6 +157,8 @@ progress:
 view_offset:
     .byte 0
 is_editing:
+    .byte 0
+is_edited:
     .byte 0
 edited_line:
     .word 0
@@ -250,6 +253,7 @@ not_right:
     beq scroll_up
     dec cursor_y
     jsr adjust_cursor_x
+    jsr check_edit_end
     jmp nav_cursor
     
 scroll_up:
@@ -265,6 +269,7 @@ do_scroll_up:
     decw current_line
     jsr update_screen
     jsr adjust_cursor_x
+    jsr check_edit_end
     jmp nav_cursor
 
     //--------------------------------
@@ -289,6 +294,7 @@ cursor_down:
 not_small:
     inc cursor_y
     jsr adjust_cursor_x
+    jsr check_edit_end
     jmp nav_cursor
 
 scroll_down:
@@ -304,6 +310,7 @@ do_scroll_down:
     incw current_line
     jsr update_screen
     jsr adjust_cursor_x
+    jsr check_edit_end
     jmp nav_cursor
 
     //--------------------------------
@@ -375,6 +382,8 @@ not_ctrlw:
     lda is_editing
     bne already_editing
     inc is_editing
+    lda #1
+    sta is_edited
     jsr status_changed
     
     jsr edit_line_init
@@ -409,6 +418,51 @@ nav_cursor:
 
 current_key:
     .byte 0
+}
+
+//----------------------------------------------------
+// check_edit_end : wrap-up after editing line
+//
+// find space for edited line, copy the line and
+// update the pointer
+//----------------------------------------------------
+
+check_edit_end:
+{
+    lda is_editing
+    beq not_edited
+
+    ldx work_buffer
+    jsr malloc
+    mov new_line,r0
+    mov r1,r0
+    
+    mov r0,#work_buffer
+    swi str_cpy
+    
+    lda goto_line.ptr
+    sta $1000
+    lda goto_line.ptr+1
+    sta $1001
+
+    mov r0, goto_line.ptr
+    
+    ldy #0
+    lda new_line
+    sta (zr0l),y
+    iny
+    lda new_line+1
+    sta (zr0l),y
+    dey
+       
+    lda #0
+    sta is_editing
+
+not_edited:
+    rts
+
+new_line:
+    .word 0
 }
 
 //----------------------------------------------------
@@ -949,7 +1003,7 @@ ok_name:
 
 status_changed:
 {
-    lda is_editing
+    lda is_edited
     beq not_editing
     lda #'*'
     bne update
