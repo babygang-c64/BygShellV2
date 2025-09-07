@@ -37,16 +37,27 @@ edit:
     // load file
     
     ldy #0
+    mov r1,#filename
+    mov r0,#file_prefix
+    swi str_cpy
+    
     sec
     swi param_process,params_buffer
+    push r0
+    
+    mov r1, r0
+    mov r0,#filename
+    swi str_cat
+    mov r1,#file_suffix
+    swi str_cat
 
-    mov r1,#filename
-    swi str_cpy
-
+    pop r0
     ldx #4
     clc
     swi file_open
     jcs error
+
+    jsr status_line
 
     ldx #4
     jsr CHKIN
@@ -109,7 +120,11 @@ options_edit:
     pstring("H")
 
 filename:
-    pstring("----FILENAME----")
+    pstring("@S:----FILENAME----,S,W")
+file_prefix:
+    pstring("@S:")
+file_suffix:
+    pstring(",W")
 
 init:
     sty view_offset
@@ -129,7 +144,6 @@ init:
     mov tmp_line,#lines_ptr
     lda #147
     jsr CHROUT
-    jsr status_line
     jmp move_cursor
 
 error:
@@ -200,9 +214,10 @@ cursor_left:
     bne ok_dec
 
     lda view_offset
-    beq not_left
+    beq not_ok_left
     dec view_offset
     jsr update_screen
+not_ok_left:
     jmp end
 
 ok_dec:
@@ -925,8 +940,48 @@ status_cursor:
     rts
 }
 
+print_name:
+{
+    // name part : 17c padded with spaces
+    ldy #0
+    lda filename
+    sec
+    sbc #4
+    tax
+    stx $1000
+    mov r0,#filename
+    inc r0
+    inc r0
+    inc r0
+print:
+    mov a,(r0++)
+    jsr CHROUT 
+    dex
+    bne print
+    lda filename
+    cmp #21
+    beq ok_name
+    tay
+complete_name:
+    lda #' '
+    jsr CHROUT
+    iny
+    cpy #21
+    bne complete_name
+ok_name:
+    ldy #0
+    rts
+}
+
 //----------------------------------------------------
 // status_line : print the bottom status line
+// 08:      = device
+// filename = name padded to 16c
+// space    = filler
+// (99,99)  = cursor X/Y
+// space    = filler
+// 9999/9999= current line / total lines
+// space    = filler
 //----------------------------------------------------
 
 status_line:
@@ -942,23 +997,9 @@ status_line:
     
     ldy CURRDEVICE
     swi pprinthex8a
-    lda #':'
-    jsr CHROUT
-    
-    mov r0,#filename
-    swi pprint
-    mov a,(r0)
-    tay
-    cpy #16
-    beq ok_name
-complete_name:
-    lda #32
-    jsr CHROUT
-    iny
-    cpy #16
-    bne complete_name
 
-ok_name:
+    jsr print_name
+
     lda #32
     jsr CHROUT
 
