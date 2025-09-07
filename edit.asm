@@ -201,7 +201,8 @@ not_quit:
 not_m:
     cmp #LEFT
     bne not_left
-    
+
+cursor_left:
     lda cursor_x
     cmp #0
     bne ok_dec
@@ -424,6 +425,30 @@ current_key:
 
 edit_line_process:
 {
+    lda navigation.current_key
+    cmp #BACKSPACE
+    bne not_backspace
+    
+    // Backspace : if at end and not zero, decrease length
+    lda work_buffer
+    beq backspace_suppress_line
+    dec work_buffer
+    ldx cursor_y
+    dec lines_length,x
+    jsr update_current_line
+    jmp navigation.cursor_left
+    
+backspace_suppress_line:
+
+    
+not_backspace:
+
+end_with_update:
+    jsr update_current_line
+end:
+    clc
+    rts
+
     lda cursor_x
     clc
     adc view_offset
@@ -433,6 +458,10 @@ edit_line_process:
     sta work_buffer,x
     jsr update_current_line
     jmp navigation.cursor_right
+
+insert_char:
+    pstring(" ")
+
 }
 
 //----------------------------------------------------
@@ -515,6 +544,7 @@ add4:
     
     mov a,(r0++)
     tax
+    stx cpt_x
     cmp #0
     beq pad_line
 
