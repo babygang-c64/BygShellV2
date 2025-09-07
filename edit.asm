@@ -187,6 +187,8 @@ lines_length:
 
 save_file:
 {
+    jsr check_edit_end
+
     mov r0,#filename
     ldx #5
     sec
@@ -491,6 +493,7 @@ check_edit_end:
     beq not_edited
 
     ldx work_buffer
+    inx
     jsr malloc
     mov new_line,r0
     mov r1,r0
@@ -498,11 +501,6 @@ check_edit_end:
     mov r0,#work_buffer
     swi str_cpy
     
-    lda goto_line.ptr
-    sta $1000
-    lda goto_line.ptr+1
-    sta $1001
-
     mov r0, goto_line.ptr
     
     ldy #0
