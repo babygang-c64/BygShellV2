@@ -1,12 +1,14 @@
-*edit : small text editor
+ABCabc
 
-File management :
+edit : small text editor
+
+-- File management --
 
 run/stop : quit without saving
 ctrl-x : quit and save
 ctrl-s : save file
 
-Editor :
+-- Editor --
 
 ctrl-a : start of line
 ctrl-e : end of line

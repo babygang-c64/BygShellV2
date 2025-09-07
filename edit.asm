@@ -133,6 +133,7 @@ file_suffix:
 
 init:
     sty view_offset
+    sty master_key
     sty is_editing
     sty is_edited
     sty affiche
@@ -155,6 +156,8 @@ error:
     sec
     rts
     
+master_key:
+    .byte 0
 cursor_x:
     .byte 0
 cursor_y:
@@ -253,7 +256,59 @@ not_changed:
 navigation:
 {
     swi key_wait
+    sta current_key
     
+    //--------------------------------
+    // Master key CTRL+K
+    //--------------------------------
+    
+    lda master_key
+    bne process_masterkey
+
+    lda current_key
+    cmp #CTRLK
+    bne not_master
+    
+    lda #1
+    sta master_key
+    lda #'M'+$80
+    sta $0400+38+40*24
+    clc
+    rts
+
+process_masterkey:
+    lda current_key
+    cmp #CTRLK
+    bne not_cancel_master
+
+cancel_master:
+    lda #0
+    sta master_key
+    lda #32+128
+    sta $0400+38+40*24
+    clc
+    rts
+
+not_cancel_master:    
+    //--------------------------------
+    // MASTER-T : go to top
+    //--------------------------------
+    cmp #'T'
+    bne not_top
+    
+    lda #0
+    sta current_line
+    sta current_line+1
+    sta view_offset
+    sta cursor_x
+    sta cursor_y
+    jsr update_screen
+    jmp cancel_master
+
+not_top:
+    jmp cancel_master
+
+not_master:
     //--------------------------------
     // CTRL-X : Quit editor
     //--------------------------------
@@ -279,21 +334,7 @@ no_quit:
     jmp nav_cursor
 
 not_save:
-    //--------------------------------
-    // CTRL-T : go to top
-    //--------------------------------
-    cmp #CTRLT
-    bne not_top
-    lda #0
-    sta current_line
-    sta current_line+1
-    sta view_offset
-    sta cursor_x
-    sta cursor_y
-    jsr update_screen
-    jmp end
 
-not_top:
     //--------------------------------
     // Cursor Left
     //--------------------------------
@@ -628,6 +669,7 @@ not_backspace:
     inc work_buffer
     ldx work_buffer
     lda navigation.current_key
+    jsr screen_to_ascii
     sta work_buffer,x
 insert_end:
     ldx cursor_y
@@ -637,6 +679,7 @@ insert_end:
 
 insert_car_not_end:
     lda navigation.current_key
+    jsr screen_to_ascii
     sta insert_char+1
     mov r0, #work_buffer
     mov r1, #insert_char
@@ -916,20 +959,37 @@ max_offset:
 //----------------------------------------------------
 // ascii_to_screen : convert character in A for screen
 //----------------------------------------------------
+
 ascii_to_screen:
 {
-    cmp #$41
-    bcc not_letter
-    cmp #$5B
-    bcs not_letter
-    sec
-    sbc #$40
-    jmp not_uppercase
-
-not_letter:
     cmp #97
-    bcc not_uppercase
+    bcc not_lowercase
     cmp #123
+    bcs not_lowercase
+    sec
+    sbc #$60
+not_lowercase:
+    rts
+}
+
+//----------------------------------------------------
+// screen_to_ascii : convert character in A to ASCII
+//----------------------------------------------------
+
+screen_to_ascii:
+{
+    cmp #65
+    bcc not_lowercase
+    cmp #65+26
+    bcs not_lowercase
+    clc
+    adc #$20
+    rts
+
+not_lowercase:
+    cmp #65+128
+    bcc not_uppercase
+    cmp #65+26+128
     bcs not_uppercase
     sec
     sbc #$60
