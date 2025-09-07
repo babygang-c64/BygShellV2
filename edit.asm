@@ -19,7 +19,7 @@ edit:
     .label work_buffer = $ce00
     .label params_buffer = $cd00
     .label lines_ptr = $7800
-    .label buffer_edit = $7880  // relocate ?
+    .label buffer_edit = $7780  // relocate ?
 
     .label OPT_N=1
     
@@ -105,7 +105,9 @@ ok_close:
 main_loop:
     jsr navigation
     bcc main_loop
-    
+
+    jsr save_file
+
     lda #147
     jsr CHROUT
     jsr CLRCHN
@@ -178,6 +180,47 @@ edited_line:
     .word 0
 lines_length:
     .fill 24,0
+
+//----------------------------------------------------
+// save_file : save the file to disk
+//----------------------------------------------------
+
+save_file:
+{
+    mov r0,#filename
+    ldx #5
+    sec
+    swi file_open
+    bcs error
+    ldx #5
+    jsr CHKOUT
+
+    lda #0
+    sta current_line
+    sta current_line+1
+    lda #'S'+$80
+    sta $0400+39+40*24
+
+write_line:
+    mov r0,current_line
+    jsr goto_line
+    swi pprint_nl
+    lda $0400+39+40*24
+    eor #'S'
+    sta $0400+39+40*24
+    incw current_line
+    lda current_line
+    cmp total_lines
+    bne write_line
+    lda current_line+1
+    cmp total_lines+1
+    bne write_line
+
+    ldx #5
+    swi file_close
+    clc
+    rts
+}
 
 //====================================================
 // Editor code
