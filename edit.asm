@@ -260,6 +260,7 @@ not_right:
     cmp #0
     beq scroll_up
     dec cursor_y
+    jsr adjust_cursor_x
     jmp nav_cursor
     
 scroll_up:
@@ -274,6 +275,7 @@ scroll_up:
 do_scroll_up:
     decw current_line
     jsr update_screen
+    jsr adjust_cursor_x
     jmp nav_cursor
 
     //--------------------------------
