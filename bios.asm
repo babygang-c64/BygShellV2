@@ -68,6 +68,7 @@
 .label param_process=83
 .label set_basic_string=85
 .label param_get_value=87
+.label mult10=89
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -114,6 +115,7 @@ bios_jmp:
     .word do_param_process
     .word do_set_basic_string
     .word do_param_get_value
+    .word do_mult10
 
 * = * "BIOS code"
 
@@ -744,7 +746,7 @@ read_number:
     mov a,(r0++)
     jsr is_digit
     bcc end_number
-    jsr mult10
+    jsr do_mult10
     sec
     sbc #$30
     add r1, a
@@ -2018,6 +2020,36 @@ pas_test_padding:
 }
 
 //---------------------------------------------------------------
+// mult10 : multiply R1 by 10, result in R1
+//---------------------------------------------------------------
+
+do_mult10:
+{
+    pha
+
+    lda zr1h
+    pha
+    
+    lda zr1l
+    jsr mult2
+    jsr mult2
+    adc zr1l
+    sta zr1l
+    pla
+    adc zr1h
+    sta zr1h
+    jsr mult2
+
+    pla
+    rts
+
+mult2:
+    asl zr1l
+    rol zr1h
+    rts
+}
+
+//---------------------------------------------------------------
 // int2str : convert int in r0 to pstring in r1
 // target buffer for pstring r1 should be 16 bytes at least
 //---------------------------------------------------------------
@@ -2309,32 +2341,3 @@ is_digit:
     rts
 }
 
-//---------------------------------------------------------------
-// mult10 : multiply R1 by 10, result in R1
-//---------------------------------------------------------------
-
-mult10:
-{
-    pha
-
-    lda zr1h
-    pha
-    
-    lda zr1l
-    jsr mult2
-    jsr mult2
-    adc zr1l
-    sta zr1l
-    pla
-    adc zr1h
-    sta zr1h
-    jsr mult2
-
-    pla
-    rts
-
-mult2:
-    asl zr1l
-    rol zr1h
-    rts
-}

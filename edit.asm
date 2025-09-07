@@ -159,6 +159,8 @@ is_editing:
     .byte 0
 edited_line:
     .word 0
+lines_length:
+    .fill 24,0
 
 //====================================================
 // Editor code
@@ -220,7 +222,17 @@ ok_dec:
 not_left:
     cmp #RIGHT
     bne not_right
+    
+    lda cursor_x
+    ldy cursor_y
+    cmp lines_length,y
+    bne cursor_right
+    ldy #0
+    sty cursor_x
+    jmp cursor_down
 
+cursor_right:
+    ldy #0
     lda cursor_x
     cmp #39
     bne ok_inc
@@ -270,15 +282,15 @@ not_up:
     cmp #DOWN
     bne not_down
 
+cursor_down:
     lda cursor_y
     cmp #23
     beq scroll_down
     
     lda total_lines+1
     bne not_small
+
     lda cursor_y
-    clc
-    adc #1
     cmp total_lines
     jeq end
 
@@ -365,6 +377,7 @@ found_word:
     // other key ? start edit
     //--------------------------------
 not_ctrlw:
+    sta current_key
     lda is_editing
     bne already_editing
     inc is_editing
@@ -373,6 +386,8 @@ not_ctrlw:
     jsr edit_line_init
 
 already_editing:
+    jsr edit_line_process
+    jmp end
 
     //--------------------------------
     // end, return
@@ -397,6 +412,27 @@ nav_cursor:
     cli
     clc
     rts
+
+current_key:
+    .byte 0
+}
+
+//----------------------------------------------------
+// edit_line_process : process the keys to edit when
+// within a line
+//----------------------------------------------------
+
+edit_line_process:
+{
+    lda cursor_x
+    clc
+    adc view_offset
+    tax
+    inx
+    lda navigation.current_key
+    sta work_buffer,x
+    jsr update_current_line
+    jmp navigation.cursor_right
 }
 
 //----------------------------------------------------
@@ -409,10 +445,7 @@ nav_cursor:
 
 edit_line_init:
 {
-    mov r0,current_line
-    lda cursor_y
-    add r0, a
-    jsr goto_line
+    jsr goto_line_at_cursor
     
     // ici r0 = edited_line
     
@@ -438,6 +471,80 @@ edit_line_init:
 }
 
 //----------------------------------------------------
+// goto_line_at_cursor : get line at cursor in r0
+//----------------------------------------------------
+
+goto_line_at_cursor:
+{
+    mov r0,current_line
+    lda cursor_y
+    add r0, a
+    jmp goto_line
+}
+
+//----------------------------------------------------
+// update_current_line : repaint just the current line
+//----------------------------------------------------
+
+update_current_line:
+{
+    sei
+    jsr unblink_cursor
+
+    lda cursor_y
+    mov r1,a
+    swi mult10
+
+    mov r0, #$0400
+
+    // manque add rN,rM
+    ldx #4
+add4:
+    clc
+    lda zr0l
+    adc zr1l
+    sta zr0l
+    lda zr0h
+    adc zr1h
+    sta zr0h
+    dex
+    bne add4
+    mov r1, r0
+    
+    jsr goto_line_at_cursor
+    
+    mov a,(r0++)
+    tax
+    cmp #0
+    beq pad_line
+
+    ldy #0
+    sty cpt_x
+paint:
+    mov a,(r0++)
+    jsr ascii_to_screen
+    mov (r1++),a
+    inc cpt_x
+    dex
+    bne paint
+
+pad_line:
+    lda #32
+paint_pad:
+    ldx cpt_x
+    cpx #40
+    beq fin
+    mov (r1++),a
+    inc cpt_x
+    bne paint_pad
+fin:
+    jmp update_screen.end
+
+cpt_x:
+    .byte 0
+}
+
+//----------------------------------------------------
 // update_screen : repaint the screen
 //----------------------------------------------------
 
@@ -446,6 +553,7 @@ update_screen:
     sei
     jsr unblink_cursor
     jsr fill_screen
+end:
     jsr move_cursor
     lda #0
     sta BLNSW
@@ -496,6 +604,10 @@ fill_screen:
     ldy #0
 next_line:
     mov a,(r0++)
+    
+    ldy pos_y
+    sta lines_length,y
+    ldy #0
 
     cmp max_offset
     bcc smaller
@@ -513,22 +625,9 @@ smaller:
 write_line:
     ldy view_offset
     mov a,(r0++)
-    cmp #$41
-    bcc not_letter
-    cmp #$5B
-    bcs not_letter
-    sec
-    sbc #$40
-    jmp not_uppercase
 
-not_letter:
-    cmp #97
-    bcc not_uppercase
-    cmp #123
-    bcs not_uppercase
-    sec
-    sbc #$60
-not_uppercase:
+    jsr ascii_to_screen
+
     sta screen_write:$0400
     incw screen_write
     incw screen_write2
@@ -580,6 +679,30 @@ pos_y:
     .byte 0
 max_offset:
     .byte 0
+}
+
+//----------------------------------------------------
+// ascii_to_screen : convert character in A for screen
+//----------------------------------------------------
+ascii_to_screen:
+{
+    cmp #$41
+    bcc not_letter
+    cmp #$5B
+    bcs not_letter
+    sec
+    sbc #$40
+    jmp not_uppercase
+
+not_letter:
+    cmp #97
+    bcc not_uppercase
+    cmp #123
+    bcs not_uppercase
+    sec
+    sbc #$60
+not_uppercase:
+    rts
 }
 
 //----------------------------------------------------

@@ -55,6 +55,7 @@
     .label param_process=83
     .label set_basic_string=85
     .label param_get_value=87
+    .label mult10=89
 }
 
 //===============================================================
