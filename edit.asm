@@ -297,6 +297,7 @@ cursor_down:
 
 not_small:
     inc cursor_y
+    jsr adjust_cursor_x
     jmp nav_cursor
 
 scroll_down:
@@ -311,6 +312,7 @@ scroll_down:
 do_scroll_down:
     incw current_line
     jsr update_screen
+    jsr adjust_cursor_x
     jmp nav_cursor
 
     //--------------------------------
@@ -419,6 +421,25 @@ current_key:
 }
 
 //----------------------------------------------------
+// adjust_cursor_x : when changing line, check if we
+// need to adjust cursor_x according to line length
+//----------------------------------------------------
+
+adjust_cursor_x:
+{
+    ldx cursor_y
+    lda lines_length,x
+    sec
+    sbc view_offset
+    cmp cursor_x
+    bcc adjust
+    rts
+adjust:
+    sta cursor_x
+    rts
+}
+
+//----------------------------------------------------
 // edit_line_process : process the keys to edit when
 // within a line
 //----------------------------------------------------
@@ -429,6 +450,10 @@ edit_line_process:
     cmp #BACKSPACE
     bne not_backspace
     
+    //------------------------------------
+    // Backspace
+    //------------------------------------
+
     // Backspace : if at end and not zero, decrease length
     lda work_buffer
     beq backspace_suppress_line
@@ -442,6 +467,30 @@ backspace_suppress_line:
 
     
 not_backspace:
+
+    //------------------------------------
+    // insert standard character
+    //------------------------------------
+
+    // if at end, increase length and insert
+    
+    lda work_buffer
+    sec
+    sbc view_offset
+    cmp cursor_x
+    bne insert_car_not_end
+
+    inc work_buffer
+    ldx work_buffer
+    lda navigation.current_key
+    sta work_buffer,x
+    ldx cursor_y
+    inc lines_length,x
+    jsr update_current_line
+    jmp navigation.cursor_right
+
+insert_car_not_end:
+    jmp end
 
 end_with_update:
     jsr update_current_line
