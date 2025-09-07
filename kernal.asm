@@ -104,6 +104,7 @@
 .label RUNSTOP=$03
 .label CTRLK=$0b    // master key
 .label CTRLO=$0f    // end key
+.label CTRLT=$14
 .label CTRLU=$15    // home key
 .label CTRLX=$18
 .label CTRLS=$13

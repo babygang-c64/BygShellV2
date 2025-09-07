@@ -237,7 +237,6 @@ change2:
     lda #'-'+$80
     sta $0400+39+40*24
 
-
 not_changed:
     clc
     rts
@@ -280,6 +279,21 @@ no_quit:
     jmp nav_cursor
 
 not_save:
+    //--------------------------------
+    // CTRL-T : go to top
+    //--------------------------------
+    cmp #CTRLT
+    bne not_top
+    lda #0
+    sta current_line
+    sta current_line+1
+    sta view_offset
+    sta cursor_x
+    sta cursor_y
+    jsr update_screen
+    jmp end
+
+not_top:
     //--------------------------------
     // Cursor Left
     //--------------------------------
