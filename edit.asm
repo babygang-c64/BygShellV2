@@ -183,22 +183,11 @@ navigation:
     sec
     rts
 
-    //--------------------------------
-    // CTRL-M : test for view offset
-    //--------------------------------
-
 not_quit:
-    cmp #'M'
-    bne not_m
-    inc view_offset
-    jsr update_screen
-    jmp end
-
     //--------------------------------
     // Cursor Left
     //--------------------------------
 
-not_m:
     cmp #LEFT
     bne not_left
 
@@ -486,13 +475,21 @@ not_backspace:
     ldx work_buffer
     lda navigation.current_key
     sta work_buffer,x
+insert_end:
     ldx cursor_y
     inc lines_length,x
     jsr update_current_line
     jmp navigation.cursor_right
 
 insert_car_not_end:
-    jmp end
+    lda navigation.current_key
+    sta insert_char+1
+    mov r0, #work_buffer
+    mov r1, #insert_char
+    ldx cursor_x
+    inx
+    swi str_ins
+    jmp insert_end
 
 end_with_update:
     jsr update_current_line
