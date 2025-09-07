@@ -56,6 +56,7 @@
     .label set_basic_string=85
     .label param_get_value=87
     .label mult10=89
+    .label str_del=91
 }
 
 //===============================================================

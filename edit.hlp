@@ -10,6 +10,7 @@ ctrl-s : save file
 
 -- Editor --
 
-ctrl-a : start of line
-ctrl-e : end of line
-ctrl-w : next word
+ctrl-a   : start of line
+ctrl-e   : end of line
+ctrl-w   : next word
+ctrl-k-t : top of document

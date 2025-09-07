@@ -643,6 +643,31 @@ edit_line_process:
     // Backspace : if at end and not zero, decrease length
     lda work_buffer
     beq backspace_suppress_line
+    
+    // check if at end
+    lda cursor_x
+    clc
+    adc view_offset
+    cmp work_buffer
+    beq backspace_at_end
+    
+    // not at end : suppress within string or join lines
+    lda view_offset
+    bne not_backspace_start
+    lda cursor_x
+    bne not_backspace_start
+    
+    // at start : join with previous line except if first line
+    
+    jmp end
+    
+    // not at start : remove from string
+not_backspace_start:
+    ldy #1
+    ldx cursor_x
+    swi str_del, #work_buffer
+
+backspace_at_end:
     dec work_buffer
     ldx cursor_y
     dec lines_length,x

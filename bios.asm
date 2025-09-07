@@ -69,6 +69,7 @@
 .label set_basic_string=85
 .label param_get_value=87
 .label mult10=89
+.label str_del=91
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -116,6 +117,7 @@ bios_jmp:
     .word do_set_basic_string
     .word do_param_get_value
     .word do_mult10
+    .word do_str_del
 
 * = * "BIOS code"
 
@@ -1327,6 +1329,54 @@ fin_lecture:
 // str_rchr
 // str_ncpy
 //===============================================================
+
+//---------------------------------------------------------------
+// str_del : supprime Y caractères à partir de la position X
+// entrée : R0 = pstring
+// todo : contrôle erreurs / dépassements
+//---------------------------------------------------------------
+
+do_str_del:
+{
+    // 0 123456789 : 3, 4 -> 0 123 4567 89 -> 0 12389
+    // début Y+1
+    sty nb_supp
+    inx
+    stx pos_ecriture
+    txa
+    clc
+    adc nb_supp
+    sta pos_lecture
+    
+    swi str_len
+    sec
+    sbc pos_ecriture
+    sbc nb_supp
+    tax
+
+copie:
+    ldy pos_lecture
+    mov a, (r0)
+    ldy pos_ecriture
+    mov (r0), a
+    inc pos_ecriture
+    inc pos_lecture
+    dex
+    bpl copie
+
+    // maj longueur
+    ldy #0
+    mov a, (r0)
+    sec
+    sbc nb_supp
+    mov (r0), a    
+    clc
+    rts
+
+.label nb_supp = vars
+.label pos_lecture = vars+1
+.label pos_ecriture = vars+2
+}
 
 //---------------------------------------------------------------
 // str_cpy : copie pstring en r0 vers destination en r1
