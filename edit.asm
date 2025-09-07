@@ -106,8 +106,11 @@ main_loop:
     jsr navigation
     bcc main_loop
 
+    cmp #RUNSTOP
+    beq no_save
     jsr save_file
 
+no_save:
     lda #147
     jsr CHROUT
     jsr CLRCHN
@@ -187,6 +190,9 @@ lines_length:
 
 save_file:
 {
+    lda is_edited
+    beq not_changed
+
     jsr check_edit_end
 
     mov r0,#filename
@@ -208,7 +214,13 @@ write_line:
     jsr goto_line
     swi pprint_nl
     lda $0400+39+40*24
-    eor #'S'
+    cmp #'S'+$80
+    bne change1
+    lda #' '+$80
+    bne change2
+change1:
+    lda #'S'+$80
+change2:
     sta $0400+39+40*24
     incw current_line
     lda current_line
@@ -220,6 +232,13 @@ write_line:
 
     ldx #5
     swi file_close
+    lda #0
+    sta is_edited
+    lda #'-'+$80
+    sta $0400+39+40*24
+
+
+not_changed:
     clc
     rts
 }
@@ -241,11 +260,26 @@ navigation:
     //--------------------------------
 
     cmp #CTRLX
-    bne not_quit
+    beq quit
+    cmp #RUNSTOP
+    beq quit
+    bne no_quit
+
+quit:
     sec
     rts
 
-not_quit:
+no_quit:
+    //--------------------------------
+    // CTRL-S : save
+    //--------------------------------
+
+    cmp #CTRLS
+    bne not_save
+    jsr save_file
+    jmp nav_cursor
+
+not_save:
     //--------------------------------
     // Cursor Left
     //--------------------------------
@@ -374,27 +408,23 @@ do_scroll_down:
     jmp nav_cursor
 
     //--------------------------------
-    // CTRL+A or U = start of line
+    // CTRL+A = start of line
     //--------------------------------
 not_down:
     cmp #CTRLA
-    beq start_of_line
-    cmp #CTRLU
     bne not_start
-start_of_line:
+
     lda #0
     sta cursor_x
     jmp nav_cursor
 
     //--------------------------------
-    // CTRL+O or E = end of line
+    // CTRL+E = end of line
     //--------------------------------
 not_start:
-    cmp #CTRLO
-    beq end_of_line
     cmp #CTRLE
     bne not_end
-end_of_line:
+
     ldy #40
 find_end:
     dey
@@ -989,7 +1019,6 @@ print_name:
     sec
     sbc #4
     tax
-    stx $1000
     mov r0,#filename
     inc r0
     inc r0

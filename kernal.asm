@@ -102,10 +102,11 @@
 .label CTRLA=1      // unix style home
 .label CTRLE=5      // unix style end
 .label RUNSTOP=$03
-.label CTRLK=$0b    // delete to end of line
+.label CTRLK=$0b    // master key
 .label CTRLO=$0f    // end key
 .label CTRLU=$15    // home key
 .label CTRLX=$18
+.label CTRLS=$13
 .label CTRLW=23
 .label RVSON=18
 .label RVSOFF=146
