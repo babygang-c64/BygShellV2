@@ -111,6 +111,7 @@ main_loop:
     jsr save_file
 
 no_save:
+    jsr unblink_cursor
     lda #147
     jsr CHROUT
     jsr CLRCHN
@@ -140,6 +141,7 @@ init:
     sty progress
     sty cursor_x
     sty cursor_y
+    sty block_set
     sty current_line
     sty current_line+1
     sty total_lines
@@ -161,6 +163,22 @@ master_key:
 cursor_x:
     .byte 0
 cursor_y:
+    .byte 0
+mark_x:
+    .byte 0
+mark_view_offset:
+    .byte 0
+mark_line:
+    .byte 0
+block_set:
+    .byte 0
+block_start_x:
+    .byte 0
+block_start_line:
+    .byte 0
+block_end_x:
+    .byte 0
+block_end_line:
     .byte 0
 max_x:
     .byte 39
@@ -278,7 +296,7 @@ navigation:
 
     lda current_key
     cmp #CTRLK
-    bne not_master
+    jne not_master
     
     lda #1
     sta master_key
@@ -316,7 +334,39 @@ not_cancel_master:
     jsr update_screen
     jmp cancel_master
 
+    //--------------------------------
+    // MASTER-+ : set mark
+    //--------------------------------
 not_top:
+    cmp #'+'
+    bne not_set_mark
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    mov mark_line,r0
+    lda cursor_x
+    sta mark_x
+    lda view_offset
+    sta mark_view_offset
+    jmp cancel_master
+    
+    //--------------------------------
+    // MASTER-- : goto mark
+    //--------------------------------
+not_set_mark:
+    cmp #'-'
+    bne not_goto_mark
+    mov current_line,mark_line
+    lda #0
+    sta cursor_y
+    lda mark_x
+    sta cursor_x
+    lda mark_view_offset
+    sta view_offset
+    jsr cancel_master
+    jmp update_and_go
+    
+not_goto_mark:
     jmp cancel_master
 
 not_master:
