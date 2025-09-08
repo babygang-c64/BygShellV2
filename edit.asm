@@ -180,10 +180,6 @@ block_end_x:
     .byte 0
 block_end_line:
     .byte 0
-max_x:
-    .byte 39
-max_y:
-    .byte 23
 current_line:
     .word 0
 total_lines:
@@ -1419,7 +1415,7 @@ clear_bam:
     iny
     cpy #nb_bam
     bne clear_bam
-    lda #nb_bam
+    lda #nb_bam*8
     sta bam_free
     ldy #0
     sty bam_allocated
@@ -1558,8 +1554,8 @@ new_block:
     rts
 
 error:
-    sec
-    rts
+    inc $d020
+    jmp error
 }
 
 //----------------------------------------------------
@@ -1614,7 +1610,7 @@ ok_size:
     // no space free in allocated blocs, allocate a new block,
     // the new block free space is 255-X
 
-new_block: 
+new_block:
     jsr bam_get
     lda #255
     sec

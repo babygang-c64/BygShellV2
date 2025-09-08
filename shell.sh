@@ -52,6 +52,7 @@ ${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write edit.hlp "edit.hlp" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cartridge_header.asm "crt.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cat.asm "cat.asm" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write wc.asm "wc.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write samsara.koa "samsara.koa" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write image.koa "image.koa" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write "jiffymon v2" "jiffymonv2" -silent
