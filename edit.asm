@@ -84,7 +84,7 @@ get_lines:
     sta progress
     jsr status_line
     jmp get_lines
-
+    
 ok_close:
     ldx #4
     swi file_close
@@ -201,7 +201,7 @@ save_file:
     lda #7
     sta $d800+39+40*24
 
-    jsr check_edit_end
+//    jsr check_edit_end
 
     mov r0,#filename
     ldx #5
@@ -225,6 +225,7 @@ write_line:
     lda color_cycle,x
     sta $d800+39+40*24
     inc color_pos
+
     incw current_line
     lda current_line
     cmp total_lines
@@ -232,7 +233,7 @@ write_line:
     lda current_line+1
     cmp total_lines+1
     bne write_line
-
+    
     ldx #5
     swi file_close
     lda #0
@@ -426,10 +427,10 @@ scroll_up:
     
 do_scroll_up:
     decw current_line
+    jsr check_edit_end
 update_and_go:
     jsr update_screen
     jsr adjust_cursor_x
-    jsr check_edit_end
     jmp nav_cursor
 
     //--------------------------------
@@ -447,8 +448,9 @@ cursor_down:
     lda total_lines+1
     bne not_small
 
-    lda cursor_y
-    cmp total_lines
+    ldx total_lines
+    dex
+    cpx cursor_y
     jeq end
 
 not_small:
@@ -468,6 +470,7 @@ scroll_down:
     
 do_scroll_down:
     incw current_line
+    jsr check_edit_end
     jmp update_and_go
 
     //--------------------------------
@@ -694,6 +697,7 @@ backspace_suppress_line:
     adc #0
     bne backspace_not_zero
     jmp end
+
 backspace_not_zero:
     jsr suppress_line_at_cursor
     jmp navigation.update_and_go
@@ -766,7 +770,6 @@ suppress_line_at_cursor:
     lda #0
     sta tmp_line
     sta tmp_line+1
-    tay
     mov (r0),a
 
     mov r0,current_line
@@ -777,8 +780,6 @@ suppress_line_at_cursor:
     mov r0,#lines_ptr
     mov r1,#lines_ptr
     
-    // decrement total_lines
-
 again:
     // not current line ?
     lda tmp_line
@@ -807,8 +808,9 @@ suite:
     lda tmp_line+1
     cmp total_lines+1
     bne again
+
     decw total_lines
-    rts    
+    rts
 }
 
 //----------------------------------------------------
@@ -996,8 +998,9 @@ smaller:
     tax
     
     cmp #0
-    beq pad_line
-    bmi pad_line
+    beq do_pad_line
+    bmi do_pad_line
+    jmp write_line
 
 write_line:
     ldy view_offset
@@ -1015,16 +1018,8 @@ write_line:
     dex
     bne write_line
 
-pad_line:
-    lda #32
-    sta screen_write2:$0400
-    incw screen_write
-    incw screen_write2
-    
-    inc pos_x
-    lda pos_x
-    cmp #40
-    bne pad_line
+do_pad_line:
+    jsr pad_line
 
 end_line:
     ldy #0
@@ -1042,6 +1037,28 @@ end_line:
     cmp total_lines+1
     bne not_total
 end_screen:
+// here fill to bottom of screen
+    lda pos_y
+    cmp #24
+    beq fin
+    inc pos_y
+    lda #0
+    sta pos_x
+    jsr pad_line
+    jmp end_screen
+fin:
+    rts
+    
+pad_line:
+    lda #32
+    sta screen_write2:$0400
+    incw screen_write
+    incw screen_write2
+    
+    inc pos_x
+    lda pos_x
+    cmp #40
+    bne pad_line
     rts
 
 not_total:
