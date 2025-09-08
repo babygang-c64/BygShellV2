@@ -407,9 +407,10 @@ cursor_left:
     lda view_offset
     beq not_ok_left
     dec view_offset
-    jsr update_screen
+    jmp update_screen
 not_ok_left:
-    jmp end
+    clc
+    rts
 
 ok_dec:
     dec cursor_x
@@ -440,8 +441,7 @@ cursor_right:
     cmp #80
     beq not_right
     inc view_offset
-    jsr update_screen
-    jmp end
+    jmp update_screen
 
 ok_inc:
     inc cursor_x
@@ -469,7 +469,8 @@ scroll_up:
     lda current_line+1
     cmp #0
     bne do_scroll_up
-    jmp end
+    clc
+    rts
     
 do_scroll_up:
     decw current_line
@@ -512,7 +513,8 @@ scroll_down:
     lda cmp_line+1
     cmp total_lines+1
     bne do_scroll_down
-    jmp end
+    clc
+    rts
     
 do_scroll_down:
     incw current_line
@@ -567,7 +569,9 @@ search_word:
     iny
     cpy #39
     bne search_word
-    jmp end
+    clc
+    rts
+
 found_word:
     iny
     lda (PNT),y
@@ -580,19 +584,17 @@ found_word:
     // other key ? start edit
     //--------------------------------
 not_ctrlw:
-    sta current_key
     lda is_editing
     bne already_editing
     inc is_editing
     lda #1
     sta is_edited
     jsr status_changed
-    
+
     jsr edit_line_init
 
 already_editing:
     jsr edit_line_process
-    jmp end
 
     //--------------------------------
     // end, return
@@ -615,7 +617,6 @@ nav_cursor:
     lda #0
     sta BLNSW
     cli
-    clc
     rts
 
 current_key:
@@ -983,6 +984,7 @@ end:
     lda #0
     sta BLNSW
     cli
+    clc
     rts
 }
 
