@@ -194,7 +194,7 @@ lines_length:
 save_file:
 {
     lda is_edited
-    beq not_changed
+    jeq not_changed
 
     lda #211
     sta $0400+39+40*24
@@ -426,6 +426,7 @@ scroll_up:
     
 do_scroll_up:
     decw current_line
+update_and_go:
     jsr update_screen
     jsr adjust_cursor_x
     jsr check_edit_end
@@ -467,10 +468,7 @@ scroll_down:
     
 do_scroll_down:
     incw current_line
-    jsr update_screen
-    jsr adjust_cursor_x
-    jsr check_edit_end
-    jmp nav_cursor
+    jmp update_and_go
 
     //--------------------------------
     // CTRL+A = start of line
@@ -668,7 +666,7 @@ edit_line_process:
     bne not_backspace_start
     
     // at start : join with previous line except if first line
-    
+    inc $d020
     jmp end
     
     // not at start : remove from string
@@ -688,7 +686,17 @@ backspace_at_end:
     jmp navigation.cursor_left
     
 backspace_suppress_line:
+    lda current_line
+    clc
+    adc cursor_y
+    bne backspace_not_zero
+    lda current_line+1
+    adc #0
+    bne backspace_not_zero
     jmp end
+backspace_not_zero:
+    jsr suppress_line_at_cursor
+    jmp navigation.update_and_go
     
 not_backspace:
 
@@ -745,6 +753,62 @@ end:
 insert_char:
     pstring(" ")
 
+}
+
+//----------------------------------------------------
+// suppress_line_at_cursor : mark line as zero bytes, 
+// suppress line from lines list, goto line-1
+//----------------------------------------------------
+
+suppress_line_at_cursor:
+{
+    jsr goto_line_at_cursor
+    lda #0
+    sta tmp_line
+    sta tmp_line+1
+    tay
+    mov (r0),a
+
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    mov cmp_line,r0
+    
+    mov r0,#lines_ptr
+    mov r1,#lines_ptr
+    
+    // decrement total_lines
+
+again:
+    // not current line ?
+    lda tmp_line
+    cmp cmp_line
+    bne not_current_line
+    lda tmp_line+1
+    cmp cmp_line+1
+    bne not_current_line
+    
+    // current_line
+    inc r1
+    inc r1
+
+not_current_line:
+    // copy from r1 to r0
+    mov a,(r1++)
+    mov (r0++),a
+    mov a,(r1++)
+    mov (r0++),a
+
+suite:
+    incw tmp_line
+    lda tmp_line
+    cmp total_lines
+    bne again
+    lda tmp_line+1
+    cmp total_lines+1
+    bne again
+    decw total_lines
+    rts    
 }
 
 //----------------------------------------------------
