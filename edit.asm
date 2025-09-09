@@ -948,36 +948,46 @@ suite:
     
 init_insdel:
     jsr goto_line_at_cursor
-
+    push r0
     mov r0,current_line
     lda cursor_y
     add r0,a
     mov cmp_line,r0
+    pop r0
     rts
 
 insert_line:
     jsr init_insdel
-
-    // adjust length = position of cursor X
+    // adjust length = position of cursor X-1
     lda cursor_x
     clc
     adc view_offset
     mov (r0),a
+    tay
     // copy remaining into work buffer
-    ldy #0
+    pha
+    iny
+    ldx #0
 copy_remaining:
     mov a,(r0)
-    sta work_buffer+1,y
+    sta work_buffer+1,x
+    cmp #0
     beq end_remaining
+    inx
     iny
     bne copy_remaining
 end_remaining:
-    // copy ending zero and length
-    sta work_buffer+1,y
-    dey
-    sty work_buffer
-    ldy #0
+    inx
+    sta work_buffer+1,x
+    dex
+    stx work_buffer
+    pla
+    tay
+    iny
+    lda #0
+    mov (r0),a
 
+    tay
     // copy lines : r1 = read, r0 = write
     mov r0,total_lines
     dec r0
@@ -1017,9 +1027,9 @@ copy_insert:
     bne copy_insert
     
     lda #<work_buffer
-    mov (r0++),a
+    mov (r1++),a
     lda #>work_buffer
-    mov (r0),a
+    mov (r1),a
 
     incw total_lines
     rts
