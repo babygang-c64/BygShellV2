@@ -148,7 +148,8 @@ init:
     sty total_lines+1
     sty lines_ptr
     sty lines_ptr+1
-    jsr bam_init
+    ldx #nb_bam
+    swi bam_init,bam_root
     mov tmp_line,#lines_ptr
     lda #147
     jsr CHROUT
@@ -1393,36 +1394,29 @@ move_cursor:
 //      zero ending string
 //
 // lines : list of block pointers at $7800
+//
+// BAM structure :
+//
+// bam_root
+// 1 byte : bam length = n
+// 1 byte : bam free
+// 1 byte : bam allocated
+// n bytes : bam 
 //====================================================
 
 .label memory_start=$0800
 .label nb_bam=14
 
-bam:
-    .fill nb_bam,0
-bam_free:
-    .byte nb_bam*8
-bam_allocated:
-    .byte 0
+bam_root:
+        bam_length:
+            .byte nb_bam
+        bam_free:
+            .byte nb_bam*8
+        bam_allocated:
+            .byte 0
+        bam:
+            .fill nb_bam,0
 
-//---------------------------------------------------------------
-// bam_init : reset bam
-//---------------------------------------------------------------
-
-bam_init:
-    ldy #0
-    tya
-clear_bam:
-    sta bam,y
-    iny
-    cpy #nb_bam
-    bne clear_bam
-    lda #nb_bam*8
-    sta bam_free
-    ldy #0
-    sty bam_allocated
-    rts
-    
 //---------------------------------------------------------------
 // set_bit : sets bit #Y to 1 into A
 //---------------------------------------------------------------
@@ -1452,64 +1446,6 @@ lookup:
     bpl lookup
 is_free:
     rts
-}
-
-//----------------------------------------------------
-// bam_next : get first / next allocated block
-//
-// input : C=1 start, C=0 continue
-// output : R0 = block, C=1 KO, C=0 OK
-//----------------------------------------------------
-
-bam_next:
-{
-    bcc not_first
-    mov r0, #memory_start
-    lda #0
-    sta bit_bam
-    sta pos_bam
-
-not_first:
-    ldx pos_bam
-    lda bam,x
-    ldy bit_bam
-    cpy #8
-    beq not_found
-    
-    and bit_list,y
-    bne found
-
-    inc zr0h
-    iny
-    sty bit_bam
-    ldy bit_bam
-    cpy #8
-    bne not_first
-
-not_found:
-    ldy #0
-    sty bit_bam
-    inc pos_bam
-    
-    lda pos_bam
-    lda bam_allocated
-    
-    lda pos_bam
-    cmp bam_allocated
-    bne not_first
-    
-    sec
-    rts
-    
-found:
-    inc bit_bam
-    clc
-    rts
-
-pos_bam:
-    .byte 0
-bit_bam:
-    .byte 0
 }
 
 //----------------------------------------------------
@@ -1581,7 +1517,9 @@ scan_bam:
     
     sec
 test_bam:
-    jsr bam_next
+    mov r0,bam_root
+    mov r1,#memory_start
+    swi bam_next
     bcs new_block
     
     ldy #0

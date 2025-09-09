@@ -57,6 +57,8 @@
     .label param_get_value=87
     .label mult10=89
     .label str_del=91
+    .label bam_init=93
+    .label bam_next=95
 }
 
 //===============================================================

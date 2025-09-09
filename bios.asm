@@ -70,6 +70,8 @@
 .label param_get_value=87
 .label mult10=89
 .label str_del=91
+.label bam_init=93
+.label bam_next=95
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -118,6 +120,8 @@ bios_jmp:
     .word do_param_get_value
     .word do_mult10
     .word do_str_del
+    .word do_bam_init
+    .word do_bam_next
 
 * = * "BIOS code"
 
@@ -1305,6 +1309,114 @@ fin_lecture:
     rts
 }
 
+//===============================================================
+// Memory management routines
+//
+// memory allocation uses a BAM structure of 255 bytes blocs
+// each bloc has a bytes free byte + 255 bytes
+//
+// BAM structure :
+//
+// bam_root
+// 1 byte : bam length = n
+// 1 byte : bam free = n*8
+// 1 byte : bam allocated = 0
+// n bytes : bam 
+//
+// bam_init : reset bam
+// bam_next : get 1st or next allocated block
+//===============================================================
+
+.label bam_length=0
+.label bam_free=1
+.label bam_allocated=2
+.label bam_start=3
+
+//---------------------------------------------------------------
+// bam_init : reset bam
+//
+// input : R0 = bam root address, x = bam length
+//---------------------------------------------------------------
+
+do_bam_init:
+{
+    ldy #0
+    txa
+    mov (r0++),a
+    asl
+    rol
+    rol
+    mov (r0++),a
+    tya
+    mov (r0++),a
+clear_bam:
+    mov (r0++),a
+    dex
+    bne clear_bam
+    clc
+    rts    
+}
+
+//----------------------------------------------------
+// bam_next : get first / next allocated block
+//
+// input : C=1 start, C=0 continue, r0=bam root
+// r1=memory start, r2=used for storage
+// output : R0 = block, C=1 KO, C=0 OK
+//----------------------------------------------------
+
+do_bam_next:
+{
+    bcc not_first
+    lda #0
+    sta bit_bam
+    sta pos_bam
+
+    lda #bam_start
+    add r0,a
+
+not_first:
+    ldy pos_bam
+    mov a,(r0)
+    
+    ldx bit_bam
+    cpx #8
+    beq not_found
+    
+    and bit_list,x
+    bne found
+
+    inc zr1h
+    inx
+    stx bit_bam
+    ldx bit_bam
+    cpx #8
+    bne not_first
+
+not_found:
+    ldy #0
+    sty bit_bam
+    inc pos_bam
+
+    // r0 on bam_allocated, get value then restore r0
+    dec r0
+    mov a,(r0)
+    inc r0
+    cmp pos_bam
+    bne not_first
+    
+    sec
+    rts
+    
+found:
+    inc bit_bam
+    mov r0,r1
+    clc
+    rts
+
+.label pos_bam = zr2l
+.label bit_bam = zr2h
+}
 
 //===============================================================
 // pstring routines
@@ -2357,9 +2469,10 @@ set_bit:
 {
     ora bit_list,y
     rts
+}
+
 bit_list:
     .byte 1,2,4,8,16,32,64,128
-}
 
 //---------------------------------------------------------------
 // which bit ? returns bit number of A into Y
@@ -2370,7 +2483,7 @@ which_bit:
 {
     ldy #7
 lookup_bit:
-    and set_bit.bit_list,y
+    and bit_list,y
     bne found
     bpl lookup_bit
 found:
