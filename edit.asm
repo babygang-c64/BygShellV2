@@ -56,7 +56,7 @@ edit:
     clc
     swi file_open
     jcs error
-
+    
     jsr status_line
 
     ldx #4
@@ -149,7 +149,8 @@ init:
     sty lines_ptr
     sty lines_ptr+1
     ldx #nb_bam
-    swi bam_init,bam_root
+    mov r0,#bam_root
+    swi bam_init
     mov tmp_line,#lines_ptr
     lda #147
     jsr CHROUT
@@ -1504,17 +1505,22 @@ test_bam:
     cmp how_much
     bcc test_bam
 
+    // existing block with enough size
+    // calculate position and new free
+    // size
+
 ok_size:
+    // target position
     sta bam_available
     lda #0
     sec
     sbc bam_available
     pha
     
+    // size
     sec
     lda bam_available
     sbc how_much
-    sta bam_available
     mov (r0),a
     
     pla
@@ -1531,7 +1537,7 @@ new_block:
     mov r0,#bam_root
     mov r1,#memory_start
     swi bam_get
-    
+
     lda #255
     sec
     sbc how_much

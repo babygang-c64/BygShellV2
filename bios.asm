@@ -1429,24 +1429,28 @@ found:
 
 do_bam_get:
 {
-    ldy #1
+    // if no more blocks free = error
+    ldy #bam_free
     mov a,(r0)
     dey
     cmp #0
     beq error
     
-    lda #bam_start
-    add r0,a
-
+    // lookup for space in bam
+    ldy #bam_start
 bam_next:
     mov a,(r0)
     cmp #$ff
     bne new_block
     
+    // target new block address = +8 pages for each
+    // bam entry
     add r1, #$0800
     iny
     bne bam_next
 
+    // new block possible, find which one (bit number)
+    // and mark bit for block is allocated
 new_block:
     sty save_y
     jsr next_free_bit
@@ -1464,17 +1468,20 @@ new_block:
     sec
     sbc #1
     mov (r0),a
-    iny
+
+    ldy #bam_allocated
     mov a,(r0)
     clc
     adc #1
     mov (r0),a
-    
-    lda save_y
+
+    // adjust target address with block position
+    lda found_bit
     clc
     adc zr1h
     sta zr1h
-    
+
+    // write number of free bytes in new block = 255
     ldy #0
     lda #255
     mov (r1),a
