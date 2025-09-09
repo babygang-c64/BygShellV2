@@ -386,13 +386,34 @@ cursor_left:
     bne ok_dec
 
     lda view_offset
-    beq not_ok_left
+    beq left_at_start
     dec view_offset
     jmp update_screen
-
+    
+    // 1st position ? ok if not 1st line
+left_at_start:
+    lda cursor_y
+    bne start_ok
+    lda current_line
+    ora current_line+1
+    bne start_ok
+    
 not_ok_left:
     clc
     rts
+
+start_ok:
+    // move at end of previous line
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    dec r0
+    
+    jsr goto_line
+    mov a,(r0)
+    sta cursor_x
+    
+    jmp cursor_up
 
 ok_dec:
     dec cursor_x
@@ -859,6 +880,7 @@ return:
     jsr check_edit_end
     sec
     jsr insdel_line_at_cursor
+    brk
     jmp navigation.cursor_down
 
 insert_char:
