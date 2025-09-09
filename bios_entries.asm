@@ -59,6 +59,7 @@
     .label str_del=91
     .label bam_init=93
     .label bam_next=95
+    .label bam_get=97
 }
 
 //===============================================================

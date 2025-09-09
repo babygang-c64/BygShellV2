@@ -1278,7 +1278,7 @@ complete_name:
     lda #' '
     jsr CHROUT
     iny
-    cpy #21
+    cpy #22
     bne complete_name
 ok_name:
     ldy #0
@@ -1296,62 +1296,45 @@ ok_name:
 // space    = filler
 //----------------------------------------------------
 
+status_rvson:
+{
+    lda #LIGHT_GRAY
+    jsr CHROUT
+    lda #RVSON
+    jmp CHROUT
+}
+
+status_rvsoff:
+{
+    lda #WHITE
+    jsr CHROUT
+    lda #RVSOFF
+    jmp CHROUT
+}
+
 status_line:
 {
     ldx #24
     ldy #0
     clc
     jsr PLOT
-    lda #LIGHT_GRAY
-    jsr CHROUT
-    lda #RVSON
-    jsr CHROUT
+    jsr status_rvson
     
     ldy CURRDEVICE
     swi pprinthex8a
-
     jsr print_name
-
-    lda #32
-    jsr CHROUT
 
     lda #'('
     jsr CHROUT
-    ldy #0
-    sty zr0h
-    lda cursor_x
-    sta zr0l
-    ldx #%00000011
-    swi pprint_int
-    lda #','
-    jsr CHROUT
-    lda cursor_y
-    sta zr0l
-    swi pprint_int
-    lda #')'
-    jsr CHROUT
+    jsr status_cursor
+    jsr status_rvson
     lda #32
     jsr CHROUT
+    jsr CHROUT
+
+    jsr status_rvsoff
     
-    mov r0,current_line
-    ldx #%11001111
-    swi pprint_int
-    lda #'/'
-    jsr CHROUT
-    mov r0,total_lines
-    swi pprint_int
-
-    lda #32
-    jsr CHROUT
-    jsr CHROUT
-
-    lda #RVSOFF
-    jsr CHROUT
-    lda #WHITE
-    jsr CHROUT
-    jsr status_changed
-    clc
-    rts
+    jmp status_changed
 }
 
 status_changed:
@@ -1367,6 +1350,7 @@ update:
     sta $0400+39+40*24
     lda #15
     sta $d800+39+40*24
+    clc
     rts
 }
 
@@ -1395,13 +1379,7 @@ move_cursor:
 //
 // lines : list of block pointers at $7800
 //
-// BAM structure :
-//
-// bam_root
-// 1 byte : bam length = n
-// 1 byte : bam free
-// 1 byte : bam allocated
-// n bytes : bam 
+// BAM structure : cf BIOS
 //====================================================
 
 .label memory_start=$0800
@@ -1416,85 +1394,6 @@ bam_root:
             .byte 0
         bam:
             .fill nb_bam,0
-
-//---------------------------------------------------------------
-// set_bit : sets bit #Y to 1 into A
-//---------------------------------------------------------------
-
-bit_list:
-    .byte 1,2,4,8,16,32,64,128
-
-set_bit:
-{
-    ora bit_list,y
-    rts
-}
-
-//---------------------------------------------------------------
-// next_free_bit : lookup for 1st unset bit in A, return into Y
-//---------------------------------------------------------------
-
-next_free_bit:
-{
-    ldy #7
-    sta ztmp
-lookup:
-    and bit_list,y
-    beq is_free
-    lda ztmp
-    dey
-    bpl lookup
-is_free:
-    rts
-}
-
-//----------------------------------------------------
-// bam_get : allocate one block if possible
-//
-// output : R0 = allocated block, C=1 = KO, C=0 = OK
-//----------------------------------------------------
-
-bam_get:
-{
-    lda bam_free
-    beq error
-    
-    mov r0, #memory_start
-    ldx #0
-    
-bam_next:
-    lda bam,x
-    cmp #$ff
-    bne new_block
-    
-    add r0, #$0800
-    inx
-    bne bam_next
-
-new_block:
-    jsr next_free_bit
-    lda bam,x
-    jsr set_bit
-    sta bam,x
-
-    dec bam_free
-    inc bam_allocated
-    
-    tya
-    clc
-    adc zr0h
-    sta zr0h
-    
-    ldy #0
-    lda #255
-    mov (r0),a
-    clc
-    rts
-
-error:
-    inc $d020
-    jmp error
-}
 
 //----------------------------------------------------
 // malloc : return R0 to space with free X bytes
@@ -1551,7 +1450,9 @@ ok_size:
     // the new block free space is 255-X
 
 new_block:
-    jsr bam_get
+    mov r1,#memory_start
+    swi bam_get,bam_root
+
     lda #255
     sec
     sbc how_much

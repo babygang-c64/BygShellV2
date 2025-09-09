@@ -72,6 +72,7 @@
 .label str_del=91
 .label bam_init=93
 .label bam_next=95
+.label bam_get=97
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -122,6 +123,7 @@ bios_jmp:
     .word do_str_del
     .word do_bam_init
     .word do_bam_next
+    .word do_bam_get
 
 * = * "BIOS code"
 
@@ -1418,6 +1420,75 @@ found:
 .label bit_bam = zr2h
 }
 
+//----------------------------------------------------
+// bam_get : allocate one block if possible
+//
+// input : R0 = bam root, R1 = memory start
+// output : R0 = allocated block, C=1 = KO, C=0 = OK
+//----------------------------------------------------
+
+do_bam_get:
+{
+    ldy #1
+    mov a,(r0)
+    dey
+    cmp #0
+    beq error
+    
+    lda #bam_start
+    add r0,a
+
+bam_next:
+    mov a,(r0)
+    cmp #$ff
+    bne new_block
+    
+    add r1, #$0800
+    iny
+    bne bam_next
+
+new_block:
+    sty save_y
+    jsr next_free_bit
+    sty found_bit
+    ldy save_y
+    mov a,(r0)
+    ldy found_bit
+    jsr set_bit
+    ldy save_y
+    mov (r0),a
+
+    // dec bam_free, inc bam_allocated
+    ldy #bam_free
+    mov a,(r0)
+    sec
+    sbc #1
+    mov (r0),a
+    iny
+    mov a,(r0)
+    clc
+    adc #1
+    mov (r0),a
+    
+    lda save_y
+    clc
+    adc zr1h
+    sta zr1h
+    
+    ldy #0
+    lda #255
+    mov (r1),a
+    clc
+    rts
+
+error:
+    inc $d020
+    jmp error
+
+.label found_bit=vars
+.label save_y=vars+1
+}
+
 //===============================================================
 // pstring routines
 //
@@ -2460,6 +2531,24 @@ do_pprinthex8a_swi:
 //===============================================================
 // Helper functions
 //===============================================================
+
+//---------------------------------------------------------------
+// next_free_bit : lookup for 1st unset bit in A, return into Y
+//---------------------------------------------------------------
+
+next_free_bit:
+{
+    ldy #7
+    sta ztmp
+lookup:
+    and bit_list,y
+    beq is_free
+    lda ztmp
+    dey
+    bpl lookup
+is_free:
+    rts
+}
 
 //---------------------------------------------------------------
 // set_bit : sets bit #Y to 1 into A
