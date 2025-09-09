@@ -306,9 +306,7 @@ update_master_key_indicator:
     //--------------------------------
 
 process_masterkey:
-    lda current_key
-    cmp #CTRLK
-    bne not_cancel_master
+    jmp key_jump_masterkey
 
 cancel_master:
     lda #0
@@ -316,13 +314,11 @@ cancel_master:
     lda #32+128
     jmp update_master_key_indicator
 
-not_cancel_master:    
     //--------------------------------
     // MASTER-T : go to top
     //--------------------------------
-    cmp #'T'
-    bne not_top
-    
+
+master_t:    
     lda #0
     sta current_line
     sta current_line+1
@@ -335,9 +331,8 @@ not_cancel_master:
     //--------------------------------
     // MASTER-+ : set mark
     //--------------------------------
-not_top:
-    cmp #'+'
-    bne not_set_mark
+
+master_set_mark:
     mov r0,current_line
     lda cursor_y
     add r0,a
@@ -351,9 +346,8 @@ not_top:
     //--------------------------------
     // MASTER-- : goto mark
     //--------------------------------
-not_set_mark:
-    cmp #'-'
-    bne not_goto_mark
+
+master_goto_mark:
     mov current_line,mark_line
     lda #0
     sta cursor_y
@@ -364,9 +358,6 @@ not_set_mark:
     jsr cancel_master
     jmp update_and_go
     
-not_goto_mark:
-    jmp cancel_master
-
     //--------------------------------
     // CTRL-X : Quit editor
     //--------------------------------
@@ -457,7 +448,7 @@ scroll_up:
     bne do_scroll_up
     clc
     rts
-    
+
 do_scroll_up:
     decw current_line
     jsr check_edit_end
@@ -481,7 +472,7 @@ cursor_down:
     ldx total_lines
     dex
     cpx cursor_y
-    jeq end
+    beq end2
 
 not_small:
     inc cursor_y
@@ -496,6 +487,7 @@ scroll_down:
     lda cmp_line+1
     cmp total_lines+1
     bne do_scroll_down
+end2:
     clc
     rts
     
@@ -640,6 +632,17 @@ nav_keys:
     .byte 0
     .word default_keypress
 
+    // When masterkey has been pressed before
+nav_keys_master:
+    .byte 'T'
+    .word master_t
+    .byte '+'
+    .word master_set_mark
+    .byte '-'
+    .word master_goto_mark
+    .byte 0
+    .word cancel_master
+
     // A = key pressed, lookup in nav_keys and jump
 key_jump:
     ldx #0
@@ -659,6 +662,10 @@ key_found:
     lda nav_keys+2,x
     sta key_jump_addr+1
     jmp key_jump_addr:default_keypress
+    
+key_jump_masterkey:
+    ldx #nav_keys_master-nav_keys
+    bne test_key
 }
 
 //----------------------------------------------------
