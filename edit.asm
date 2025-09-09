@@ -880,7 +880,9 @@ return:
     jsr check_edit_end
     sec
     jsr insdel_line_at_cursor
-    brk
+    lda #0
+    sta cursor_x
+    jsr update_screen
     jmp navigation.cursor_down
 
 insert_char:
@@ -897,17 +899,18 @@ insert_char:
 
 insdel_line_at_cursor:
 {
-    stc action
-    jsr goto_line_at_cursor
+    bcc delete_line
+    jmp insert_line
+    
+delete_line:
     lda #0
     sta tmp_line
     sta tmp_line+1
+
+    // current line length= 0
     mov (r0),a
 
-    mov r0,current_line
-    lda cursor_y
-    add r0,a
-    mov cmp_line,r0
+    jsr init_insdel
     
     mov r0,#lines_ptr
     mov r1,#lines_ptr
@@ -921,16 +924,6 @@ again:
     cmp cmp_line+1
     bne not_current_line
     
-    // current_line
-    lda action
-    beq delete_action
-    
-    // insert action
-    inc r0
-    inc r0
-    jmp not_current_line
-    
-delete_action:
     inc r1
     inc r1
 
@@ -950,17 +943,87 @@ suite:
     cmp total_lines+1
     bne again
 
-    lda action
-    bne end_insert
-
     decw total_lines
     rts
-end_insert:
+    
+init_insdel:
+    jsr goto_line_at_cursor
+
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    mov cmp_line,r0
+    rts
+
+insert_line:
+    jsr init_insdel
+
+    // adjust length = position of cursor X
+    lda cursor_x
+    clc
+    adc view_offset
+    mov (r0),a
+    // copy remaining into work buffer
+    ldy #0
+copy_remaining:
+    mov a,(r0)
+    sta work_buffer+1,y
+    beq end_remaining
+    iny
+    bne copy_remaining
+end_remaining:
+    // copy ending zero and length
+    sta work_buffer+1,y
+    dey
+    sty work_buffer
+    ldy #0
+
+    // copy lines : r1 = read, r0 = write
+    mov r0,total_lines
+    dec r0
+    mov tmp_line,r0
+    asl zr0l
+    rol zr0h
+    clc
+    lda #<lines_ptr
+    adc zr0l
+    sta zr0l
+    lda #>lines_ptr
+    adc zr0h
+    sta zr0h
+    mov r1,r0
+    inc r0
+    inc r0
+
+copy_insert:
+    mov a,(r1++)
+    mov (r0++),a
+    mov a,(r1++)
+    mov (r0++),a
+    dec r0
+    dec r0
+    dec r0
+    dec r0
+    dec r1
+    dec r1
+    dec r1
+    dec r1
+    dec tmp_line
+    lda tmp_line
+    cmp cmp_line
+    bne copy_insert
+    lda tmp_line+1
+    cmp cmp_line+1
+    bne copy_insert
+    
+    lda #<work_buffer
+    mov (r0++),a
+    lda #>work_buffer
+    mov (r0),a
+
     incw total_lines
     rts
 
-action:
-    .byte 0
 }
 
 //----------------------------------------------------
