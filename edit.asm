@@ -283,24 +283,27 @@ navigation:
 {
     swi key_wait
     sta current_key
+    lda master_key
+    bne process_masterkey
+
+    jmp key_jump
     
     //--------------------------------
     // Master key CTRL+K
     //--------------------------------
-    
-    lda master_key
-    bne process_masterkey
 
-    lda current_key
-    cmp #CTRLK
-    jne not_master
-    
+press_master_key:    
     lda #1
     sta master_key
     lda #77+128
+update_master_key_indicator:
     sta $0400+38+40*24
     clc
     rts
+
+    //--------------------------------
+    // Master Key : 2nd key press
+    //--------------------------------
 
 process_masterkey:
     lda current_key
@@ -311,9 +314,7 @@ cancel_master:
     lda #0
     sta master_key
     lda #32+128
-    sta $0400+38+40*24
-    clc
-    rts
+    jmp update_master_key_indicator
 
 not_cancel_master:    
     //--------------------------------
@@ -366,39 +367,26 @@ not_set_mark:
 not_goto_mark:
     jmp cancel_master
 
-not_master:
     //--------------------------------
     // CTRL-X : Quit editor
     //--------------------------------
 
-    cmp #CTRLX
-    beq quit
-    cmp #RUNSTOP
-    beq quit
-    bne no_quit
-
 quit:
+save_and_quit:
     sec
     rts
 
-no_quit:
     //--------------------------------
     // CTRL-S : save
     //--------------------------------
 
-    cmp #CTRLS
-    bne not_save
+save_file:
     jsr save_file
     jmp nav_cursor
-
-not_save:
 
     //--------------------------------
     // Cursor Left
     //--------------------------------
-
-    cmp #LEFT
-    bne not_left
 
 cursor_left:
     lda cursor_x
@@ -409,6 +397,7 @@ cursor_left:
     beq not_ok_left
     dec view_offset
     jmp update_screen
+
 not_ok_left:
     clc
     rts
@@ -420,19 +409,17 @@ ok_dec:
     //--------------------------------
     // Cursor Right
     //--------------------------------
-not_left:
-    cmp #RIGHT
-    bne not_right
-    
+
+cursor_right:    
     lda cursor_x
     ldy cursor_y
     cmp lines_length,y
-    bne cursor_right
+    bne ok_cursor_right
     ldy #0
     sty cursor_x
     jmp cursor_down
 
-cursor_right:
+ok_cursor_right:
     ldy #0
     lda cursor_x
     cmp #39
@@ -440,7 +427,7 @@ cursor_right:
     
     lda view_offset
     cmp #80
-    beq not_right
+    beq not_ok_left
     inc view_offset
     jmp update_screen
 
@@ -451,10 +438,8 @@ ok_inc:
     //--------------------------------
     // Cursor UP ?
     //--------------------------------
-not_right:
-    cmp #UP
-    bne not_up
 
+cursor_up:
     lda cursor_y
     cmp #0
     beq scroll_up
@@ -484,9 +469,6 @@ update_and_go:
     //--------------------------------
     // Cursor DOWN ?
     //--------------------------------
-not_up:
-    cmp #DOWN
-    bne not_down
 
 cursor_down:
     lda cursor_y
@@ -525,21 +507,18 @@ do_scroll_down:
     //--------------------------------
     // CTRL+A = start of line
     //--------------------------------
-not_down:
-    cmp #CTRLA
-    bne not_start
 
-    lda #0
-    sta cursor_x
+start_of_line:
+    ldy #0
+update_x_and_nav:
+    sty cursor_x
     jmp nav_cursor
 
     //--------------------------------
     // CTRL+E = end of line
     //--------------------------------
-not_start:
-    cmp #CTRLE
-    bne not_end
 
+end_of_line:
     ldy #40
 find_end:
     dey
@@ -553,15 +532,13 @@ found_the_end:
     beq found_end
     iny
 found_end:
-    sty cursor_x
-    jmp nav_cursor
+    jmp update_x_and_nav
     
     //--------------------------------
     // CTRL+W : next word
     //--------------------------------
-not_end:
-    cmp #CTRLW
-    bne not_ctrlw
+
+next_word:
     ldy cursor_x
 search_word:
     lda (PNT),y
@@ -578,13 +555,13 @@ found_word:
     lda (PNT),y
     cmp #32
     beq end
-    sty cursor_x
-    jmp nav_cursor
+    jmp update_x_and_nav
 
     //--------------------------------
     // other key ? start edit
     //--------------------------------
-not_ctrlw:
+
+default_keypress:
     lda is_editing
     bne already_editing
     inc is_editing
@@ -622,6 +599,66 @@ nav_cursor:
 
 current_key:
     .byte 0
+
+    // Navigation keys / endpoint combinations
+
+nav_keys:
+    // Master key for combinations
+    .byte CTRLK
+    .word press_master_key
+    // Quit and save if needed
+    .byte CTRLX
+    .word save_and_quit
+    // Quit without saving
+    .byte RUNSTOP
+    .word quit
+    // Save file
+    .byte CTRLS
+    .word save_file
+    // Cursor left
+    .byte LEFT
+    .word cursor_left
+    // Cursor right
+    .byte RIGHT
+    .word cursor_right
+    // Cursor up
+    .byte UP
+    .word cursor_up
+    // Cursor down
+    .byte DOWN
+    .word cursor_down
+    // Next word
+    .byte CTRLW
+    .word next_word
+    // Start of line
+    .byte CTRLA
+    .word start_of_line
+    // End of line
+    .byte CTRLE
+    .word end_of_line
+    // Not found = default keypress
+    .byte 0
+    .word default_keypress
+
+    // A = key pressed, lookup in nav_keys and jump
+key_jump:
+    ldx #0
+test_key:
+    lda nav_keys,x
+    beq key_found
+    cmp current_key
+    beq key_found
+    inx
+    inx
+    inx
+    bne test_key
+
+key_found:
+    lda nav_keys+1,x
+    sta key_jump_addr
+    lda nav_keys+2,x
+    sta key_jump_addr+1
+    jmp key_jump_addr:default_keypress
 }
 
 //----------------------------------------------------
