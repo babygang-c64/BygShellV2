@@ -1478,6 +1478,7 @@ new_block:
     ldy #0
     lda #255
     mov (r1),a
+    mov r0,r1
     clc
     rts
 

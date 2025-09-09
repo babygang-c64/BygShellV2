@@ -66,7 +66,6 @@ get_lines:
     swi file_readline, work_buffer
     jcs ok_close
 
-    //swi pprint_nl
     jsr string_add
 
     // store line ptr
@@ -88,6 +87,7 @@ get_lines:
 ok_close:
     ldx #4
     swi file_close
+    
     mov r0,#tmp_line
     lda #0
     mov (r0++),a
@@ -791,10 +791,13 @@ backspace_suppress_line:
     jmp end
 
 backspace_not_zero:
-    jsr suppress_line_at_cursor
+    clc
+    jsr insdel_line_at_cursor
     jmp navigation.update_and_go
     
 not_backspace:
+    cmp #RETURN
+    beq return
 
     //------------------------------------
     // insert standard character
@@ -846,18 +849,32 @@ end:
     jsr update_current_line
     jmp navigation.cursor_right
 
+    //------------------------------------
+    // Return key pressed : 
+    // check if was editing, split line,
+    // add new line which is work_buffer
+    //------------------------------------
+return:
+    jsr check_edit_end
+    sec
+    jsr insdel_line_at_cursor
+    jmp navigation.cursor_down
+
 insert_char:
     pstring(" ")
 
 }
 
 //----------------------------------------------------
-// suppress_line_at_cursor : mark line as zero bytes, 
-// suppress line from lines list, goto line-1
+// insdel_line_at_cursor : mark line as zero bytes, 
+// suppress or insert line from lines list
+//
+// input : C=1 = insert line, C=0 = suppress line
 //----------------------------------------------------
 
-suppress_line_at_cursor:
+insdel_line_at_cursor:
 {
+    stc action
     jsr goto_line_at_cursor
     lda #0
     sta tmp_line
@@ -882,6 +899,15 @@ again:
     bne not_current_line
     
     // current_line
+    lda action
+    beq delete_action
+    
+    // insert action
+    inc r0
+    inc r0
+    jmp not_current_line
+    
+delete_action:
     inc r1
     inc r1
 
@@ -901,8 +927,17 @@ suite:
     cmp total_lines+1
     bne again
 
+    lda action
+    bne end_insert
+
     decw total_lines
     rts
+end_insert:
+    incw total_lines
+    rts
+
+action:
+    .byte 0
 }
 
 //----------------------------------------------------
@@ -1447,12 +1482,11 @@ bam_root:
 
 malloc:
 {
-    stx how_much
+   stx how_much
    // lookup all allocated blocks first to see if one
    // has enough space left
    
    ldy #0
-   mov r0,#memory_start
 
 scan_bam:
     lda bam,y
@@ -1460,7 +1494,7 @@ scan_bam:
     
     sec
 test_bam:
-    mov r0,bam_root
+    mov r0,#bam_root
     mov r1,#memory_start
     swi bam_next
     bcs new_block
@@ -1494,9 +1528,10 @@ ok_size:
     // the new block free space is 255-X
 
 new_block:
+    mov r0,#bam_root
     mov r1,#memory_start
-    swi bam_get,bam_root
-
+    swi bam_get
+    
     lda #255
     sec
     sbc how_much
