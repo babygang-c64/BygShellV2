@@ -965,7 +965,6 @@ end_copy:
     lda #0
     mov (r0),a
     ldy #0
-    dex
     txa
     mov (r0),a
     rts
