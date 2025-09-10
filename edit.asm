@@ -17,9 +17,8 @@ pstring("EDIT")
 edit:
 {
     .label work_buffer = $ce00
-    .label params_buffer = $cd00
+    .label params_buffer = $cd80
     .label lines_ptr = $7800
-    .label buffer_edit = $7780  // relocate ?
 
     .label OPT_N=1
     
@@ -103,6 +102,10 @@ ok_close:
     sta BLNSW
     
 main_loop:
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    mov cursor_line,r0
     jsr navigation
     bcc main_loop
 
@@ -185,6 +188,8 @@ block_end_line:
 current_line:
     .word 0
 total_lines:
+    .word 0
+cursor_line:
     .word 0
 cmp_line:
     .word 0
@@ -824,18 +829,18 @@ backspace_at_end:
     jmp navigation.cursor_left
     
 backspace_suppress_line:
-    lda current_line
-    clc
-    adc cursor_y
+    lda cursor_line
     bne backspace_not_zero
-    lda current_line+1
-    adc #0
+    lda cursor_line+1
     bne backspace_not_zero
     jmp end
 
+    // suppression d'une ligne vide
 backspace_not_zero:
-    clc
-    jsr insdel_line_at_cursor
+    mov r0,cursor_line
+    jsr suppress_line
+    lda #0
+    sta is_editing
     jmp navigation.update_and_go
     
 not_backspace:
@@ -1743,7 +1748,7 @@ string_add:
 // input : r0 = line # to suppress
 //----------------------------------------------------
 
-suppress_line:
+insdel_calc_nb:
 {
     // tmp_line = how many lines to copy
     sec
@@ -1754,10 +1759,29 @@ suppress_line:
     sbc zr0h
     sta tmp_line+1
     decw tmp_line
+    rts
+}
+
+suppress_line:
+{
+    jsr insdel_calc_nb
     push r0    
 
     // r0 = read, r1 = write = pos to suppress
-    
+    jsr insdel_precalc
+    inc r0
+    inc r0
+
+    sec
+    jsr insdel_copy
+
+    decw total_lines
+    pop r0
+    rts
+}
+
+insdel_precalc:
+{
     asl zr0l
     rol zr0h
     clc
@@ -1768,10 +1792,12 @@ suppress_line:
     adc zr0h
     sta zr0h
     mov r1,r0
-    inc r0
-    inc r0
+    rts    
+}
+insdel_copy:
+{
+    stc sens
     ldy #0
-
 copie:
     lda (zr0l),y
     sta (zr1l),y
@@ -1779,20 +1805,32 @@ copie:
     lda (zr0l),y
     sta (zr1l),y
     dey
-    inc r0
-    inc r0
-    inc r1
-    inc r1
     
+    lda sens
+    bne supp_line
+
+    dec r0
+    dec r0
+    dec r1
+    dec r1    
+    jmp suite_copie
+
+supp_line:
+    inc r0
+    inc r0
+    inc r1
+    inc r1
+
+suite_copie:
     decw tmp_line
     lda tmp_line
     bne copie
     lda tmp_line+1
     bne copie
-
-    decw total_lines
-    pop r0
     rts
+
+sens:
+    .byte 0
 }
 
 //----------------------------------------------------
@@ -1803,56 +1841,22 @@ copie:
 
 insert_line:
 {
-    // nb_ins = how many lines to copy
-    sec
-    lda total_lines
-    sbc zr0l
-    sta tmp_line
-    lda total_lines+1
-    sbc zr0h
-    sta tmp_line+1
-    decw tmp_line
+    jsr insdel_calc_nb
     push r0
 
     // r0 = read = total, r1 = write = read + 1 
     mov r0, total_lines
-    asl zr0l
-    rol zr0h
-    clc
-    lda #<lines_ptr
-    adc zr0l
-    sta zr0l
-    lda #>lines_ptr
-    adc zr0h
-    sta zr0h
-    mov r1,r0
+    jsr insdel_precalc
     dec r0
     dec r0
-    ldy #0
-    
-copie:
-    lda (zr0l),y
-    sta (zr1l),y
-    iny
-    lda (zr0l),y
-    sta (zr1l),y
-    dey
-    dec r0
-    dec r0
-    dec r1
-    dec r1    
 
-    decw tmp_line
-    lda tmp_line
-    bne copie
-    lda tmp_line+1
-    bne copie
+    clc
+    jsr insdel_copy
 
     incw total_lines
     pop r0
     rts
 }
-
 
 } // edit
 
