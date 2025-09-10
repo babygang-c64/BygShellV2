@@ -1004,7 +1004,9 @@ end_remaining:
     mov r1,r0
     inc r0
     inc r0
-
+    incw tmp_line
+    
+    // r0 = dest, r1 = source, 
 copy_insert:
     mov a,(r1++)
     mov (r0++),a
@@ -1026,10 +1028,12 @@ copy_insert:
     cmp cmp_line+1
     bne copy_insert
     
+    inc r0
+    inc r0
     lda #<work_buffer
-    mov (r1++),a
+    mov (r0++),a
     lda #>work_buffer
-    mov (r1),a
+    mov (r0),a
 
     incw total_lines
     rts
