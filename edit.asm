@@ -791,10 +791,8 @@ edit_line_process:
     beq backspace_suppress_line
     
     // check if at end
-    lda cursor_x
-    clc
-    adc view_offset
-    cmp work_buffer
+    jsr get_true_x
+    cpx work_buffer
     beq backspace_at_end
     
     // not at end : suppress within string or join lines
@@ -888,10 +886,7 @@ end:
     clc
     rts
 
-    lda cursor_x
-    clc
-    adc view_offset
-    tax
+    jsr get_true_x
     inx
     lda navigation.current_key
     sta work_buffer,x
@@ -904,13 +899,25 @@ end:
     // add new line which is work_buffer
     //------------------------------------
 return:
-    jsr check_edit_end
-    sec
-    jsr insdel_line_at_cursor
-    lda #0
-    sta cursor_x
-    incw goto_line.ptr
-    incw goto_line.ptr
+    mov r0,cursor_line
+    jsr insert_line
+
+    mov r0,cursor_line
+    inc r0
+    jsr goto_line
+    mov r0, goto_line.ptr
+    push r0
+    lda #<work_buffer
+    mov (r0++),a
+    lda #>work_buffer
+    mov (r0),a
+    jsr get_true_x
+    jsr split_line
+    ldy #0
+    sty cursor_x
+    sty view_offset
+    pop r0
+    mov goto_line.ptr,r0
     jsr check_edit_end.force
     jsr update_screen
     jmp navigation.cursor_down
@@ -918,6 +925,63 @@ return:
 insert_char:
     pstring(" ")
 
+}
+
+//----------------------------------------------------
+// split line : split current line on X, remainder in
+// work_buffer
+//----------------------------------------------------
+
+split_line:
+{
+    jsr goto_line_at_cursor
+    push r0
+    txa
+    add r0, a
+    mov r1, #work_buffer
+    ldy #1
+copy:
+    mov a,(r0)
+    cmp #0
+    beq end_copy
+    mov (r1),a
+    iny
+    bne copy
+end_copy:
+    dey
+    tya
+    ldy #0
+    mov (r1),a
+    tay
+    iny
+    lda #0
+    mov (r1),a
+    
+    // mark end and length of left side of split
+    pop r0
+    txa
+    tay
+    iny
+    lda #0
+    mov (r0),a
+    ldy #0
+    dex
+    txa
+    mov (r0),a
+    rts
+}
+
+//----------------------------------------------------
+// get_true_x
+//----------------------------------------------------
+
+get_true_x:
+{
+    lda cursor_x
+    clc
+    adc view_offset
+    tax
+    rts
 }
 
 //----------------------------------------------------
@@ -942,155 +1006,6 @@ join_lines:
     sta work_buffer+1,y
     tay
     rts
-}
-
-//----------------------------------------------------
-// insdel_line_at_cursor : mark line as zero bytes, 
-// suppress or insert line from lines list
-//
-// input : C=1 = insert line, C=0 = suppress line
-//----------------------------------------------------
-
-insdel_line_at_cursor:
-{
-    bcc delete_line
-    jmp do_insert_line
-    
-delete_line:
-    lda #0
-    sta tmp_line
-    sta tmp_line+1
-
-    // current line length= 0
-    mov (r0),a
-
-    jsr init_insdel
-    
-    mov r0,#lines_ptr
-    mov r1,#lines_ptr
-    
-again:
-    // not current line ?
-    lda tmp_line
-    cmp cmp_line
-    bne not_current_line
-    lda tmp_line+1
-    cmp cmp_line+1
-    bne not_current_line
-    
-    inc r1
-    inc r1
-
-not_current_line:
-    // copy from r1 to r0
-    mov a,(r1++)
-    mov (r0++),a
-    mov a,(r1++)
-    mov (r0++),a
-
-suite:
-    incw tmp_line
-    lda tmp_line
-    cmp total_lines
-    bne again
-    lda tmp_line+1
-    cmp total_lines+1
-    bne again
-
-    decw total_lines
-    rts
-    
-init_insdel:
-    jsr goto_line_at_cursor
-    push r0
-    mov r0,current_line
-    lda cursor_y
-    add r0,a
-    mov cmp_line,r0
-    pop r0
-    rts
-
-do_insert_line:
-    jsr init_insdel
-    // adjust length = position of cursor X-1
-    lda cursor_x
-    clc
-    adc view_offset
-    mov (r0),a
-    tay
-    // copy remaining into work buffer
-    pha
-    iny
-    ldx #0
-
-copy_remaining:
-    mov a,(r0)
-    sta work_buffer+1,x
-    cmp #0
-    beq end_remaining
-    inx
-    iny
-    bne copy_remaining
-end_remaining:
-    inx
-    sta work_buffer+1,x
-    dex
-    stx work_buffer
-    pla
-    tay
-    iny
-    lda #0
-    mov (r0),a
-    tay
-    // copy lines : r1 = read, r0 = write
-    mov r0,total_lines
-    dec r0
-    mov tmp_line,r0
-    asl zr0l
-    rol zr0h
-    clc
-    lda #<lines_ptr
-    adc zr0l
-    sta zr0l
-    lda #>lines_ptr
-    adc zr0h
-    sta zr0h
-    mov r1,r0
-    inc r0
-    inc r0
-    incw tmp_line
-        
-    // r0 = dest, r1 = source, 
-copy_insert:
-    mov a,(r1)
-    mov (r0),a
-    iny
-    mov a,(r1)
-    mov (r0),a
-    dey
-    dec r0
-    dec r0
-    dec r1
-    dec r1
-    dec tmp_line
-    lda tmp_line
-    cmp cmp_line
-    bne copy_insert
-    lda tmp_line+1
-    cmp cmp_line+1
-    bne copy_insert
-    
-    inc r0
-    inc r0
-    lda #<work_buffer
-    mov (r0++),a
-    lda #>work_buffer
-    mov (r0),a
-
-    incw total_lines
-
-    rts
-
 }
 
 //----------------------------------------------------
@@ -1137,9 +1052,7 @@ edit_line_init:
 
 goto_line_at_cursor:
 {
-    mov r0,current_line
-    lda cursor_y
-    add r0, a
+    mov r0,cursor_line
     jmp goto_line
 }
 
@@ -1452,10 +1365,8 @@ status_cursor:
     jsr CHROUT
     ldy #0
     sty zr0h
-    lda cursor_x
-    clc
-    adc view_offset
-    sta zr0l
+    jsr get_true_x
+    stx zr0l
     ldx #%00000011
     swi pprint_int
     lda #','
