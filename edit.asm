@@ -708,7 +708,7 @@ check_edit_end:
     beq not_edited
     cmp #2
     bne not_edited
-
+force:
     ldx work_buffer
     inx
     jsr malloc
@@ -721,16 +721,21 @@ check_edit_end:
     mov r0, goto_line.ptr
     
     ldy #0
+    sty is_editing
+
     lda new_line
     sta (zr0l),y
     iny
     lda new_line+1
     sta (zr0l),y
     dey
-       
+    mov r0,new_line
+    mov a,(r0)
+    tay
+    iny
     lda #0
-    sta is_editing
-
+    mov (r0),a
+    tay
 not_edited:
     rts
 
@@ -792,8 +797,8 @@ edit_line_process:
     lda cursor_x
     bne not_backspace_start
     
-    // at start : join with previous line except if first line
-    inc $d020
+    // at start : join with previous line except if first line : todo
+    inc $d021
     jmp end
     
     // not at start : remove from string
@@ -893,6 +898,9 @@ return:
     jsr insdel_line_at_cursor
     lda #0
     sta cursor_x
+    incw goto_line.ptr
+    incw goto_line.ptr
+    jsr check_edit_end.force
     jsr update_screen
     jmp navigation.cursor_down
 
@@ -1016,12 +1024,7 @@ end_remaining:
     inc r0
     inc r0
     incw tmp_line
-    
-    mov $1000,r0
-    mov $1002,r1
-    mov $1004,tmp_line
-    mov $1006,cmp_line
-    
+        
     // r0 = dest, r1 = source, 
 copy_insert:
     mov a,(r1)
