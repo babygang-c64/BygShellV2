@@ -803,6 +803,7 @@ edit_line_process:
     jsr check_edit_end
     ldy #0
     sty cursor_x
+    brk
     jsr update_screen
     jmp navigation.cursor_up
     
@@ -948,7 +949,7 @@ join_lines:
 insdel_line_at_cursor:
 {
     bcc delete_line
-    jmp insert_line
+    jmp do_insert_line
     
 delete_line:
     lda #0
@@ -1004,7 +1005,7 @@ init_insdel:
     pop r0
     rts
 
-insert_line:
+do_insert_line:
     jsr init_insdel
     // adjust length = position of cursor X-1
     lda cursor_x
@@ -1736,4 +1737,122 @@ string_add:
     rts
 }
 
+//----------------------------------------------------
+// suppress_line : suppress line from list
+//
+// input : r0 = line # to suppress
+//----------------------------------------------------
+
+suppress_line:
+{
+    // tmp_line = how many lines to copy
+    sec
+    lda total_lines
+    sbc zr0l
+    sta tmp_line
+    lda total_lines+1
+    sbc zr0h
+    sta tmp_line+1
+    decw tmp_line
+    push r0    
+
+    // r0 = read, r1 = write = pos to suppress
+    
+    asl zr0l
+    rol zr0h
+    clc
+    lda #<lines_ptr
+    adc zr0l
+    sta zr0l
+    lda #>lines_ptr
+    adc zr0h
+    sta zr0h
+    mov r1,r0
+    inc r0
+    inc r0
+    ldy #0
+
+copie:
+    lda (zr0l),y
+    sta (zr1l),y
+    iny
+    lda (zr0l),y
+    sta (zr1l),y
+    dey
+    inc r0
+    inc r0
+    inc r1
+    inc r1
+    
+    decw tmp_line
+    lda tmp_line
+    bne copie
+    lda tmp_line+1
+    bne copie
+
+    decw total_lines
+    pop r0
+    rts
 }
+
+//----------------------------------------------------
+// insert_line : insert line in list
+//
+// input : r0 = line # to insert to
+//----------------------------------------------------
+
+insert_line:
+{
+    // nb_ins = how many lines to copy
+    sec
+    lda total_lines
+    sbc zr0l
+    sta tmp_line
+    lda total_lines+1
+    sbc zr0h
+    sta tmp_line+1
+    decw tmp_line
+    push r0
+
+    // r0 = read = total, r1 = write = read + 1 
+    mov r0, total_lines
+    asl zr0l
+    rol zr0h
+    clc
+    lda #<lines_ptr
+    adc zr0l
+    sta zr0l
+    lda #>lines_ptr
+    adc zr0h
+    sta zr0h
+    mov r1,r0
+    dec r0
+    dec r0
+    ldy #0
+    
+copie:
+    lda (zr0l),y
+    sta (zr1l),y
+    iny
+    lda (zr0l),y
+    sta (zr1l),y
+    dey
+    dec r0
+    dec r0
+    dec r1
+    dec r1    
+
+    decw tmp_line
+    lda tmp_line
+    bne copie
+    lda tmp_line+1
+    bne copie
+
+    incw total_lines
+    pop r0
+    rts
+}
+
+
+} // edit
+
