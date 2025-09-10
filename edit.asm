@@ -712,6 +712,7 @@ force:
     ldx work_buffer
     inx
     jsr malloc
+    mov $1000,r0
     mov new_line,r0
     mov r1,r0
     
@@ -771,7 +772,7 @@ edit_line_process:
 {
     lda navigation.current_key
     cmp #BACKSPACE
-    bne not_backspace
+    jne not_backspace
     
     //------------------------------------
     // Backspace
@@ -797,9 +798,13 @@ edit_line_process:
     lda cursor_x
     bne not_backspace_start
     
-    // at start : join with previous line except if first line : todo
-    inc $d021
-    jmp end
+    // at start : join with previous line except if first line : wip
+    jsr join_lines
+    jsr check_edit_end
+    ldy #0
+    sty cursor_x
+    jsr update_screen
+    jmp navigation.cursor_up
     
     // not at start : remove from string
 not_backspace_start:
@@ -907,6 +912,30 @@ return:
 insert_char:
     pstring(" ")
 
+}
+
+//----------------------------------------------------
+// join_lines : insert previous line in work_buffer
+//----------------------------------------------------
+
+join_lines:
+{
+    mov r0,goto_line.ptr
+    dec r0
+    dec r0
+    mov a,(r0++)
+    sta zr1l
+    mov a,(r0)
+    sta zr1h
+    mov r0,#work_buffer
+    
+    ldx #1
+    swi str_ins
+    ldy work_buffer
+    lda #0
+    sta work_buffer+1,y
+    tay
+    rts
 }
 
 //----------------------------------------------------
