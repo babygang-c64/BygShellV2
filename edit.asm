@@ -583,6 +583,11 @@ default_keypress:
     sta is_edited
     jsr status_changed
 
+    // copy line to work buffer except when return key
+    lda current_key
+    cmp #RETURN
+    beq already_editing
+
     jsr edit_line_init
 
 already_editing:
@@ -701,6 +706,8 @@ check_edit_end:
 {
     lda is_editing
     beq not_edited
+    cmp #2
+    bne not_edited
 
     ldx work_buffer
     inx
@@ -765,6 +772,9 @@ edit_line_process:
     // Backspace
     //------------------------------------
 
+    lda #2
+    sta is_editing
+
     // Backspace : if at end and not zero, decrease length
     lda work_buffer
     beq backspace_suppress_line
@@ -826,7 +836,8 @@ not_backspace:
     //------------------------------------
 
     // if at end, increase length and insert
-    
+    lda #2
+    sta is_editing
     lda work_buffer
     sec
     sbc view_offset
@@ -968,6 +979,7 @@ insert_line:
     pha
     iny
     ldx #0
+
 copy_remaining:
     mov a,(r0)
     sta work_buffer+1,x
@@ -986,7 +998,6 @@ end_remaining:
     iny
     lda #0
     mov (r0),a
-
     tay
     // copy lines : r1 = read, r0 = write
     mov r0,total_lines
@@ -1006,18 +1017,21 @@ end_remaining:
     inc r0
     incw tmp_line
     
+    mov $1000,r0
+    mov $1002,r1
+    mov $1004,tmp_line
+    mov $1006,cmp_line
+    
     // r0 = dest, r1 = source, 
 copy_insert:
-    mov a,(r1++)
-    mov (r0++),a
-    mov a,(r1++)
-    mov (r0++),a
+    mov a,(r1)
+    mov (r0),a
+    iny
+    mov a,(r1)
+    mov (r0),a
+    dey
     dec r0
     dec r0
-    dec r0
-    dec r0
-    dec r1
-    dec r1
     dec r1
     dec r1
     dec tmp_line
@@ -1036,6 +1050,7 @@ copy_insert:
     mov (r0),a
 
     incw total_lines
+
     rts
 
 }
@@ -1071,7 +1086,10 @@ edit_line_init:
     mov edited_line, r0
     mov r1,#work_buffer
     swi str_cpy
-    
+    ldy work_buffer
+    lda #0
+    sta work_buffer+1,y
+    tay
     rts
 }
 
