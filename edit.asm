@@ -707,7 +707,6 @@ check_edit_end:
     beq not_edited
 
 force:
-    inc $d020
     ldx work_buffer
     inx
     jsr malloc
@@ -858,11 +857,33 @@ edit_line_process:
     bne not_backspace_start
     
     // at start : join with previous line except if first line : wip
+    
+    lda cursor_line
+    bne not_first
+    lda cursor_line+1
+    jeq end
+
+not_first:
+    // if previous line is empty, just suppress it, if not join lines
+    
+    ldx cursor_y
+    dex
+    lda lines_length,x
+    beq go_suppress
+
     jsr join_lines
+
+go_suppress:
     jsr check_edit_end
+    ldx cursor_y
+    dex
+    lda lines_length,x
+    sta cursor_x
     ldy #0
-    sty cursor_x
-    brk
+    sty view_offset
+    mov r0,cursor_line
+    dec r0
+    jsr suppress_line
     jsr update_screen
     jmp navigation.cursor_up
     
@@ -1775,6 +1796,12 @@ insert_line:
     jsr insdel_calc_nb
     push r0
 
+    lda tmp_line
+    bne ok_insert
+    lda tmp_line+1
+    beq no_need
+    
+ok_insert:
     // r0 = read = total, r1 = write = read + 1 
     mov r0, total_lines
     jsr insdel_precalc
@@ -1784,6 +1811,7 @@ insert_line:
     clc
     jsr insdel_copy
 
+no_need:
     incw total_lines
     pop r0
     rts
