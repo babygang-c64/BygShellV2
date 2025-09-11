@@ -1130,6 +1130,10 @@ add4:
     jsr goto_line_at_cursor
     
     mov a,(r0++)
+    
+    ldx cursor_y
+    sta lines_length,x
+    
     tax
     stx cpt_x
     cmp #0
@@ -1142,6 +1146,9 @@ paint:
     jsr ascii_to_screen
     mov (r1++),a
     inc cpt_x
+    lda cpt_x
+    cmp #40
+    beq fin
     dex
     bne paint
 
@@ -1151,6 +1158,7 @@ paint_pad:
     ldx cpt_x
     cpx #40
     beq fin
+    bcs fin
     mov (r1++),a
     inc cpt_x
     bne paint_pad
