@@ -1,7 +1,4 @@
-
-abcABC
-
-edit : small text editor
+*** Edit : small text editor ***
 
 -- File management --
 
@@ -14,4 +11,6 @@ ctrl-s : save file
 ctrl-a   : start of line
 ctrl-e   : end of line
 ctrl-w   : next word
-ctrl-k-t : top of document
+ctrl-k t : top of document
+ctrl-k + : set mark
+ctrl-k - : goto mark

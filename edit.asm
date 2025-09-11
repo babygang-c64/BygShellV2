@@ -40,6 +40,8 @@ edit:
     swi str_cpy
 
     jsr status_line
+
+empty_file:
     mov r0,#new_file
     jsr string_add
     mov r1,tmp_line
@@ -69,13 +71,13 @@ load_file:
     mov r1,#file_suffix
     swi str_cat
 
+    jsr status_line
+
     pop r0
     ldx #4
     clc
     swi file_open
-    jcs error
-    
-    jsr status_line
+    jcs empty_file
 
     ldx #4
     jsr CHKIN
