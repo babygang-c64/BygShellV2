@@ -26,13 +26,32 @@ edit:
     swi param_init,buffer,options_edit
     jcs error
     
-    ldx nb_params
-//    jeq help
-
     // editor init
     ldy #0
     jsr init
 
+    ldx nb_params
+    bne load_file
+
+    // no input file = new blank file
+    
+    mov r1,#filename
+    mov r0,#default_filename
+    swi str_cpy
+
+    jsr status_line
+    mov r0,#new_file
+    jsr string_add
+    mov r1,tmp_line
+    mov (r1), r0
+    incw tmp_line
+    incw tmp_line
+    incw total_lines
+
+    jmp blank_file
+    
+
+load_file:
     // load file
     
     ldy #0
@@ -86,15 +105,14 @@ get_lines:
 ok_close:
     ldx #4
     swi file_close
-    
+
     mov r0,#tmp_line
     lda #0
     mov (r0++),a
     mov (r0),a
-    
-    lda #0
+
+blank_file:
     jsr fill_screen
-    
     jsr status_line
     jsr navigation.nav_cursor
     
@@ -134,6 +152,11 @@ file_prefix:
     pstring("@S:")
 file_suffix:
     pstring(",W")
+default_filename:
+    pstring("@S:TMP,W")
+new_file:
+    pstring("")
+
 
 init:
     sty view_offset

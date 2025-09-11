@@ -50,6 +50,7 @@ ${VICE_PATH}/c1541 -attach ${disk} -write shell_pp.prg "shell" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test.txt "test" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write edit.hlp "edit.hlp" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write empty.txt "empty" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cartridge_header.asm "crt.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write cat.asm "cat.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write wc.asm "wc.asm" -silent
