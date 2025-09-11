@@ -191,6 +191,8 @@ total_lines:
     .word 0
 cursor_line:
     .word 0
+cursor_line_ptr:
+    .word 0
 cmp_line:
     .word 0
 tmp_line:
@@ -583,17 +585,8 @@ found_word:
 default_keypress:
     lda is_editing
     bne already_editing
-    inc is_editing
-    lda #1
-    sta is_edited
-    jsr status_changed
-
-    // copy line to work buffer except when return key
-    lda current_key
-    cmp #RETURN
-    beq already_editing
-
-    jsr edit_line_init
+    
+    jsr init_line_edit
 
 already_editing:
     jsr edit_line_process
@@ -710,31 +703,33 @@ key_jump_masterkey:
 check_edit_end:
 {
     lda is_editing
+    sta $1004
     beq not_edited
-    cmp #2
-    bne not_edited
+
 force:
+    inc $d020
     ldx work_buffer
     inx
     jsr malloc
-    mov $1000,r0
     mov new_line,r0
+    mov $1000,r0
     mov r1,r0
-    
+
+    // copy editing line to new space    
     mov r0,#work_buffer
     swi str_cpy
     
-    mov r0, goto_line.ptr
-    
-    ldy #0
-    sty is_editing
-
+    // update pointer in list
+    mov r0, cursor_line_ptr
+    mov $1002,r0
     lda new_line
     sta (zr0l),y
     iny
     lda new_line+1
     sta (zr0l),y
     dey
+    
+    // add trailing zero
     mov r0,new_line
     mov a,(r0)
     tay
@@ -742,11 +737,75 @@ force:
     lda #0
     mov (r0),a
     tay
+    sta is_editing
+
 not_edited:
     rts
 
 new_line:
     .word 0
+}
+
+//----------------------------------------------------
+// init_line_edit
+//----------------------------------------------------
+
+init_line_edit:
+{
+    lda #1
+    sta is_editing
+    sta is_edited
+    jsr status_changed
+
+    // copy line to work buffer except when return key
+    lda navigation.current_key
+    cmp #RETURN
+    beq is_return
+
+    jsr goto_line_at_cursor
+    
+    // ici r0 = edited_line
+    
+    mov edited_line,r0
+    
+    mov r1,cursor_line_ptr
+    
+    // manque : mov (r1),#addr
+    ldy #0
+    lda #<work_buffer
+    sta (zr1l),y
+    iny
+    lda #>work_buffer
+    sta (zr1l),y
+    dey
+
+    // copy OK
+    mov edited_line, r0
+    mov r1,#work_buffer
+    swi str_cpy
+    ldy work_buffer
+    lda #0
+    sta work_buffer+1,y
+    tay
+    rts
+    
+is_return:
+    mov r0, cursor_line
+    asl zr0l
+    rol zr0h
+    clc
+    lda zr0l
+    adc #<lines_ptr
+    sta cursor_line_ptr
+    lda zr0h
+    adc #>lines_ptr
+    sta cursor_line_ptr+1
+    
+    // when return key is the first edit key,
+    // is_editing = 2
+
+    inc is_editing
+    rts
 }
 
 //----------------------------------------------------
@@ -782,9 +841,6 @@ edit_line_process:
     //------------------------------------
     // Backspace
     //------------------------------------
-
-    lda #2
-    sta is_editing
 
     // Backspace : if at end and not zero, decrease length
     lda work_buffer
@@ -850,8 +906,6 @@ not_backspace:
     //------------------------------------
 
     // if at end, increase length and insert
-    lda #2
-    sta is_editing
     lda work_buffer
     sec
     sbc view_offset
@@ -899,14 +953,20 @@ end:
     // add new line which is work_buffer
     //------------------------------------
 return:
+    lda is_editing
+    cmp #2
+    beq return_key_alone
+    jsr check_edit_end
+    lda #1
+    sta is_editing
+
+return_key_alone:
     mov r0,cursor_line
     jsr insert_line
-
     mov r0,cursor_line
     inc r0
     jsr goto_line
-    mov r0, goto_line.ptr
-    push r0
+    mov r0,cursor_line_ptr
     lda #<work_buffer
     mov (r0++),a
     lda #>work_buffer
@@ -916,9 +976,9 @@ return:
     ldy #0
     sty cursor_x
     sty view_offset
-    pop r0
-    mov goto_line.ptr,r0
-    jsr check_edit_end.force
+    incw cursor_line_ptr
+    incw cursor_line_ptr
+    jsr check_edit_end
     jsr update_screen
     jmp navigation.cursor_down
 
@@ -989,7 +1049,7 @@ get_true_x:
 
 join_lines:
 {
-    mov r0,goto_line.ptr
+    mov r0,cursor_line_ptr
     dec r0
     dec r0
     mov a,(r0++)
@@ -1000,44 +1060,6 @@ join_lines:
     
     ldx #1
     swi str_ins
-    ldy work_buffer
-    lda #0
-    sta work_buffer+1,y
-    tay
-    rts
-}
-
-//----------------------------------------------------
-// edit_line_init : start editing line
-//
-// edited_line = source of line to edit
-// update line reference with work_buffer
-// copy source line to work_buffer
-//----------------------------------------------------
-
-edit_line_init:
-{
-    jsr goto_line_at_cursor
-    
-    // ici r0 = edited_line
-    
-    mov edited_line,r0
-    
-    mov r1,goto_line.ptr
-    
-    // manque : mov (r1),#addr
-    ldy #0
-    lda #<work_buffer
-    sta (zr1l),y
-    iny
-    lda #>work_buffer
-    sta (zr1l),y
-    dey
-
-    // copy OK
-    mov edited_line, r0
-    mov r1,#work_buffer
-    swi str_cpy
     ldy work_buffer
     lda #0
     sta work_buffer+1,y
@@ -1316,7 +1338,8 @@ not_uppercase:
 // goto_line : get pointer of specific line
 //
 // input : line number in R0
-// output : line buffer in R0
+// output : line buffer in R0, ptr to line in 
+// cursor_line_ptr
 //----------------------------------------------------
 
 goto_line:
@@ -1327,12 +1350,12 @@ goto_line:
     lda zr0l
     adc #<lines_ptr
     sta zr0l
-    sta ptr
+    sta cursor_line_ptr
 
     lda zr0h
     adc #>lines_ptr
     sta zr0h
-    sta ptr+1
+    sta cursor_line_ptr+1
     ldy #0
     lda (zr0l),y
     pha
@@ -1343,8 +1366,6 @@ goto_line:
     pla
     sta zr0l    
     rts
-ptr:
-    .word 0
 }
 
 //----------------------------------------------------
