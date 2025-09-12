@@ -95,11 +95,15 @@ boucle_cat:
     bcs ok_close
 
     swi print_hex_buffer
+    lda #13
+    jsr CHROUT
     jmp boucle_cat
 
 derniere_ligne_hex:
     swi pipe_output
     swi print_hex_buffer
+    lda #13
+    jsr CHROUT
     jmp ok_close
     
 pas_hexdump:    
