@@ -19,6 +19,7 @@ menu:
     .label work_buffer = $ce00
     .label params_buffer = $cd80
     .label menu_data = $cc00
+    .label save_screen = $7D00
 
     .label OPT_N=1
     
@@ -34,6 +35,7 @@ menu:
     jsr navigation
     
     lda #0
+    sta saved
     sta zr0h
     ldx selected_item
     inx
@@ -135,6 +137,7 @@ not_zero_up:
     jmp boucle
 
 fin:
+    jsr restore_screen
     lda #0
     sta BLNSW
     jsr unblink_cursor
@@ -175,6 +178,10 @@ fin_params:
 
 paint_menu:
 {
+    lda saved
+    bne is_saved
+    mov r1,#save_screen
+is_saved:
     sec
     mov r0,#$0400+38
     sec
@@ -239,9 +246,17 @@ ok_len:
     cmp nb_items
     bne boucle
 fin_params:
+    lda #1
+    sta saved
     rts
 
 write_char:
+    pha
+    lda saved
+    bne already_saved
+    jsr save_screen_data
+already_saved:
+    pla
     sta screen_adr:$0400,x
     lda cur_item
     cmp selected_item
@@ -255,13 +270,113 @@ do_color:
     sta color_adr:$d800,x
     inx
     rts
-    
+
+save_screen_data:
+    lda screen_adr
+    sta read_screen
+    sta read_color
+    lda screen_adr+1
+    sta read_screen+1
+    clc
+    adc #$d4
+    sta read_color+1
+    lda read_screen:$0400,x
+    mov (r1++),a
+    lda read_color:$d800,x
+    mov (r1++),a
+    rts
+
 entry_len:
     .byte 0
 entry_length:
     .byte 0
 cur_item:
     .byte 0
+}
+
+restore_screen:
+{
+    mov r1,#save_screen
+    sec
+    mov r0,#$0400+38
+    sec
+    lda zr0l
+    sbc max_length
+    sta zr0l
+    lda zr0h
+    sbc #0
+    sta zr0h
+    mov screen_adr,r0
+    clc
+    lda zr0h
+    adc #$d4
+    sta zr0h
+    mov color_adr,r0
+    ldy #0
+    mov menu_data_ptr,#menu_data
+    mov r0,menu_data_ptr
+    sty cur_item
+boucle:
+    ldx #0
+    mov a,(r1++)
+    jsr write_char
+    mov a,(r0++)
+    sta entry_len
+    sta entry_length
+boucle_entry:
+    mov a,(r0++)
+    mov a,(r1++)
+    jsr write_char
+    dec entry_len
+    bne boucle_entry
+    
+pad:
+    lda entry_length
+    cmp max_length
+    beq ok_len
+    mov a,(r1++)
+    jsr write_char
+    inc entry_length
+    jmp pad
+    
+ok_len:
+    mov a,(r1++)
+    jsr write_char
+    clc
+    lda #40
+    adc screen_adr
+    sta screen_adr
+    lda screen_adr+1
+    adc #0
+    sta screen_adr+1
+    clc
+    lda #40
+    adc color_adr
+    sta color_adr
+    lda color_adr+1
+    adc #0
+    sta color_adr+1
+    inc cur_item
+    lda cur_item
+    cmp nb_items
+    jne boucle
+fin_params:
+    rts
+
+entry_len:
+    .byte 0
+entry_length:
+    .byte 0
+cur_item:
+    .byte 0
+    
+write_char:
+    sta screen_adr:$0400,x
+    mov a,(r1++)
+    sta color_adr:$d800,x
+    inx
+    rts
+
 }
 
 //----------------------------------------------------
@@ -283,5 +398,6 @@ unblink_cursor:
 blink_off:
     rts
 }
+
 
 } // menu
