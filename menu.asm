@@ -39,6 +39,17 @@ menu:
     inx
     stx zr0l
     swi return_int
+    
+    jsr get_item
+    mov r1, #string_storage
+    swi str_cpy
+    sta string_len
+    tay
+    lda #0
+    sta (zr1l),y
+    tay
+    swi set_basic_string,return_string
+    
     clc
     rts
 
@@ -56,6 +67,41 @@ menu_data_ptr:
     .word 0
 nb_items:
     .byte 0
+saved:
+    .byte 0
+    
+return_string:
+    .text "SH$"
+string_len:
+    .byte 15
+    .word string_storage
+string_storage:
+    .fill 64,0
+
+
+// get_item : get item at selected_item position in R0
+get_item:
+{
+    ldy #0
+    sty pos
+    mov menu_data_ptr,#menu_data
+    mov r0,menu_data_ptr
+boucle:
+    lda pos
+    cmp selected_item
+    beq fin
+    
+    mov a,(r0)
+    add r0,a
+    inc r0
+    inc pos
+    bne boucle
+
+fin:
+    rts
+pos:
+    .byte 0
+}
 
 navigation:
 {
