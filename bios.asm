@@ -73,6 +73,9 @@
 .label bam_init=93
 .label bam_next=95
 .label bam_get=97
+.label node_insert=99
+.label node_delete=101
+.label return_int=103
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -124,6 +127,10 @@ bios_jmp:
     .word do_bam_init
     .word do_bam_next
     .word do_bam_get
+    .word do_node_insert
+    .word do_node_delete
+    .word do_return_int
+
 
 * = * "BIOS code"
 
@@ -896,8 +903,6 @@ suite_hex:
     ldx #8
     jsr print_hex_text
 
-    lda #13
-    jsr CHROUT
     add r1, #8
     clc
     rts
@@ -1498,6 +1503,164 @@ error:
 }
 
 //===============================================================
+// Nodes : routines to manage list of pointers
+//
+// node_delete : delete existing node
+// node_insert : insert new node 
+//
+// Data structure (through r1) :
+//
+// total_entries = word
+// entries = words
+//
+// uses ztmp
+//===============================================================
+
+//---------------------------------------------------------------
+// node_calc_nb : calculates number of moves for copy
+//---------------------------------------------------------------
+
+node_calc_nb:
+{
+    // tmp_line = how many lines to copy
+    sec
+    lda zr1l
+    sbc zr0l
+    sta ztmp
+    lda zr1h
+    sbc zr0h
+    sta ztmp+1
+    decw ztmp
+    rts
+}
+
+//---------------------------------------------------------------
+// node_precalc : calculates position of node in list =
+// r2 =  2 * r0 + 2 + r1
+//---------------------------------------------------------------
+
+node_precalc:
+{
+    asl zr0l
+    rol zr0h
+    add r0,#2
+    clc
+    lda zr1l
+    adc zr0l
+    sta zr0l
+    lda zr1h
+    adc zr0h
+    sta zr0h
+    mov r2,r0
+    sta $1000
+    brk
+    rts    
+}
+
+//---------------------------------------------------------------
+// node_copy : copy sequence for insert / delete
+//---------------------------------------------------------------
+
+node_copy:
+{
+    stc sens
+    ldy #0
+copie:
+    lda (zr0l),y
+    sta (zr2l),y
+    iny
+    lda (zr0l),y
+    sta (zr2l),y
+    dey
+    
+    lda sens
+    bne supp_line
+
+    dec r0
+    dec r0
+    dec r2
+    dec r2    
+    jmp suite_copie
+
+supp_line:
+    inc r0
+    inc r0
+    inc r2
+    inc r2
+
+suite_copie:
+    decw ztmp
+    lda ztmp
+    bne copie
+    lda ztmp+1
+    bne copie
+    rts
+
+.label sens = vars
+}
+
+//---------------------------------------------------------------
+// node_delete : insert node at position r0 in list described 
+// at r1
+//---------------------------------------------------------------
+
+do_node_delete:
+{
+    jsr node_calc_nb
+    push r0    
+
+    // r0 = read, r2 = write = pos to suppress
+    jsr node_precalc
+    inc r0
+    inc r0
+
+    sec
+    jsr node_copy
+
+    mov r0,(r1)
+    dec r0
+    mov (r1),r0
+
+    pop r0
+    clc
+    rts
+}
+
+//----------------------------------------------------
+// node_insert : insert node in list
+//----------------------------------------------------
+
+do_node_insert:
+{
+    jsr node_calc_nb
+    push r0
+
+    lda ztmp
+    bne ok_insert
+    lda ztmp+1
+    beq no_need
+    
+ok_insert:
+    // r0 = read = total, r2 = write = read + 1 
+    mov r0, (r1)
+    jsr node_precalc
+    dec r0
+    dec r0
+
+    clc
+    jsr node_copy
+
+no_need:
+    mov r0,(r1)
+    dec r0
+    mov (r1),r0
+
+    pop r0
+    clc
+    rts
+}
+
+//===============================================================
 // pstring routines
 //
 // str_split
@@ -1512,7 +1675,7 @@ error:
 // lines_goto
 // is_filter
 //
-// manque :
+// missing from v1 :
 //
 // str_empty
 // str_del
@@ -2498,6 +2661,45 @@ do_pprinthex8a_swi:
     ldy #0
     jmp do_pprinthex8a
 }
+
+
+//---------------------------------------------------------------
+// return_int : return int value to variable SH%
+//
+// input : r0 = value
+//---------------------------------------------------------------
+
+do_return_int:
+{
+    lda $7a
+    pha
+    lda $7b
+    pha
+    
+    lda #<return_var_int
+    sta $7a
+    lda #>return_var_int
+    sta $7b
+    jsr $b08b
+    ldy #2
+    lda zr0h
+    sta ($5f),y
+    iny
+    lda zr0l
+    sta ($5f),y
+    ldy #0
+    
+    pla
+    sta $7b
+    pla
+    sta $7a
+    clc
+    rts
+}
+
+return_var_int:
+    .text "SH%"
+    .byte 0
 
 
 } // namespace bios

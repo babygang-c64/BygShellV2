@@ -370,6 +370,10 @@ ok_params:
     swi str_next
     push r0
     swi str_next
+    mov a,(r0)
+    cmp #4
+    jne not_address
+
     swi hex2int
     mov stop_address, r0
     pop r0
@@ -386,6 +390,12 @@ juste_8:
     pop r0
 
 boucle_hex:
+    lda #'*'
+    jsr CHROUT
+    lda #'M'
+    jsr CHROUT
+    lda #' '
+    jsr CHROUT
     mov r1, r0
     ldx #0
 
@@ -413,8 +423,14 @@ prep_buffer:
     bcc boucle_hex
 
 fin_hex:
+    lda #13
+    jsr CHROUT
     sec
     rts
+
+not_address:
+    pop r0
+    jmp fin_hex
 
 .label stop_address = vars
 .label nb_bytes = vars+1

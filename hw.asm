@@ -39,6 +39,31 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    mov r0,#$1001
+    swi return_int
+    clc
+    rts
+
+    // nodes list tests
+
+    mov r1,#list_root
+    mov $1002,r1
+    mov r0,2
+    swi node_delete
+
+    clc
+    rts
+
+list_root:
+    .word 5
+list:
+    .word $0000
+    .word $0101
+    .word $0202
+    .word $0303
+    .word $0404
+    .word $5555
+
     //-- init options
     sec
     swi param_init,buffer,options_hw

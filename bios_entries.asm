@@ -60,6 +60,9 @@
     .label bam_init=93
     .label bam_next=95
     .label bam_get=97
+    .label node_insert=99
+    .label node_delete=101
+    .label return_int=103
 }
 
 //===============================================================
