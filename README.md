@@ -688,7 +688,7 @@ print first lines of files
 
 **MENU**
 
-![Menu can be on left or right](images/images/menuR.jpeg)
+![Menu can be on left or right](images/menuR.png)
 
 ```
 *menu <item>...
