@@ -662,3 +662,17 @@ print first lines of files
     options :
     K = wait for keypress
 ```
+
+**EDIT**
+```
+*edit [<file>]
+    small text file editor, see edit.hlp
+    default filename for new files is tmp
+```
+
+**MENU**
+```
+*menu <item>...
+    menu popup, chosen item number in sh% and item content in sh$
+    you can mix directory patterns in the items list
+```

@@ -21,14 +21,14 @@ menu:
     .label menu_data = $cc00
     .label save_screen = $7D00
 
-    .label OPT_N=1
+    .label OPT_L=1
     
     sec
     swi param_init,buffer,options_menu
     jcs error
     
     ldx nb_params
-    beq error
+    jeq help
     
     mov menu_data_ptr,#menu_data
     jsr get_max_length
@@ -60,7 +60,7 @@ error:
     rts
 
 options_menu:
-    pstring("N")
+    pstring("L")
 selected_item:
     .byte 0
 max_length:
@@ -176,12 +176,17 @@ fin_params:
     rts
 }
 
-paint_menu:
+calc_start_position:
 {
-    lda saved
-    bne is_saved
-    mov r1,#save_screen
-is_saved:
+    lda options_params
+    and #OPT_L
+    beq pos_right
+    
+    // pos_left
+    mov r0,#$0400
+    rts
+    
+pos_right:
     sec
     mov r0,#$0400+38
     sec
@@ -191,12 +196,24 @@ is_saved:
     lda zr0h
     sbc #0
     sta zr0h
+    rts
+}
+
+paint_menu:
+{
+    lda saved
+    bne is_saved
+    mov r1,#save_screen
+
+is_saved:
+    jsr calc_start_position
     mov screen_adr,r0
     clc
     lda zr0h
     adc #$d4
     sta zr0h
-    mov color_adr,r0
+    mov color_adr,r0    
+    
     ldy #0
     mov menu_data_ptr,#menu_data
     mov r0,menu_data_ptr
@@ -297,15 +314,7 @@ cur_item:
 restore_screen:
 {
     mov r1,#save_screen
-    sec
-    mov r0,#$0400+38
-    sec
-    lda zr0l
-    sbc max_length
-    sta zr0l
-    lda zr0h
-    sbc #0
-    sta zr0h
+    jsr calc_start_position
     mov screen_adr,r0
     clc
     lda zr0h
@@ -377,6 +386,22 @@ write_char:
     inx
     rts
 
+}
+
+//----------------------------------------------------
+// help : display help messages
+//----------------------------------------------------
+
+help:
+{
+    swi pprint_lines,help_msg
+    sec
+    rts
+    
+help_msg:
+    pstring("*MENU [ITEM OR FILE PATTERN] [-L]")
+    pstring(" L = PLACE MENU ON LEFT")
+    .byte 0
 }
 
 //----------------------------------------------------
