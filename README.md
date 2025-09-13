@@ -56,6 +56,107 @@ All external commands can :
 - HELP : lists the internal commands and retrieves help for internal commands
 - M : memory dump
 
+## External commands
+
+**CAT**
+```
+*cat <file> [<file> ...]
+
+print file(s) contents to screen
+    options : 
+    N = numbers all lines
+    E = print $ at EOL
+    B = numbers all non empty lines
+    P = paginates output
+    H = hexdump
+    A = read C64 binary start address for hexdump
+```
+
+**WC**
+```
+*wc <file> [<file> ...]
+
+count lines / words / bytes of files
+    options :
+    L = count lines
+    W = count words
+    C = count bytes
+    Q = don't print filename
+```
+
+**SEARCH**
+```
+*search <pattern> <file> [<file> ...]
+
+search for pattern in files
+    options :
+    N = print line number
+    L = print only line number
+    V = lines not matching
+    C = count lines matching
+```
+
+**HEAD**
+```
+*head <file> [<file> ...]
+
+print first lines of files
+    options :
+    N = change max lines number
+    Q = no filename
+    V = always print filename
+    P = paginate output
+```
+
+**KOALA**
+```
+*koala <image>
+    load and view Koala format image (.KLA file)
+    options :
+    K = wait for keypress
+```
+
+**EDIT**
+
+![Edit is a small text editor](images/Edit.png)
+
+
+```
+*edit [<file>]
+    small text file editor, see edit.hlp
+    default filename for new files is tmp
+
+    -- File management --
+
+    run/stop : quit without saving
+    ctrl-x : quit and save
+    ctrl-s : save file
+    
+    -- Editor --
+    
+    ctrl-a   : start of line
+    ctrl-e   : end of line
+    ctrl-w   : next word
+    ctrl-k t : top of document
+    ctrl-k e : end of document
+    ctrl-k + : set mark
+    ctrl-k - : goto mark
+```
+
+**MENU**
+
+![Menu can be on left or right](images/menuR.png)
+
+```
+*menu <item>...
+    menu popup, chosen item number in sh% and item content in sh$
+    you can mix directory patterns in the items list
+    when run/stop or q/x are pressed, sh%=0, sh$= non affected
+    
+    options:
+    L = menu on left side (right side by default)
+```
+
 ## Data structures and provided "framework"
 
 Note : this is beeing reviewed as a lot has moved, not all functions are available in the BIOS,
@@ -603,99 +704,3 @@ Y = bit to set in A
     C=1 if wildcards were found
 ```
 
-# External commands
-
-**CAT**
-```
-*cat <file> [<file> ...]
-
-print file(s) contents to screen
-    options : 
-    N = numbers all lines
-    E = print $ at EOL
-    B = numbers all non empty lines
-    P = paginates output
-    H = hexdump
-    A = read C64 binary start address for hexdump
-```
-
-**WC**
-```
-*wc <file> [<file> ...]
-
-count lines / words / bytes of files
-    options :
-    L = count lines
-    W = count words
-    C = count bytes
-    Q = don't print filename
-```
-
-**SEARCH**
-```
-*search <pattern> <file> [<file> ...]
-
-search for pattern in files
-    options :
-    N = print line number
-    L = print only line number
-    V = lines not matching
-    C = count lines matching
-```
-
-**HEAD**
-```
-*head <file> [<file> ...]
-
-print first lines of files
-    options :
-    N = change max lines number
-    Q = no filename
-    V = always print filename
-    P = paginate output
-```
-
-**KOALA**
-```
-*koala <image>
-    load and view Koala format image (.KLA file)
-    options :
-    K = wait for keypress
-```
-
-**EDIT**
-```
-*edit [<file>]
-    small text file editor, see edit.hlp
-    default filename for new files is tmp
-
-    -- File management --
-
-    run/stop : quit without saving
-    ctrl-x : quit and save
-    ctrl-s : save file
-    
-    -- Editor --
-    
-    ctrl-a   : start of line
-    ctrl-e   : end of line
-    ctrl-w   : next word
-    ctrl-k t : top of document
-    ctrl-k e : end of document
-    ctrl-k + : set mark
-    ctrl-k - : goto mark
-```
-
-**MENU**
-
-![Menu can be on left or right](images/menuR.png)
-
-```
-*menu <item>...
-    menu popup, chosen item number in sh% and item content in sh$
-    you can mix directory patterns in the items list
-    when run/stop or q/x are pressed, sh%=0, sh$= non affected
-    
-    options:
-    L = menu on left side (right side by default)
-```
