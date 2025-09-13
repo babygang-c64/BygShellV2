@@ -124,9 +124,7 @@ blank_file:
     sta BLNSW
     
 main_loop:
-    mov r0,current_line
-    lda cursor_y
-    add r0,a
+    jsr get_true_y
     mov cursor_line,r0
     jsr navigation
     bcc main_loop
@@ -201,16 +199,14 @@ mark_x:
 mark_view_offset:
     .byte 0
 mark_line:
+    .word 0
+mark_end_x:
     .byte 0
+mark_end_view_offset:
+    .byte 0
+mark_end_line:
+    .word 0
 block_set:
-    .byte 0
-block_start_x:
-    .byte 0
-block_start_line:
-    .byte 0
-block_end_x:
-    .byte 0
-block_end_line:
     .byte 0
 current_line:
     .word 0
@@ -374,17 +370,30 @@ master_e:
 
     //--------------------------------
     // MASTER-+ : set mark
+    // MASTER-B : set start of block
     //--------------------------------
 
+master_set_start:
 master_set_mark:
-    mov r0,current_line
-    lda cursor_y
-    add r0,a
+    jsr get_true_y
     mov mark_line,r0
     lda cursor_x
     sta mark_x
     lda view_offset
     sta mark_view_offset
+    jmp cancel_master
+
+    //--------------------------------
+    // MASTER-K : set end of block
+    //--------------------------------
+
+master_set_end:
+    jsr get_true_y
+    mov mark_end_line,r0
+    lda cursor_x
+    sta mark_end_x
+    lda view_offset
+    sta mark_end_view_offset
     jmp cancel_master
     
     //--------------------------------
@@ -447,9 +456,7 @@ not_ok_left:
 
 start_ok:
     // move at end of previous line
-    mov r0,current_line
-    lda cursor_y
-    add r0,a
+    jsr get_true_y
     dec r0
     
     jsr goto_line
@@ -699,6 +706,10 @@ nav_keys_master:
     .word master_t
     .byte 'E'
     .word master_e
+    .byte 'B'
+    .word master_set_start
+    .byte 'B'
+    .word master_set_end
     .byte '+'
     .word master_set_mark
     .byte '-'
@@ -1095,7 +1106,19 @@ end_copy:
 }
 
 //----------------------------------------------------
-// get_true_x
+// get_true_y : get absolute line
+//----------------------------------------------------
+
+get_true_y:
+{
+    mov r0,current_line
+    lda cursor_y
+    add r0,a
+    rts
+}
+
+//----------------------------------------------------
+// get_true_x : get absolute X position in line
 //----------------------------------------------------
 
 get_true_x:
