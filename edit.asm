@@ -728,7 +728,6 @@ key_jump_masterkey:
 check_edit_end:
 {
     lda is_editing
-    sta $1004
     beq not_edited
 
 force:
@@ -736,7 +735,6 @@ force:
     inx
     jsr malloc
     mov new_line,r0
-    mov $1000,r0
     mov r1,r0
 
     // copy editing line to new space    
@@ -745,7 +743,6 @@ force:
     
     // update pointer in list
     mov r0, cursor_line_ptr
-    mov $1002,r0
     lda new_line
     sta (zr0l),y
     iny

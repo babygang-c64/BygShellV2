@@ -61,7 +61,7 @@ ${VICE_PATH}/c1541 -attach ${disk} -write "jiffymon v2" "jiffymonv2" -silent
 build_command cat
 build_command wc
 build_command search
-build_command hw
+build_command hw -symbolfile
 build_command koala
 build_command head
 build_command mon

@@ -28,7 +28,7 @@
 .label zr1 = $05
 .label zr1l = zr1
 .label zr1h = zr1+1
-.label zr2 = $96
+.label zr2 = $b4
 .label zr2l = zr2
 .label zr2h = zr2+1
 .label zr3 = $b0
@@ -37,10 +37,10 @@
 .label zr4 = $b2
 .label zr4l = zr4
 .label zr4h = zr4+1
-.label zr5 = $b4
+.label zr5 = $f7
 .label zr5l = zr5
 .label zr5h = zr5+1
-.label zr6 = $f7
+.label zr6 = $96
 .label zr6l = zr6
 .label zr6h = zr6+1
 .label zr7 = $f9
@@ -198,9 +198,9 @@ filename:
 .macro sti_r(reg, word_param)
 {
     lda #<word_param
-    sta zr0l+2*reg
+    sta reg
     lda #>word_param
-    sta zr0h+2*reg
+    sta reg+1
 }
 
 //---------------------------------------------------------------
@@ -212,10 +212,10 @@ filename:
 
 .macro sta_r(reg)
 {
-    sta zr0l+2*reg
+    sta reg
     lda #0
-    sta zr0h+2*reg
-    lda zr0l+2*reg
+    sta reg+1
+    lda reg
 }
 
 //---------------------------------------------------------------
@@ -228,9 +228,9 @@ filename:
 .macro stw_r(reg, word_param)
 {
     lda word_param
-    sta zr0l+2*reg
+    sta reg
     lda word_param+1
-    sta zr0h+2*reg
+    sta reg+1
 }
 
 //---------------------------------------------------------------
@@ -242,9 +242,9 @@ filename:
 
 .macro str_w(word, reg)
 {
- lda zr0l+2*reg
+ lda reg
  sta word
- lda zr0h+2*reg
+ lda reg+1
  sta word+1
 }
 
@@ -258,16 +258,16 @@ filename:
 
 .macro getbyte_r(reg)
 {
-    lda (zr0+2*reg),y
-    inc zr0l+2*reg
+    lda (reg),y
+    inc reg
     bne pas_inc
-    inc zr0h+2*reg
+    inc reg+1
 pas_inc:
 }
 
 .macro getbyte(reg)
 {
-    lda (zr0+2*reg),y
+    lda (reg),y
 }
 
 //---------------------------------------------------------------
@@ -280,16 +280,16 @@ pas_inc:
 
 .macro setbyte_r(reg)
 {
-    sta (zr0+2*reg),y
-    inc zr0l+2*reg
+    sta (reg),y
+    inc reg
     bne pas_inc
-    inc zr0h+2*reg
+    inc reg+1
 pas_inc:
 }
 
 .macro setbyte(reg)
 {
-    sta (zr0+2*reg),y
+    sta (reg),y
 }
 
 //---------------------------------------------------------------
@@ -353,10 +353,10 @@ pas_inc:
 {
     clc
     lda #value
-    adc zr0l+2*reg
-    sta zr0l+2*reg
+    adc reg
+    sta reg
     bcc pas_inc
-    inc zr0h+2*reg
+    inc reg+1
 pas_inc:    
 }
 
@@ -370,11 +370,11 @@ pas_inc:
 {
     clc
     lda #<value
-    adc zr0l+2*reg
-    sta zr0l+2*reg
-    lda zr0h+2*reg
+    adc reg
+    sta reg
+    lda reg+1
     adc #>value
-    sta zr0h+2*reg    
+    sta reg+1    
 }
 
 //---------------------------------------------------------------
@@ -386,10 +386,10 @@ pas_inc:
 .macro add_r(reg)
 {
     clc
-    adc zr0l+2*reg
-    sta zr0l+2*reg
+    adc reg
+    sta reg
     bcc pas_inc
-    inc zr0h+2*reg
+    inc reg+1
 pas_inc:    
 }
 
@@ -402,12 +402,12 @@ pas_inc:
 .macro addr_r(regdest, reg)
 {
     clc
-    lda zr0l+2*regdest
-    adc zr0l+2*reg
-    sta zr0l+2*regdest
-    lda zr0l+2*regdest+1
-    adc zr0l+2*reg+1
-    sta zr0l+2*regdest+1
+    lda regdest
+    adc reg
+    sta regdest
+    lda regdest+1
+    adc reg+1
+    sta regdest+1
 }
 
 //---------------------------------------------------------------
@@ -500,9 +500,9 @@ no_jump:
 
 .macro push_r(reg)
 {
-    lda zr0l+2*reg
+    lda reg
     pha
-    lda zr0h+2*reg
+    lda reg+1
     pha
 }
 
@@ -514,9 +514,9 @@ no_jump:
 .macro pop_r(reg)
 {
     pla
-    sta zr0h+2*reg
+    sta reg+1
     pla
-    sta zr0l+2*reg
+    sta reg
 }
 
 //---------------------------------------------------------------
@@ -526,10 +526,10 @@ no_jump:
 
 .macro str_r(reg_dest, reg)
 {
-    lda zr0l+2*reg
-    sta zr0l+2*reg_dest
-    lda zr0h+2*reg
-    sta zr0h+2*reg_dest
+    lda reg
+    sta reg_dest
+    lda reg+1
+    sta reg_dest+1
 }
 
 //---------------------------------------------------------------
@@ -541,13 +541,13 @@ no_jump:
 .macro sts_r(reg_dest, reg)
 {
     ldy #0
-    lda (zr0+2*reg),y
+    lda (reg),y
     sta ztmp
     iny
-    lda (zr0+2*reg),y
-    sta zr0+2*reg_dest+1
+    lda (reg),y
+    sta reg_dest+1
     lda ztmp
-    sta zr0+2*reg_dest
+    sta reg_dest
     dey
 }
 
@@ -561,16 +561,16 @@ no_jump:
 .macro stir_s(reg_dest, reg)
 {
     ldy #0
-    lda (zr0+2*reg_dest),y
+    lda (reg_dest),y
     sta ztmp
     iny
-    lda (zr0+2*reg_dest),y
+    lda (reg_dest),y
     sta ztmp+1
     dey
-    lda zr0l+2*reg
+    lda reg
     sta (ztmp),y
     iny
-    lda zr0h+2*reg
+    lda reg+1
     sta (ztmp),y
     dey
 }
@@ -585,11 +585,11 @@ no_jump:
 .macro str_s(reg_dest, reg)
 {
     ldy #0
-    lda zr0+2*reg
-    sta (zr0+2*reg_dest),y
+    lda reg
+    sta (reg_dest),y
     iny
-    lda zr0h+2*reg
-    sta (zr0+2*reg_dest),y
+    lda reg+1
+    sta (reg_dest),y
     dey
 }
 
@@ -613,19 +613,19 @@ no_jump:
 
 .macro swapr_r(reg1, reg2)
 {
- lda zr0l+2*reg1
+ lda reg1
  pha
- lda zr0l+2*reg2
- sta zr0l+2*reg1
+ lda reg2
+ sta reg1
  pla
- sta zr0l+2*reg2
+ sta reg2
 
- lda zr0h+2*reg1
+ lda reg1+1
  pha
- lda zr0h+2*reg2
- sta zr0h+2*reg1
+ lda reg2+1
+ sta reg1+1
  pla
- sta zr0h+2*reg2
+ sta reg2+1
 }
 
 //---------------------------------------------------------------
@@ -636,11 +636,11 @@ no_jump:
 
 .macro dec_r(reg)
 {
-    lda zr0l+2*reg
+    lda reg
     bne pas_zero
-    dec zr0h+2*reg
+    dec reg+1
 pas_zero:
-    dec zr0l+2*reg
+    dec reg
 }
 
 //---------------------------------------------------------------
@@ -651,9 +651,9 @@ pas_zero:
 
 .macro inc_r(reg)
 {
-    inc zr0l+2*reg
+    inc reg
     bne pas_zero
-    inc zr0h+2*reg
+    inc reg+1
 pas_zero:
 }
 

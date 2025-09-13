@@ -20,7 +20,10 @@ def get_size(value: str) -> int:
 def param_type(param: str):
     """Return (ptype, pval) for operand."""
 
-    special_regs = {"rdest": "reg_zdest", "rsrc": "reg_zsrc"}
+    special_regs = {"rdest": "reg_zdest", "rsrc": "reg_zsrc",
+                    "r0": "zr0l", "r1": "zr1l", "r2": "zr2l", 
+                    "r3": "zr3l", "r4": "zr4l", "r5": "zr5l", 
+                    "r6": "zr6l", "r7": "zr7l"}
 
     rules = [
         # Immediate
@@ -37,8 +40,8 @@ def param_type(param: str):
          lambda p: (
              "si" if p[2:-1].endswith("++") else "s",
              special_regs.get(
-                 p[2:-1].rstrip("+").lower(),
-                 p[2:-1].rstrip("+").lower()
+                 'zr' + p[2:-1].rstrip("+").lower()+ 'l',
+                 'zr' + p[2:-1].rstrip("+").lower() +'l'
              )
          )),
     ]

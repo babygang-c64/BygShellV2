@@ -32,23 +32,17 @@ pstring("HW")
 
 //-- Good practice : wrap your code in a namespace
 
-.label params_buffer=$ce00
+.label params_buffer=$cd80
 
 hw:
 {
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    mov r0,#$1001
-    swi return_int
-    clc
-    rts
-
     // nodes list tests
 
     mov r1,#list_root
-    mov $1002,r1
-    mov r0,2
+    mov r0,#2
     swi node_delete
 
     clc

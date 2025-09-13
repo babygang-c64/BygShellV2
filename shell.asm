@@ -384,6 +384,7 @@ juste_8:
     mov r0, #buffer
     swi str_next
     swi hex2int
+    mov $1000,r0
     push r0
     add r0, #8
     mov stop_address, r0

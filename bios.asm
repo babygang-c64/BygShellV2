@@ -1543,16 +1543,28 @@ error:
 
 //---------------------------------------------------------------
 // node_calc_nb : calculates number of moves for copy
+//
+// input : r0 = line position to process
+// r1 = root entry = contains total number of values
+// output : ztmp = number of moves
 //---------------------------------------------------------------
 
 node_calc_nb:
 {
     // tmp_line = how many lines to copy
+    ldy #0
+    lda (zr1l),y
+    sta ztmp
+    iny
+    lda (zr1l),y
+    sta ztmp+1
+    dey
+
     sec
-    lda zr1l
+    lda ztmp
     sbc zr0l
     sta ztmp
-    lda zr1h
+    lda ztmp+1
     sbc zr0h
     sta ztmp+1
     decw ztmp
@@ -1562,6 +1574,7 @@ node_calc_nb:
 //---------------------------------------------------------------
 // node_precalc : calculates position of node in list =
 // r2 =  2 * r0 + 2 + r1
+//
 //---------------------------------------------------------------
 
 node_precalc:
@@ -1576,10 +1589,13 @@ node_precalc:
     lda zr1h
     adc zr0h
     sta zr0h
-    mov r2,r0
-    sta $1000
-    brk
-    rts    
+    // mov r2,r0
+    // bug mov R2,R0 = registers not contiguous...?
+    lda zr0l
+    sta zr2l
+    lda zr0h
+    sta zr2h
+    rts
 }
 
 //---------------------------------------------------------------
@@ -1590,6 +1606,15 @@ node_copy:
 {
     stc sens
     ldy #0
+    mov $1000,r0
+    lda zr2l
+    sta $1002
+    lda zr2h
+    sta $1003
+    lda ztmp
+    sta $1004
+    lda ztmp+1
+    sta ztmp+1
 copie:
     lda (zr0l),y
     sta (zr2l),y
@@ -1597,7 +1622,7 @@ copie:
     lda (zr0l),y
     sta (zr2l),y
     dey
-    
+
     lda sens
     bne supp_line
 
@@ -1638,7 +1663,7 @@ do_node_delete:
     jsr node_precalc
     inc r0
     inc r0
-
+    
     sec
     jsr node_copy
 
@@ -2622,7 +2647,7 @@ conv_hex_byte:
     rts
 
 conv_hex_nibble:
-    getbyte_r(0)
+    mov a,(r0++)
     sec
     sbc #$30
     cmp #10
