@@ -30,18 +30,18 @@ menu:
     ldx nb_params
     jeq help
     
+    ldy #0
+    sty selected_item
+    sty string_len
+    sty string_storage
     mov menu_data_ptr,#menu_data
     jsr get_max_length
     jsr navigation
     
-    lda #0
-    sta saved
-    sta zr0h
-    ldx selected_item
-    inx
-    stx zr0l
-    swi return_int
-    
+    lda selected_item
+    cmp #$ff
+    beq quit_menu
+        
     jsr get_item
     mov r1, #string_storage
     swi str_cpy
@@ -51,7 +51,16 @@ menu:
     sta (zr1l),y
     tay
     swi set_basic_string,return_string
-    
+
+quit_menu:
+    lda #0
+    sta saved
+    sta zr0h
+    ldx selected_item
+    inx
+    stx zr0l
+    swi return_int
+
     clc
     rts
 
@@ -75,7 +84,7 @@ saved:
 return_string:
     .text "SH$"
 string_len:
-    .byte 15
+    .byte 0
     .word string_storage
 string_storage:
     .fill 64,0
@@ -109,11 +118,19 @@ navigation:
 {
     lda #1
     sta BLNSW
-    jsr unblink_cursor
+    swi cursor_unblink
 
 boucle:
     jsr paint_menu
     swi key_wait
+    cmp #RUNSTOP
+    bne not_stop
+    
+    lda #$ff
+    sta selected_item
+    jmp fin
+    
+not_stop:
     cmp #13
     beq fin
     cmp #DOWN
@@ -140,7 +157,7 @@ fin:
     jsr restore_screen
     lda #0
     sta BLNSW
-    jsr unblink_cursor
+    swi cursor_unblink
     jsr CLRCHN
     clc
     rts
@@ -402,26 +419,6 @@ help_msg:
     pstring("*MENU [ITEM OR FILE PATTERN] [-L]")
     pstring(" L = PLACE MENU ON LEFT")
     .byte 0
-}
-
-//----------------------------------------------------
-// unblink cursor
-//----------------------------------------------------
-
-unblink_cursor:
-{
-    lda #1
-    sta BLNSW
-    lda BLNON
-    beq blink_off
-    
-    ldy #0
-    sty BLNON
-    lda GDBLN
-    ldx GDCOL
-    jmp DSPP
-blink_off:
-    rts
 }
 
 

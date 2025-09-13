@@ -134,7 +134,7 @@ main_loop:
     jsr save_file
 
 no_save:
-    jsr unblink_cursor
+    swi cursor_unblink
     lda #147
     jsr CHROUT
     jsr CLRCHN
@@ -631,7 +631,7 @@ end:
 
 nav_cursor:
     sei
-    jsr unblink_cursor
+    swi cursor_unblink
     jsr status_cursor
     jsr move_cursor
     lda #0
@@ -1130,7 +1130,7 @@ goto_line_at_cursor:
 update_current_line:
 {
     sei
-    jsr unblink_cursor
+    swi cursor_unblink
 
     lda cursor_y
     mov r1,a
@@ -1201,7 +1201,7 @@ cpt_x:
 update_screen:
 {
     sei
-    jsr unblink_cursor
+    swi cursor_unblink
     jsr fill_screen
 end:
     jsr move_cursor
@@ -1212,25 +1212,6 @@ end:
     rts
 }
 
-//----------------------------------------------------
-// unblink cursor
-//----------------------------------------------------
-
-unblink_cursor:
-{
-    lda #1
-    sta BLNSW
-    lda BLNON
-    beq blink_off
-    
-    ldy #0
-    sty BLNON
-    lda GDBLN
-    ldx GDCOL
-    jmp DSPP
-blink_off:
-    rts
-}
 //----------------------------------------------------
 // fill_screen : print all lines starting at 
 // current_line on screen

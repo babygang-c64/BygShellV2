@@ -76,6 +76,7 @@
 .label node_insert=99
 .label node_delete=101
 .label return_int=103
+.label cursor_unblink=104
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -130,6 +131,7 @@ bios_jmp:
     .word do_node_insert
     .word do_node_delete
     .word do_return_int
+    .word do_cursor_unblink
 
 
 * = * "BIOS code"
@@ -854,7 +856,30 @@ msg_option_error:
 // key_wait
 // file_load
 // pprint_hex_buffer
+// cursor_unblink
 //===============================================================
+
+//----------------------------------------------------
+// cursor_unblink : unblink cursor, restore character
+// behind cursor if needed
+//----------------------------------------------------
+
+do_cursor_unblink:
+{
+    lda #1
+    sta BLNSW
+    lda BLNON
+    beq blink_off
+    
+    ldy #0
+    sty BLNON
+    lda GDBLN
+    ldx GDCOL
+    jsr DSPP
+blink_off:
+    clc
+    rts
+}
 
 //---------------------------------------------------------------
 // pprint_hex_buffer : hexdump buffer in r0, address r1

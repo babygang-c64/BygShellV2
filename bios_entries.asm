@@ -63,6 +63,7 @@
     .label node_insert=99
     .label node_delete=101
     .label return_int=103
+    .label cursor_unblink=105
 }
 
 //===============================================================
