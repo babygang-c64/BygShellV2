@@ -668,6 +668,22 @@ print first lines of files
 *edit [<file>]
     small text file editor, see edit.hlp
     default filename for new files is tmp
+
+    -- File management --
+
+    run/stop : quit without saving
+    ctrl-x : quit and save
+    ctrl-s : save file
+    
+    -- Editor --
+    
+    ctrl-a   : start of line
+    ctrl-e   : end of line
+    ctrl-w   : next word
+    ctrl-k t : top of document
+    ctrl-k e : end of document
+    ctrl-k + : set mark
+    ctrl-k - : goto mark
 ```
 
 **MENU**
