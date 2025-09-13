@@ -64,6 +64,7 @@
     .label node_delete=101
     .label return_int=103
     .label cursor_unblink=105
+    .label malloc=107
 }
 
 //===============================================================

@@ -23,7 +23,7 @@ edit:
     .label lines_ptr = lines_root+2
 
     .label OPT_N=1
-    
+
     sec
     swi param_init,buffer,options_edit
     jcs error
@@ -109,7 +109,7 @@ get_lines:
 ok_close:
     ldx #4
     swi file_close
-
+    
     mov r0,#tmp_line
     lda #0
     mov (r0++),a
@@ -746,7 +746,11 @@ check_edit_end:
 force:
     ldx work_buffer
     inx
-    jsr malloc
+
+    mov r0,#bam_root
+    mov r1,#memory_start
+    swi malloc
+//    jsr malloc
     mov new_line,r0
     mov r1,r0
 
@@ -1611,84 +1615,6 @@ bam_root:
             .fill nb_bam,0
 
 //----------------------------------------------------
-// malloc : return R0 to space with free X bytes
-//
-// output : C=1 KO, C=0 OK
-//----------------------------------------------------
-
-malloc:
-{
-   stx how_much
-   // lookup all allocated blocks first to see if one
-   // has enough space left
-   
-   ldy #0
-
-scan_bam:
-    lda bam,y
-    beq new_block
-    
-    sec
-test_bam:
-    mov r0,#bam_root
-    mov r1,#memory_start
-    swi bam_next
-    bcs new_block
-    
-    ldy #0
-    mov a,(r0)
-    cmp how_much
-    bcc test_bam
-
-    // existing block with enough size
-    // calculate position and new free
-    // size
-
-ok_size:
-    // target position
-    sta bam_available
-    lda #0
-    sec
-    sbc bam_available
-    pha
-    
-    // size
-    sec
-    lda bam_available
-    sbc how_much
-    mov (r0),a
-    
-    pla
-    clc
-    add r0,a
-
-    clc
-    rts
-    
-    // no space free in allocated blocs, allocate a new block,
-    // the new block free space is 255-X
-
-new_block:
-    mov r0,#bam_root
-    mov r1,#memory_start
-    swi bam_get
-
-    lda #255
-    sec
-    sbc how_much
-    mov (r0),a
-    inc r0
-    
-    clc
-    rts
-
-how_much:
-    .byte 0
-bam_available:
-    .byte 0
-}
-
-//----------------------------------------------------
 // string_add : add one pstring to memory
 //
 // input : r0 = pstring
@@ -1705,7 +1631,10 @@ string_add:
     inx
     inx
     push r0
-    jsr malloc
+
+    mov r0,#bam_root
+    mov r1,#memory_start
+    swi malloc
 
     mov r1, r0
     pop r0

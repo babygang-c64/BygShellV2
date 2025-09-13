@@ -76,7 +76,8 @@
 .label node_insert=99
 .label node_delete=101
 .label return_int=103
-.label cursor_unblink=104
+.label cursor_unblink=105
+.label malloc=107
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -132,6 +133,7 @@ bios_jmp:
     .word do_node_delete
     .word do_return_int
     .word do_cursor_unblink
+    .word do_malloc
 
 
 * = * "BIOS code"
@@ -1525,6 +1527,95 @@ error:
 
 .label found_bit=vars
 .label save_y=vars+1
+}
+
+//----------------------------------------------------
+// malloc : return R0 to space with free X bytes
+//
+//
+// input : X = number of bytes to allocate,
+//         R0 = bam_root address, R1 = memory_start
+// output : C=1 KO, C=0 OK
+//----------------------------------------------------
+
+do_malloc:
+{
+   stx how_much
+   // lookup all allocated blocks first to see if one
+   // has enough space left
+
+    mov save0,r0
+    mov save1,r1
+   
+   ldy #bam_start
+
+scan_bam:
+    mov a,(r0)
+    cmp #0
+    beq new_block
+    
+    ldy #0
+    sec
+
+test_bam:
+
+//    mov r0,#bam_root
+//    mov r1,#memory_start
+    swi bam_next
+    bcs new_block
+
+    ldy #0
+    mov a,(r0)
+    cmp how_much
+    bcc test_bam
+
+    // OK size :
+    // existing block with enough size
+    // calculate position and new free
+    // size
+    
+    // target position
+    sta bam_available
+    lda #0
+    sec
+    sbc bam_available
+    pha
+    
+    // size
+    sec
+    lda bam_available
+    sbc how_much
+    mov (r0),a
+    
+    pla
+    clc
+    add r0,a
+
+    clc
+    rts
+    
+    // no space free in allocated blocs, allocate a new block,
+    // the new block free space is 255-X
+
+new_block:
+//    mov r0,#bam_root
+//    mov r1,#memory_start
+    mov r0,save0
+    mov r1,save1
+    swi bam_get
+
+    lda #255
+    sec
+    sbc how_much
+    mov (r0),a
+    inc r0
+    clc
+    rts
+
+.label how_much = vars+2
+.label bam_available = vars+3
+.label save0 = vars+4
+.label save1 = vars+6
 }
 
 //===============================================================
