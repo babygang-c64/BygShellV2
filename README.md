@@ -687,9 +687,15 @@ print first lines of files
 ```
 
 **MENU**
+
+![Menu can be on left or right](images/images/menuR.jpeg)
+
 ```
 *menu <item>...
     menu popup, chosen item number in sh% and item content in sh$
     you can mix directory patterns in the items list
     when run/stop or q/x are pressed, sh%=0, sh$= non affected
+    
+    options:
+    L = menu on left side (right side by default)
 ```
