@@ -356,11 +356,21 @@ master_t:
     lda #0
     sta current_line
     sta current_line+1
+master_move:
     sta view_offset
     sta cursor_x
     sta cursor_y
     jsr update_screen
     jmp cancel_master
+
+    //--------------------------------
+    // MASTER-E : go to bottom
+    //--------------------------------
+
+master_e:
+    mov current_line,total_lines
+    dec current_line
+    jmp master_move
 
     //--------------------------------
     // MASTER-+ : set mark
@@ -687,6 +697,8 @@ nav_keys:
 nav_keys_master:
     .byte 'T'
     .word master_t
+    .byte 'E'
+    .word master_e
     .byte '+'
     .word master_set_mark
     .byte '-'
