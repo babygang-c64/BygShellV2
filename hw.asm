@@ -41,21 +41,30 @@ hw:
 
     // nodes list tests
 
+insert:
     mov r1,#list_root
-    mov r0,#2
+    mov r0,#3
+    swi node_insert
+    
+delete:
+    mov r1,#list_root
+    mov r0,#5
     swi node_delete
 
     clc
     rts
 
+
 list_root:
-    .word 5
+    .word 7
 list:
     .word $0000
     .word $0101
     .word $0202
     .word $0303
     .word $0404
+    .word $0505
+    .word $0606
     .word $5555
 
     //-- init options

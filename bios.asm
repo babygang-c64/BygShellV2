@@ -1546,7 +1546,7 @@ error:
 //
 // input : r0 = line position to process
 // r1 = root entry = contains total number of values
-// output : ztmp = number of moves
+// output : r3 = number of moves
 //---------------------------------------------------------------
 
 node_calc_nb:
@@ -1554,20 +1554,19 @@ node_calc_nb:
     // tmp_line = how many lines to copy
     ldy #0
     lda (zr1l),y
-    sta ztmp
+    sta zr3l
     iny
     lda (zr1l),y
-    sta ztmp+1
+    sta zr3h
     dey
 
     sec
-    lda ztmp
+    lda zr3l
     sbc zr0l
-    sta ztmp
-    lda ztmp+1
+    sta zr3l
+    lda zr3h
     sbc zr0h
-    sta ztmp+1
-    decw ztmp
+    sta zr3h
     rts
 }
 
@@ -1589,12 +1588,7 @@ node_precalc:
     lda zr1h
     adc zr0h
     sta zr0h
-    // mov r2,r0
-    // bug mov R2,R0 = registers not contiguous...?
-    lda zr0l
-    sta zr2l
-    lda zr0h
-    sta zr2h
+    mov r2,r0
     rts
 }
 
@@ -1603,18 +1597,9 @@ node_precalc:
 //---------------------------------------------------------------
 
 node_copy:
-{
+{    
     stc sens
     ldy #0
-    mov $1000,r0
-    lda zr2l
-    sta $1002
-    lda zr2h
-    sta $1003
-    lda ztmp
-    sta $1004
-    lda ztmp+1
-    sta ztmp+1
 copie:
     lda (zr0l),y
     sta (zr2l),y
@@ -1639,10 +1624,10 @@ supp_line:
     inc r2
 
 suite_copie:
-    decw ztmp
-    lda ztmp
+    dec r3
+    lda zr3l
     bne copie
-    lda ztmp+1
+    lda zr3h
     bne copie
     rts
 
@@ -1677,7 +1662,8 @@ do_node_delete:
 }
 
 //----------------------------------------------------
-// node_insert : insert node in list
+// node_insert : insert node at position r0 in list 
+// described at r1
 //----------------------------------------------------
 
 do_node_insert:
@@ -1685,9 +1671,9 @@ do_node_insert:
     jsr node_calc_nb
     push r0
 
-    lda ztmp
+    lda zr3l
     bne ok_insert
-    lda ztmp+1
+    lda zr3h
     beq no_need
     
 ok_insert:
@@ -1702,7 +1688,7 @@ ok_insert:
 
 no_need:
     mov r0,(r1)
-    dec r0
+    inc r0
     mov (r1),r0
 
     pop r0
