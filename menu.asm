@@ -124,8 +124,13 @@ boucle:
     jsr paint_menu
     swi key_wait
     cmp #RUNSTOP
+    beq stop
+    cmp #'Q'
+    beq stop
+    cmp #'X'
     bne not_stop
     
+stop:
     lda #$ff
     sta selected_item
     jmp fin

@@ -675,4 +675,5 @@ print first lines of files
 *menu <item>...
     menu popup, chosen item number in sh% and item content in sh$
     you can mix directory patterns in the items list
+    when run/stop or q/x are pressed, sh%=0, sh$= non affected
 ```
