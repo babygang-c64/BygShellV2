@@ -125,6 +125,8 @@ def handle_swap(elems):
     p1, v1 = param_type(elems[3])
     if p0 == p1 == "r":
         return f"swapr_r({v0},{v1})"
+    if p0 == p1 == "w":
+        return f"swapw_w({v0},{v1})"
     raise ValueError(f"Invalid SWAP instruction: {' '.join(elems)}")
 
 

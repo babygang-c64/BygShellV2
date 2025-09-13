@@ -629,6 +629,29 @@ no_jump:
 }
 
 //---------------------------------------------------------------
+// swapw_w(adr1, adr2) : swaps word content of adr1 with adr2
+// Y preserved
+// swap adr1, adr2
+//---------------------------------------------------------------
+
+.macro swapw_w(adr1, adr2)
+{
+ lda adr1
+ pha
+ lda adr2
+ sta adr1
+ pla
+ sta adr2
+
+ lda adr1+1
+ pha
+ lda adr2+1
+ sta adr1+1
+ pla
+ sta adr2+1
+}
+
+//---------------------------------------------------------------
 // dec_r(reg) : reg--
 // Y preserved
 // dec r0

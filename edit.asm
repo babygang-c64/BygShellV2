@@ -381,6 +381,8 @@ master_set_mark:
     sta mark_x
     lda view_offset
     sta mark_view_offset
+    lda #1
+    sta block_set
     jmp cancel_master
 
     //--------------------------------
@@ -394,6 +396,11 @@ master_set_end:
     sta mark_end_x
     lda view_offset
     sta mark_end_view_offset
+    lda block_set
+    beq cancel_master
+    lda #2
+    eor block_set
+    sta block_set
     jmp cancel_master
     
     //--------------------------------
@@ -1382,6 +1389,12 @@ ascii_to_screen:
     sec
     sbc #$60
 not_lowercase:
+    pha
+    lda block_set
+    cmp #3
+    bne end
+end:
+    pla
     rts
 }
 
