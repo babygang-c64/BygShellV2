@@ -199,6 +199,7 @@ Warning : indirect MOV operations rely on Y beeing set to 0, if not then Y will 
 ```
 add r<n>, #<imm>    : add 8bit or 16bit immediate value to register n
 add r<n>, a         : add a to register n
+add r<n>, r<m>      : add register m to register n
 add <addr>, a       : add a to value at address <addr>
 add <addr>, #<imm>  : add 8bit or 16bit immediate to value at address <addr>
 add <addr>, <addr2> : add value at <addr2> to value at <addr> 
