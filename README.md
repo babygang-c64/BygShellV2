@@ -161,12 +161,11 @@ print first lines of files
 
 Note : this is beeing reviewed as a lot has moved, not all functions are available in the BIOS,
 new ones are there, and the 16 bit registers have been moved around in the ZP space in order to
-avoid conflicting with BASIC which uses a lot of those. That's breaking some of the existing 
-macros for registers other than R0 and R1
+avoid conflicting with BASIC which uses a lot of those.
 
 ### 16 bit registers
 ```
-8 x 16bit registers (R0 to R7) are stored on ZP starting at address $39
+8 x 16bit registers (R0 to R7) are stored on ZP, see macros.asm for locations
 They are referenced with the following pre-defined labels :
 zr0 to zr1 : base address of registers
 zr0l to zr1l : lower bytes of registers
@@ -211,9 +210,28 @@ dec r<n> : decrement register
 incw <addr>, inw <addr> : increment value at address <addr>
 decw <addr>, dew <addr> : decrement value at address <addr>
 ```
+**CMPW / BGE / BLE / BLT / BGT**
+```
+cmpw r<n>,r<m> : compare registers
+cmpw #<val>,r<m> or cmpw r<n>,#<val> : compare registers / values
+cmpw <addr>,r<m> or cmpw r<n>, #<val> : compare registers / values
+bge <item1>,<item2>,<label> : branch to <label> if <item1> >= <item2>
+bgt <item1>,<item2>,<label> : branch to <label> if <item1> > <item2>
+ble <item1>,<item2>,<label> : branch to <label> if <item1> <= <item2>
+blt <item1>,<item2>,<label> : branch to <label> if <item1> < <item2>
+```
 **SWAP**
 ```
 swap r<n>, r<m> : swap registers
+swap <addr1>, <addr2> : swap 16 bits values at addresses <addr1> and <addr2>
+```
+***SWP**
+```
+swp : swap nybles of A
+```
+***SXY**
+```
+sxy : swap X and Y
 ```
 **STC / LDC**
 ```
@@ -228,14 +246,6 @@ long branches, Bill style, missing some variants
 ```
 swi <bios_function>                    : calls bios function
 swi <bios_function>, <addr> [,<addr2>] : calls bios function with r0 = addr, r1 = addr2
-```
-***SWP**
-```
-swp : swap nybles of A
-```
-***SXY**
-```
-sxy : swap X and Y
 ```
 
 ### pStrings
