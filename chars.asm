@@ -50,25 +50,85 @@ boucle_chars:
     dex
     bne boucle_chars
 
+    lda #1
+    sta box_draw.write_color
+    lda #2
+    sta box_draw.write_x
+    lda #'0'
+    jsr box_draw.write_char
+    lda #38
+    sta box_draw.write_x
+    lda #'0'
+    jsr box_draw.write_char
+
+    lda box_draw.write_y
+    sec
+    sbc #3
+    tay
+    dec box_draw.write_x
+    lda hex_values,y
+    sta hex_value
+    jsr box_draw.write_char
+    lda #1
+    sta box_draw.write_x
+    lda hex_value
+    jsr box_draw.write_char
+
+    lda box_draw.write_y
+    sta pos_y
+    sec
+    sbc #3
+    asl
+    clc
+    adc #4
+    sta box_draw.write_x
+    lda #1
+    sta box_draw.write_y
+    lda hex_value
+    jsr box_draw.write_char
+    lda #20
+    sta box_draw.write_y
+    lda hex_value
+    jsr box_draw.write_char
+
+    lda pos_y
+    sta box_draw.write_y
     inc box_draw.write_y
     lda box_draw.write_y
     and #3
     tay
     lda current_color,y
+    pha
+    sta box_draw.write_color
+    lda #37
+    sta box_draw.write_x
+    pla
     sta box_draw.write_color
 
     lda #4
     sta box_draw.write_x
     ldx #16
     lda current_char
-    bne boucle_chars
+    jne boucle_chars
     
+    ldy #0
+    ldx #21
+    clc
+    jsr PLOT
     clc
     rts
+
 error:
     sec
     rts
 
+pos_y:
+    .byte 0
+hex_value:
+    .byte 0
+hex_values:
+    .text "0123456789"
+    .byte 1,2,3,4,5,6
 current_char:
     .byte 0
 current_color:
