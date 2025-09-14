@@ -108,6 +108,16 @@ print first lines of files
     P = paginate output
 ```
 
+**CHARS**
+
+![Edit is a small text editor](images/Edit.png)
+```
+*chars
+    display the character map
+    options :
+    TBD
+```
+
 **KOALA**
 ```
 *koala <image>
