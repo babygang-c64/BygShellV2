@@ -98,6 +98,7 @@ def handle_add(elems):
         ("w", "a"): lambda: f"add8({v0})",
         ("w", "i"): lambda: f"{'addi' if size == 8 else 'addw'}_w({v0}, {v1})",
         ("w", "w"): lambda: f"adda_w({v0}, {v1})",
+        ("r", "r"): lambda: f"addr_r({v0}, {v1})",
     }
     if (p0, p1) in table:
         return table[(p0, p1)]()
@@ -188,8 +189,6 @@ handlers = {
     "dec":  lambda e: handle_single_reg(e, "dec"),
     "incw": lambda e: handle_incdecw(e, "incw"),
     "decw": lambda e: handle_incdecw(e, "decw"),
-    "inw":  lambda e: handle_incdecw(e, "inw"),
-    "dew":  lambda e: handle_incdecw(e, "dew"),
     "swp":  lambda e: "swp()",
     "sxy":  lambda e: "sxy()",
     "add":  handle_add,

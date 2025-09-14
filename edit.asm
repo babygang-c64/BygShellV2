@@ -24,6 +24,8 @@ edit:
 
     .label OPT_N=1
 
+    .label error=navigation.error
+
     sec
     swi param_init,buffer,options_edit
     jcs error
@@ -35,12 +37,8 @@ edit:
     ldx nb_params
     bne load_file
 
-    // no input file = new blank file
-    
-    mov r1,#filename
-    mov r0,#default_filename
-    swi str_cpy
-
+    // no input file = new blank file with default name
+    swi str_cpy,default_filename,filename
     jsr status_line
 
 empty_file:
@@ -48,8 +46,7 @@ empty_file:
     jsr string_add
     mov r1,tmp_line
     mov (r1), r0
-    incw tmp_line
-    incw tmp_line
+    add tmp_line,#2
     incw total_lines
 
     jmp blank_file
@@ -135,16 +132,11 @@ main_loop:
 
 no_save:
     swi cursor_unblink
-    lda #147
-    jsr CHROUT
+    jsr clear_screen
     jsr CLRCHN
     clc
     rts
 
-max:
-    .byte 0
-affiche:
-    .byte 0
 options_edit:
     pstring("H")
 
@@ -159,35 +151,29 @@ default_filename:
 new_file:
     pstring("")
 
-
 init:
-    sty view_offset
-    sty master_key
-    sty is_editing
-    sty is_edited
-    sty affiche
-    sty progress
-    sty cursor_x
-    sty cursor_y
-    sty block_set
-    sty current_line
-    sty current_line+1
-    sty total_lines
-    sty total_lines+1
-    sty lines_ptr
-    sty lines_ptr+1
+    tya
+init_loop:
+    sta master_key,y
+    iny
+    cpy #nb_init
+    bne init_loop
+
+    ldy #0
+    sta total_lines
+    sta total_lines+1
+
     ldx #nb_bam
     mov r0,#bam_root
     swi bam_init
     mov tmp_line,#lines_ptr
-    lda #147
-    jsr CHROUT
+    jsr clear_screen
     jmp move_cursor
 
-error:
-    sec
-    rts
-    
+clear_screen:
+    lda #147
+    jmp CHROUT
+
 master_key:
     .byte 0
 cursor_x:
@@ -230,7 +216,9 @@ edited_line:
     .word 0
 lines_length:
     .fill 24,0
-
+end_init:
+.label nb_init=end_init-master_key
+//.print "nb_init=$"+toHexString(nb_init)
 
 //----------------------------------------------------
 // save_file : save the file to disk
@@ -252,7 +240,7 @@ save_file:
     ldx #5
     sec
     swi file_open
-    bcs error
+    jcs error
     ldx #5
     jsr CHKOUT
 
@@ -422,6 +410,7 @@ master_goto_mark:
     // CTRL-X : Quit editor
     //--------------------------------
 
+error:
 quit:
 save_and_quit:
     sec
@@ -1186,16 +1175,9 @@ update_current_line:
 
     mov r0, #$0400
 
-    // manque add rN,rM
     ldx #4
 add4:
-    clc
-    lda zr0l
-    adc zr1l
-    sta zr0l
-    lda zr0h
-    adc zr1h
-    sta zr0h
+    add r0,r1
     dex
     bne add4
     mov r1, r0

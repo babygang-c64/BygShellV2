@@ -175,7 +175,7 @@ zr0h to zr1h : higher bytes of registers
 
 pre-processor is done through the pkick.py Python script, 
 
-**MOV / MOVI**
+**MOV, MOVI**
 ```
 mov r<n>, r<m>      : register n = register m
 mov r<n>, #<m>      : register n = word m
@@ -203,14 +203,14 @@ add <addr>, a       : add a to value at address <addr>
 add <addr>, #<imm>  : add 8bit or 16bit immediate to value at address <addr>
 add <addr>, <addr2> : add value at <addr2> to value at <addr> 
 ```
-**INC, DEC**
+**INC, DEC, INCW, DECW**
 ```
 inc r<n> : increment register
 dec r<n> : decrement register
-incw <addr>, inw <addr> : increment value at address <addr>
-decw <addr>, dew <addr> : decrement value at address <addr>
+incw <addr> : increment value at address <addr>
+decw <addr> : decrement value at address <addr>
 ```
-**CMPW / BGE / BLE / BLT / BGT**
+**CMPW, BGE, BLE, BLT, BGT**
 ```
 cmpw r<n>,r<m> : compare registers
 cmpw #<val>,r<m> or cmpw r<n>,#<val> : compare registers / values
@@ -233,12 +233,12 @@ swp : swap nybles of A
 ```
 sxy : swap X and Y
 ```
-**STC / LDC**
+**STC, LDC**
 ```
 stc <address> : store carry as 1 or 0 to <address>
 ldc <address> : get carry from 1 or 0 at <address>
 ```
-**JNE / JEQ / JCC / JCS**
+**JNE, JEQ, JCC, JCS**
 ```
 long branches, Bill style, missing some variants
 ```
