@@ -110,7 +110,7 @@ print first lines of files
 
 **CHARS**
 
-![Edit is a small text editor](images/Edit.png)
+![Edit is a small text editor](images/Chars.png)
 ```
 *chars
     display the character map
