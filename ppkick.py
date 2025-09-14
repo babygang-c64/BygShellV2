@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 # ppkick : kickassembler pre-processor (fully table-driven)
+#
+# r = register                 : mov r2,r1
+# w = word                     : mov $1000,r0
+# a = accumumateur             : mov r0,a
+# i = immediate                : mov a,#$1001
+# s = indirect                 : mov a,(r0)
+# si = indirect with increment : mov a,(r0++)
 
 import sys
 
@@ -130,6 +137,28 @@ def handle_swap(elems):
     raise ValueError(f"Invalid SWAP instruction: {' '.join(elems)}")
 
 
+def handle_cmpw(elems):
+    p0, v0 = param_type(elems[1])
+    p1, v1 = param_type(elems[3])
+    if p0 in ["r","w"] and p1 in ["r","w"]:
+        return f"cmpw({v0},{v1})"
+    raise ValueError(f"Invalid CMPW instruction: {' '.join(elems)}")
+
+
+def handle_brw(elems):
+    p0, v0 = param_type(elems[1])
+    p1, v1 = param_type(elems[3])
+    p2, v2 = param_type(elems[5])
+    if elems[0] != 'beqw':
+        elems[0] = elems[0][0:3]
+    if p0 in ["r","w"] and p1 in ["r","w"]:
+        return f"{elems[0]}({v0},{v1},{v2})"
+    if p0 in ["r","w"] and p1 == 'i':
+        return f"{elems[0]}_ri({v0},{v1},{v2})"
+    if p1 in ["r","w"] and p0 == 'i':
+        return f"{elems[0]}_ir({v0},{v1},{v2})"
+    raise ValueError(f"Invalid BRW instruction: {' '.join(elems)}")
+
 def handle_simple(elems, instr):
     return f"{instr}({elems[1]})"
 
@@ -172,6 +201,13 @@ handlers = {
     "jcc":  lambda e: handle_simple(e, "jcc"),
     "jcs":  lambda e: handle_simple(e, "jcs"),
     "swi":  handle_swi,
+    "cmpw": handle_cmpw,
+    "beqw": handle_brw,
+    "bnew": handle_brw,
+    "blt": handle_brw,
+    "ble": handle_brw,
+    "bgt": handle_brw,
+    "bge": handle_brw,
 }
 
 
@@ -181,7 +217,7 @@ handlers = {
 
 def main():
     if len(sys.argv) != 3:
-        print("PPKICK v0.2\nBabygang extended 6510 instruction set pre-processor\n")
+        print("PPKICK v0.3\nBabygang extended 6510 instruction set pre-processor\n")
         print("Usage: ppkick <filein> <fileout>")
         sys.exit(1)
 

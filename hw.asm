@@ -39,21 +39,22 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    // nodes list tests
+    // cmpw tests
 
-insert:
-    mov r1,#list_root
-    mov r0,#3
-    swi node_insert
-    
-delete:
-    mov r1,#list_root
-    mov r0,#5
-    swi node_delete
+
+    mov r0,#$2100
+    mov r1,#$2000
+    bgt r1,r0,greater
 
     clc
     rts
-
+greater:
+    lda #'G'
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    clc
+    rts
 
 list_root:
     .word 7

@@ -722,6 +722,120 @@ pas_zero:
 }
 
 //===============================================================
+// Compare and branch
+//===============================================================
+
+//---------------------------------------------------------------
+// CMPW : 16bits compare
+//
+// cmpw adr1,adr2 or cmpw r1,adr or cmpw r1,r2 ...
+//---------------------------------------------------------------
+
+.macro cmpw(adr1,adr2)
+{
+    lda adr1+1
+    cmp adr2+1
+    bne done
+    lda adr1
+    cmp adr2
+done:
+}
+
+//---------------------------------------------------------------
+// CMPW_RI : 16bits compare with immediate value
+//
+// cmpw_ri adr1,#$1001 or cmpw_ri r1,#$2000
+//---------------------------------------------------------------
+
+.macro cmpw_ri(adr1,adr2)
+{
+    lda adr1+1
+    cmp #adr2+1
+    bne done
+    lda adr1
+    cmp #adr2
+done:
+}
+
+//---------------------------------------------------------------
+// CMPW_IR : 16bits compare with immediate value
+//
+// cmpw_ir #$2000,adr1 or cmpw_ir #$c000,r1
+//---------------------------------------------------------------
+
+.macro cmpw_ir(adr1,adr2)
+{
+    lda #adr1+1
+    cmp adr2+1
+    bne done
+    lda #adr1
+    cmp adr2
+done:
+}
+
+//---------------------------------------------------------------
+// BEQW : compare and branch if equal 
+//
+// ex : beqw r0,$1000,bingo    beq r2,r3,equal
+//---------------------------------------------------------------
+
+.macro beqw(adr1, adr2, branch)
+{
+    cmpw(adr1,adr2)
+    beq branch
+}
+
+//---------------------------------------------------------------
+// BLT : compare and branch if less than
+//
+// blt r0,r1,less_than
+//---------------------------------------------------------------
+
+.macro blt(adr1, adr2, branch)
+{
+    cmpw(adr1,adr2)
+    bcc branch
+}
+
+//---------------------------------------------------------------
+// BLE : compare and branch if less than or equal
+//
+// ble r0,r1,less_than_or_equal
+//---------------------------------------------------------------
+
+.macro ble(adr1, adr2, branch)
+{
+    cmpw(adr1,adr2)
+    bcc branch
+    beq branch
+}
+
+//---------------------------------------------------------------
+// BGT : compare and branch if greater than
+//
+// bgt r0,r1,less_than
+//---------------------------------------------------------------
+
+.macro bgt(adr1, adr2, branch)
+{
+    cmpw(adr1,adr2)
+    bcs branch
+}
+
+//---------------------------------------------------------------
+// BGE : compare and branch if greater than or equal
+//
+// bge r0,r1,less_than_or_equal
+//---------------------------------------------------------------
+
+.macro bge(adr1, adr2, branch)
+{
+    cmpw(adr1,adr2)
+    bcs branch
+    beq branch
+}
+
+//===============================================================
 // General purpose macros
 //===============================================================
 
