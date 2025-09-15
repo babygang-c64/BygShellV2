@@ -39,6 +39,7 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    clc
     swi get_basic_string,return_string,work_buffer
     swi pprint_nl,work_buffer
     clc

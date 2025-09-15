@@ -236,11 +236,14 @@ do_set_basic_string:
 // get_basic_string
 //
 // input : R0 = variable descriptor, R1 = pstring for storage
+//         C=0 = copy string to storage, C=1 return X=length
+//         and R0 = string location
 // output : R0 = variable address
 //---------------------------------------------------------------
 
 do_get_basic_string:
 {
+    stc ztmp
     lda $7a
     pha
     lda $7b
@@ -267,6 +270,9 @@ is_ok:
     iny
     lda ($49),y
     sta zr0h
+
+    lda ztmp
+    bne no_copy
     
     // copy to r1
     ldy #0
@@ -276,6 +282,8 @@ copie:
     mov (r1),a
     dex
     bne copie
+
+no_copy:
     ldy #0
     
 end:
@@ -287,6 +295,12 @@ end:
     rts
     
 is_zero:
+    lda ztmp
+    beq zero_with_copy
+    ldx #0
+    beq end
+    
+zero_with_copy:
     ldy #0
     tya
     mov (r1),a
