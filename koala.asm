@@ -15,12 +15,13 @@ pstring("KOALA")
 
 koala:
 {
+    .label params_buffer=$cd80
     .label OPT_S=1
 
     // initialisation
 
     sec
-    swi param_init,buffer,options_koala
+    swi param_init,params_buffer,options_koala
 
     lda options_params
     and #OPT_S
@@ -29,7 +30,11 @@ koala:
     ldx nb_params
     jeq help
 
-    swi str_next,buffer
+    sec
+boucle:
+    ldy #0
+    swi param_process,params_buffer
+    bcs koala_end
 
     ldy #0
     mov r1, #$4000
@@ -44,6 +49,8 @@ opt_s:
     clc
     ldx #0
     jsr picture_show
+    
+    jmp boucle
         
 koala_end:
     lda #147

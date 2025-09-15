@@ -277,21 +277,11 @@ A list data structure contains multiple pStrings
 
 ### system variables
 
-A pool of <name> / <pstring value> variables is maintained.
-Some variables are pre-allocated
+On this version we rely on access to BASIC variables.
+A couple of return values can be set from the commands :
 
-**var_set** : 
-    Variable with name in R0 = pstring R1
-
-**var_get** : 
-```
-    R1 = value of variable with name in R0 
-    On exit : C=1 variable found, C=0 variable not found
-```
-**var_del** :
-```
-    Delete variable #X
-```
+- SH% : integer return value
+- SH$ : string returnn value
 
 ### Helper BIOS functions
 
@@ -314,7 +304,7 @@ Y = bit to set in A
 ```
 **file_load**
 ```
-    Load a binary file for running, checks the presence of a BASIC stubs with a SYS instruction and starts code at $080D (2061)
+    Load a binary file into memory
 ```
 **error**
 ```
@@ -326,9 +316,14 @@ Y = bit to set in A
 ```
     Print a pString, after expansion of contents
 ```
-**pprintnl**
+**pprint_nl**
 ```
     Same as pprint, with a new line added
+```
+**pprint_lines**
+```
+    Prints a contiguous list of pStrings in memory, ending with 0
+    Each individual line is printed with a new line added
 ```
 **print_int**
 ```
@@ -338,22 +333,7 @@ Y = bit to set in A
         bit 6 = suppress heading spaces
         bit 7 = pad with spaces (default is '0')
 ```
-**input**
-```
-    Accept input from the user, return results in input_buffer,
-    On input : 
-        C=1 : editor mode, cursor up / down not bringing history values,
-              and X contains maximum length for line 
-    On exit : R0 = input_buffer
 
-    Typing is in insert mode
-    Up and Down = history browsing
-    Ctrl+K      = delete to end of line
-    Ctrl+O or E = go to end of line
-    Ctrl+U or A = go to start of line
-    Run/stop    = break input, start new input
-    Backspace / Insert works as usual
-```
 **pprinthex**
 
 **pprinthex8**
@@ -375,138 +355,43 @@ Y = bit to set in A
 
 ## Variables
 
-**var_set**
+**get_basic_string**
 ```
-    Variable with name in R0 = pstring R1
+    Get a basic string value
 ```
-**var_get**
+**set_basic_string**
 ```
-    R1 = value of variable with name in R0 
-    On exit : C=1 variable found, C=0 variable not found
+    Set a basic string content, creates the variable if needed
 ```
-**var_del**
+**return_int**
 ```
-    Delete variable #X
-```
-**var_count**
-```
-    Count number of available variables or internal commands.
-    R0 = source variables space
-    On exit : A = number of variables
-
-    shell.var_names = variables space
-    shell.internal_commands = internal commands space
+    Returns integer value into SH%
 ```
 
-## Lists
+## Nodes
 
-**list_add**
+**node_insert**
 ```
-    Add pstring to list
-    R0 = list object
-    R1 = pstring to add to list
-    On exit : A = new item number
 ```
-**list_get**
+**node_delete**
 ```
-    Returns the Xths value in the list
-    R0 = list object
-    X = element number to retrieve
-    On exit : C=1 and R0=value if OK, C=0 otherwhise
 ```
-**list_del**
-```
-    Removes one entry from list
-    R0 = list object
-    X = object # to remove
-    On exit : R0 = list object pointer
-```
-**list_print**
-
-**list_size**
-```
-    Returns size of list
-    R0 = list object
-    On exit : A = number of elements in list
-```
-**list_reset**
 
 ## Parameters
 
-**parameters_loop**
+**param_init**
 ```
-    call subroutine for all filenames in parameters
-    r0 = subroutine address
-    r1 = address of parameters list
 ```
+**param_proces**
+```
+```
+
 ## Disk I/O
 
-**set_device**
-```
-    Selects the current device according to the value in variable "device"
-```
-**prep_path**
-```
-    Builds a ppath object from a pstring
-    R0 = pstring input
-    R1 = ppath output
-
-    Path format :
-    [device[,partition]]:][path/][file]
-
-    ppath object format :
-        Type : bitmat for presence of path components
-            WITH_DEVICE=1
-            WITH_PARTITION=2
-            WITH_PATH=4
-            WITH_NAME=8
-        Device #
-        Partition #
-        path pstring
-        name pstring
-```
-**build_path**
-```
-    Build a path pString from a ppath
-    R1 = ppath source
-    R0 = address of target pString
-    C=0 adds : to filename, C=1 : no separator added
-    On exit: r0 contains path:name
-    on exit : X = 1st available device, A = number of devices
-              R0 = devices table
-    Device table is a 32 bytes of device types, 1 position for each
-    device number and 1 byte to indicate presence / type of device
-    Device types :
-        00 - No serial device available
-        01 - foreign drive (MSD, Excelerator, Lt.Kernal, etc.)
-        41 - 1541 drive
-        71 - 1571 drive
-        81 - 1581 drive
-        e0 - FD drive
-        c0 - HD drive
-        f0 - RD drive
-        80 - RAMLink
-        si %11xxxxxx : other with CMD capabilities
-```
-**lsblk**
-```
-    Probes and populates attached disk devices into the devices table
-    C=1 for silent mode
-```
 **get_device_status**
 ```
-    Get current device status
-    C=1 prints result on screen, C=0 silent mode
-    On exit : status code into R0, 2 positions
-    C=0 if code 00, C=1 otherwise
 ```
-**set_device_from_path**
-```
-    Changes the current device according to device in ppath object
-    R0 = ppath object
-    if the device change fails, falls back to previous current device
-    value
-```
+
 ## pStrings
 
 **str_cat**
