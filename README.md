@@ -110,12 +110,14 @@ print first lines of files
 
 **CHARS**
 
-![Edit is a small text editor](images/Chars.png)
+![Char map](images/Chars.png)
+![Colorr map](images/CharsC.png)
 ```
 *chars
     display the character map
     options :
-    TBD
+    H = show help
+    C = map of colors
 ```
 
 **KOALA**

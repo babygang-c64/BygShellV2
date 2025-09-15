@@ -39,35 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    // cmpw tests
-
-
-    mov r0,#$2100
-    mov r1,#$2000
-    bgt r1,r0,greater
-
-    clc
-    rts
-greater:
-    lda #'G'
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
-    clc
-    rts
-
-list_root:
-    .word 7
-list:
-    .word $0000
-    .word $0101
-    .word $0202
-    .word $0303
-    .word $0404
-    .word $0505
-    .word $0606
-    .word $5555
-
     //-- init options
     sec
     swi param_init,buffer,options_hw

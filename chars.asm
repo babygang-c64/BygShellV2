@@ -22,101 +22,49 @@ chars:
     .label work_buffer = $ce00
     .label params_buffer = $cd00
 
-    .label OPT_L=1
-
-    sec
-    swi param_init,buffer,options_head
-    jcs error
+    .label OPT_C=1
+    .label OPT_H=2
     
+    sec
+    swi param_init,buffer,options_chars
+    jcs error
+
+    lda options_params
+    and #OPT_H
+    bne help
+
     lda #147
     jsr CHROUT
     
-    mov r0,#box_chars
-    jsr box_draw
-    lda #0
-    sta current_char
-    lda #4
-    sta box_draw.write_x
-    lda #3
-    sta box_draw.write_y
-
-    ldx #16
-boucle_chars:
-    lda current_char
-    jsr box_draw.write_char
-    inc box_draw.write_x
-    inc box_draw.write_x
-    inc current_char
-    dex
-    bne boucle_chars
-
-    lda #1
-    sta box_draw.write_color
-    lda #2
-    sta box_draw.write_x
-    lda #'0'
-    jsr box_draw.write_char
-    lda #38
-    sta box_draw.write_x
-    lda #'0'
-    jsr box_draw.write_char
-
-    lda box_draw.write_y
-    sec
-    sbc #3
-    tay
-    dec box_draw.write_x
-    lda hex_values,y
-    sta hex_value
-    jsr box_draw.write_char
-    lda #1
-    sta box_draw.write_x
-    lda hex_value
-    jsr box_draw.write_char
-
-    lda box_draw.write_y
-    sta pos_y
-    sec
-    sbc #3
-    asl
-    clc
-    adc #4
-    sta box_draw.write_x
-    lda #1
-    sta box_draw.write_y
-    lda hex_value
-    jsr box_draw.write_char
-    lda #20
-    sta box_draw.write_y
-    lda hex_value
-    jsr box_draw.write_char
-
-    lda pos_y
-    sta box_draw.write_y
-    inc box_draw.write_y
-    lda box_draw.write_y
-    and #3
-    tay
-    lda current_color,y
-    pha
-    sta box_draw.write_color
-    lda #37
-    sta box_draw.write_x
-    pla
-    sta box_draw.write_color
-
-    lda #4
-    sta box_draw.write_x
-    ldx #16
-    lda current_char
-    jne boucle_chars
+    lda options_params
+    and #OPT_C
+    beq not_c
     
+    jsr color_map
+    jmp end
+    
+not_c:
+    jsr char_map
+
+end:
     ldy #0
     ldx #21
-    clc
-    jsr PLOT
+    jsr move_cursor
     clc
     rts
+
+help:
+{
+    swi pprint_lines, help_msg
+    sec
+    rts
+}
+
+move_cursor:
+{
+    clc
+    jmp PLOT
+}
 
 error:
     sec
@@ -135,12 +83,13 @@ current_color:
     .byte 3,8,15,1
 
 help_msg:
-    pstring("*CHARS [-L]")
-    pstring(" L = LIST OF CHARS")
+    pstring("*CHARS [-CH]")
+    pstring(" C = LIST OF COLORS")
+    pstring(" H = HELP")
     .byte 0
 
-options_head:
-    pstring("L")
+options_chars:
+    pstring("CH")
 
     // box draw structure :
     // start_x, start_y
@@ -300,6 +249,145 @@ screen_adr:
     .for(var y = 0; y < 25; y++)
     { .word $0400+40*y }
     
+}
+
+char_map:
+{
+    mov r0,#box_chars
+    jsr box_draw
+    lda #0
+    sta current_char
+    lda #4
+    sta box_draw.write_x
+    lda #3
+    sta box_draw.write_y
+
+    ldx #16
+boucle_chars:
+    lda current_char
+    jsr box_draw.write_char
+    inc box_draw.write_x
+    inc box_draw.write_x
+    inc current_char
+    dex
+    bne boucle_chars
+
+    lda #1
+    sta box_draw.write_color
+    lda #2
+    sta box_draw.write_x
+    lda #'0'
+    jsr box_draw.write_char
+    lda #38
+    sta box_draw.write_x
+    lda #'0'
+    jsr box_draw.write_char
+
+    lda box_draw.write_y
+    sec
+    sbc #3
+    tay
+    dec box_draw.write_x
+    lda hex_values,y
+    sta hex_value
+    jsr box_draw.write_char
+    lda #1
+    sta box_draw.write_x
+    lda hex_value
+    jsr box_draw.write_char
+
+    lda box_draw.write_y
+    sta pos_y
+    sec
+    sbc #3
+    asl
+    clc
+    adc #4
+    sta box_draw.write_x
+    lda #1
+    sta box_draw.write_y
+    lda hex_value
+    jsr box_draw.write_char
+    lda #20
+    sta box_draw.write_y
+    lda hex_value
+    jsr box_draw.write_char
+
+    lda pos_y
+    sta box_draw.write_y
+    inc box_draw.write_y
+    lda box_draw.write_y
+    and #3
+    tay
+    lda current_color,y
+    pha
+    sta box_draw.write_color
+    lda #37
+    sta box_draw.write_x
+    pla
+    sta box_draw.write_color
+
+    lda #4
+    sta box_draw.write_x
+    ldx #16
+    lda current_char
+    jne boucle_chars
+    rts
+} 
+
+color_map:
+{
+
+    ldy #0
+    ldx #2
+    sty color
+    jsr move_cursor
+    swi pprint_lines,color_names
+
+    ldx #2
+    
+boucle:
+    lda #1
+    sta box_draw.write_x
+    stx box_draw.write_y
+    lda color
+    sta box_draw.write_color
+    lda #228
+    jsr box_draw.write_char
+    inc box_draw.write_x
+    lda #228
+    jsr box_draw.write_char
+    inc box_draw.write_x
+    lda #228
+    jsr box_draw.write_char
+ 
+    inc color
+    inx
+    cpx #18
+    bne boucle
+    rts
+
+color:
+    .byte 0
+
+color_names:
+    pstring(" --- 00 -  0 - BLACK")
+    pstring(" --- 01 -  1 - WHITE")
+    pstring(" --- 02 -  2 - RED")
+    pstring(" --- 03 -  3 - CYAN")
+    pstring(" --- 04 -  4 - PURPLE")
+    pstring(" --- 05 -  5 - GREEN")
+    pstring(" --- 06 -  6 - BLUE")
+    pstring(" --- 07 -  7 - YELLOW")
+    pstring(" --- 08 -  8 - ORANGE")
+    pstring(" --- 09 -  9 - BROWN")
+    pstring(" --- 0A - 10 - PINK")
+    pstring(" --- 0B - 11 - DARK GREY")
+    pstring(" --- 0C - 12 - MIDDLE GREY")
+    pstring(" --- 0D - 13 - LIGHT GREEN")
+    pstring(" --- 0E - 14 - LIGHT BLUE")
+    pstring(" --- 0F - 15 - LIGHT GREY")
+    .byte 0
 }
 
 } // chars
