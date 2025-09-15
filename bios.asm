@@ -78,6 +78,7 @@
 .label return_int=103
 .label cursor_unblink=105
 .label malloc=107
+.label get_basic_string=109
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -134,6 +135,7 @@ bios_jmp:
     .word do_return_int
     .word do_cursor_unblink
     .word do_malloc
+    .word do_get_basic_string
 
 
 * = * "BIOS code"
@@ -201,7 +203,7 @@ error_msg:
 //---------------------------------------------------------------
 // set_basic_string
 //
-// R0 = descripteur variable
+// input : R0 = variable descriptor
 //---------------------------------------------------------------
 
 do_set_basic_string:
@@ -213,6 +215,7 @@ do_set_basic_string:
     
     mov $7a,r0
     jsr $b08b
+
     sta $49
     sty $4a
     push r0
@@ -227,6 +230,67 @@ do_set_basic_string:
     sta $7a
     clc
     rts
+}
+
+//---------------------------------------------------------------
+// get_basic_string
+//
+// input : R0 = variable descriptor, R1 = pstring for storage
+// output : R0 = variable address
+//---------------------------------------------------------------
+
+do_get_basic_string:
+{
+    lda $7a
+    pha
+    lda $7b
+    pha
+    
+    mov $7a,r0
+    jsr $b08b
+    
+    lda $4a
+    bne is_ok
+    lda $49
+    beq is_zero
+    
+is_ok:
+    // length
+    ldy #0
+    lda ($49),y
+    tax
+    mov (r1),a
+    // address of string, move to r0
+    iny
+    lda ($49),y
+    sta zr0l
+    iny
+    lda ($49),y
+    sta zr0h
+    
+    // copy to r1
+    ldy #0
+copie:
+    mov a,(r0)
+    iny
+    mov (r1),a
+    dex
+    bne copie
+    ldy #0
+    
+end:
+    pla
+    sta $7b
+    pla
+    sta $7a
+    clc
+    rts
+    
+is_zero:
+    ldy #0
+    tya
+    mov (r1),a
+    jmp end
 }
 
 //===============================================================
@@ -2022,6 +2086,10 @@ filtre_trouve:
 //
 // input : R0 string to expand, R1 destination
 // sortie : C=1 if quoted string, otherwise C=0
+//
+// - surrounding quotes are suppressed
+// - %% is changed to %
+// - %' is changed to double quotes
 //---------------------------------------------------------------
 
 do_str_expand:

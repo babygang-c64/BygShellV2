@@ -65,6 +65,7 @@
     .label return_int=103
     .label cursor_unblink=105
     .label malloc=107
+    .label get_basic_string=109
 }
 
 //===============================================================
