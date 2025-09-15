@@ -476,6 +476,15 @@ Y = bit to set in A
               A = number of items after split
 ```
 
+## lines
+
+**lines_goto**
+```
+```
+**lines_find**
+```
+```
+
 ## File
 
 **file_open**

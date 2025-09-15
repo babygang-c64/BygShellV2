@@ -2233,9 +2233,15 @@ sh_string:
 }
 
 //---------------------------------------------------------------
-// str_pat : pattern matching, C=1 si OK, C=0 sinon
-// r0 : chaine à tester
-// r1 : pattern
+// str_pat : string pattern matching, 
+// 
+// 
+// input :
+//  r0 : address of pstring to test
+//  r1 : pstring pattern, * = multiple characters, 
+//       # = 1 character
+// output : 
+//  C=1 if found, C=0 if not found
 //---------------------------------------------------------------
 
 do_str_pat:
@@ -2245,8 +2251,6 @@ do_str_pat:
     .label multiple = '*'
     .label single = '#'
 
-
-    
     ldy #0
     lax (zstring),y
     inx
@@ -2569,10 +2573,9 @@ pas_fini:
 //===============================================================
 // pprint routines : print functions for pstrings and other
 //
-// pprint_int
-// pprint_path
 // pprint
 // pprint_nl
+// pprint_int
 // pprint_hex
 // pprint_lines
 //===============================================================
