@@ -2203,6 +2203,8 @@ add_sh_string:
     push r0
     sec
     swi get_basic_string, sh_string
+    cpx #0
+    beq empty_string
     
     ldy #0
 copy_sh:
@@ -2215,7 +2217,8 @@ copy_sh:
     ldy zsave
     dex
     bne copy_sh
-    
+
+empty_string:
     inc pos_read
     pop r0
     pla
