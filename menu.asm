@@ -175,10 +175,25 @@ get_max_length:
     sty max_length
     sty nb_items
     sty selected_item
+    sty was_quote
     sec
 boucle:
     swi param_process,params_buffer
     bcs fin_params
+    
+    ldy #1
+    mov a,(r0)
+    cmp #34
+    bne not_quote
+
+    sty was_quote
+    mov r2,r0
+    mov r1,#work_buffer
+    swi str_expand
+    mov r0,r1
+    
+not_quote:
+    ldy #0
     swi str_len
     cmp max_length
     bcc not_bigger
@@ -190,12 +205,23 @@ not_bigger:
     add r1,a
     mov menu_data_ptr,r1
     inc nb_items
+    
+    lda was_quote
+    bne was_not
+
+    dec was_quote
+    mov r0,r2
+
+was_not:
     clc
     jmp boucle
 
 fin_params:
     lda max_length
     rts
+
+was_quote:
+    .byte 0
 }
 
 calc_start_position:

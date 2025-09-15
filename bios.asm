@@ -1598,8 +1598,6 @@ test_bam:
     // the new block free space is 255-X
 
 new_block:
-//    mov r0,#bam_root
-//    mov r1,#memory_start
     mov r0,save0
     mov r1,save1
     swi bam_get
