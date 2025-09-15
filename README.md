@@ -59,6 +59,9 @@ All external commands can :
 ## External commands
 
 **CAT**
+
+![Print file content with CAT](images/Cat.png)
+
 ```
 *cat <file> [<file> ...]
 
