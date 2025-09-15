@@ -39,19 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    clc
-    swi get_basic_string,return_string,work_buffer
-    swi pprint_nl,work_buffer
-    clc
-    rts
-    
-return_string:
-    .text "SH$"
-string_len:
-    .byte 0
-string_storage:
-    .word 0
-
     //-- init options
     sec
     swi param_init,buffer,options_hw
@@ -109,4 +96,11 @@ help_hw:
     pstring("*HW [MESSAGE] [-D] : PRINTS MESSAGE")
     pstring(" D = PRINT DEFAULT MESSAGE")
     .byte 0
+return_string:
+    .text "SH$"
+string_len:
+    .byte 0
+string_storage:
+    .word 0
+
 }

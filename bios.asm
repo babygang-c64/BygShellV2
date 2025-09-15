@@ -262,7 +262,6 @@ is_ok:
     ldy #0
     lda ($49),y
     tax
-    mov (r1),a
     // address of string, move to r0
     iny
     lda ($49),y
@@ -274,8 +273,10 @@ is_ok:
     lda ztmp
     bne no_copy
     
-    // copy to r1
+    // copy to r1, start with length
     ldy #0
+    txa
+    mov (r1),a
 copie:
     mov a,(r0)
     iny
@@ -2104,10 +2105,14 @@ filtre_trouve:
 // - surrounding quotes are suppressed
 // - %% is changed to %
 // - %' is changed to double quotes
+// - %$ is replaced with value of SH$ variable
+// - if the character following % is not recognized,
+//   "?" is inserted
 //---------------------------------------------------------------
 
 do_str_expand:
 {
+    push r7
     txa
     pha
     ldy #0
@@ -2132,6 +2137,7 @@ fini:
     jsr write_length
     pla
     tax
+    pop r7
     clc
     rts
 
@@ -2142,11 +2148,15 @@ write_length:
     rts
 
 quoted:
-    inc r0
     inc r1
+    inc r0
     dex
+    ldy #0
+    sty pos_write
+    sty pos_read
 
 copy_expand:
+    ldy pos_read
     lda (zr0),y
     cmp #'%'
     beq do_special
@@ -2154,16 +2164,20 @@ copy_expand:
     beq fin_expand
 
 copy_next:
+    ldy pos_write
     sta (zr1),y
-    iny
+    inc pos_read
+    inc pos_write
     dex
     bne copy_expand
 
 fin_expand:
     pop r1
+    ldy pos_write
     jsr write_length
     pla
     tax
+    pop r7
     sec
     rts
 
@@ -2172,13 +2186,47 @@ do_special:
     lda (zr0),y
     cmp #'%'
     beq copy_next
+    cmp #'$'
+    beq add_sh_string
     cmp #39
     bne not_quote
     lda #34
     jmp copy_next
+
 not_quote:
     lda #'?'
     jmp copy_next
+
+add_sh_string:
+    txa
+    pha
+    push r0
+    sec
+    swi get_basic_string, sh_string
+    
+    ldy #0
+copy_sh:
+    lda (zr0l),y
+    iny
+    sty zsave
+    ldy pos_write
+    sta (zr1l),y
+    inc pos_write
+    ldy zsave
+    dex
+    bne copy_sh
+    
+    inc pos_read
+    pop r0
+    pla
+    tax
+    jmp copy_expand
+
+.label pos_write = zr7l
+.label pos_read = zr7h
+    
+sh_string:
+    .text "SH$"
 }
 
 //---------------------------------------------------------------
