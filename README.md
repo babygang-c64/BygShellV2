@@ -102,6 +102,15 @@ search for pattern in files
     C = count lines matching
 ```
 
+**TOUCH**
+```
+*touch <file> [<file> ...]
+
+create new empty file
+    options :
+    P = create PRG file instead of default SEQ
+```
+
 **HEAD**
 ```
 *head <file> [<file> ...]
