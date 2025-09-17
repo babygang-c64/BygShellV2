@@ -113,7 +113,9 @@ pas_opt_c:
     ldx #4
     swi file_close
     swi pipe_end
-    clc
+    mov r0,count
+    sec
+    swi success
     rts
 
 option_v:

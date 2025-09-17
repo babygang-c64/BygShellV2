@@ -11,12 +11,13 @@
 
 * = * "bios vectors"
 
-.label vars=$cf00
+.label vars=$02a7
 .label buffer=$cf80
-.label nb_params=$cfff
-.label options_params=$cffe
-.label scan_params=$cffd
-.label options_values=$cfe0
+.label nb_params=$02ff
+.label options_params=$02fe
+.label scan_params=$02fd
+.label options_values=$02e0
+
 .label OPT_PIPE=$80
 
 .namespace bios 
@@ -79,6 +80,8 @@
 .label cursor_unblink=105
 .label malloc=107
 .label get_basic_string=109
+.label bank_basic=111
+.label success=113
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -136,7 +139,8 @@ bios_jmp:
     .word do_cursor_unblink
     .word do_malloc
     .word do_get_basic_string
-
+    .word do_bank_basic
+    .word do_success
 
 * = * "BIOS code"
 
@@ -175,13 +179,17 @@ copy_bios_exec:
 // error : error message, also closes pipe output
 //
 // Input : r0: PSTRING of error message or default if C=0
+// r1=error number, -1 by default
+// 
 //---------------------------------------------------------------
 
 do_error:
 {
     bcs not_default
     mov r0, #error_default
+    mov r1,#$ffff
 not_default:
+    push r1
     lda CURSOR_COLOR
     pha
     lda #7
@@ -191,6 +199,8 @@ not_default:
     pla
     sta CURSOR_COLOR
     jsr do_pipe_end
+    pop r0
+    jsr do_return_int
     sec
     rts
 error_default:
@@ -199,6 +209,22 @@ error_msg:
     pstring(" ERROR")
 }
 
+//---------------------------------------------------------------
+// success : return OK
+//
+// Input : r0: return value if C=1 or default 0 if C=0
+// 
+//---------------------------------------------------------------
+
+do_success:
+{
+    bcs not_default
+    mov r0,#0
+not_default:
+    jsr do_return_int
+    clc
+    rts
+}
 
 //---------------------------------------------------------------
 // set_basic_string
@@ -1693,6 +1719,25 @@ new_block:
 .label bam_available = vars+3
 .label save0 = vars+4
 .label save1 = vars+6
+}
+
+//----------------------------------------------------
+// bank_basic : BASIC ROM banking
+//
+// input : C=1 bank BASIC ROM back, C=0 bank out
+//----------------------------------------------------
+
+do_bank_basic:
+{
+    bcs bank_back
+    lda #$35
+do_bank:
+    sta $01
+    clc
+    rts
+bank_back:
+    lda #$37
+    bne do_bank
 }
 
 //===============================================================

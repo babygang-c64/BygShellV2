@@ -106,8 +106,10 @@ help:
 ok_close:
     ldx #4
     swi file_close
+
 fini:
     clc
+    swi success
     rts
 
 error:

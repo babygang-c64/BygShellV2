@@ -69,3 +69,4 @@ build_command mon
 build_command edit -symbolfile
 build_command menu
 build_command chars
+build_command touch

@@ -73,6 +73,7 @@ no_option_d:
 
     //-- return with C=0 : OK
     clc
+    swi success
     rts
 
 
@@ -83,6 +84,7 @@ help:
 
     //-- return with C=1 : ERROR
     sec
+    swi error
     rts
 
 default_message:

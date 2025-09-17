@@ -51,6 +51,7 @@ end:
     ldx #21
     jsr move_cursor
     clc
+    swi success
     rts
 
 help:
@@ -68,6 +69,7 @@ move_cursor:
 
 error:
     sec
+    swi error
     rts
 
 pos_y:

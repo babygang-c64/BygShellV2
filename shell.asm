@@ -67,6 +67,10 @@ process_shell:
     jsr nchrget
 
     ldx #1
+    
+    cmp #$00
+    bmi do_token
+    
 copy_command:
     sta buffer,x
     inx   
@@ -132,6 +136,7 @@ test_char:
 modif_char:
     lda new_char,y
     rts
+
 nchrget_end:
     sec
     rts

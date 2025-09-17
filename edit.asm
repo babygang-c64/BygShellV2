@@ -16,8 +16,8 @@ pstring("EDIT")
 
 edit:
 {
-    .label work_buffer = $ce00
-    .label params_buffer = $cd80
+    .label work_buffer = $ce80
+    .label params_buffer = $cf00
     .label lines_root = $7800
     .label total_lines = lines_root
     .label lines_ptr = lines_root+2
@@ -134,6 +134,7 @@ no_save:
     swi cursor_unblink
     jsr clear_screen
     jsr CLRCHN
+    swi success
     clc
     rts
 

@@ -59,13 +59,15 @@ quit_menu:
     ldx selected_item
     inx
     stx zr0l
-    swi return_int
+    sec
+    swi success
 
     clc
     rts
 
 error:
-    sec
+    clc
+    swi error
     rts
 
 options_menu:

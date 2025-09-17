@@ -2,12 +2,18 @@
 
 .encoding "ascii"
 
-.label vars=$cf00
+.label vars=$02a7
 .label buffer=$cf80
-.label nb_params=$cfff
-.label options_params=$cffe
-.label scan_params=$cffd
-.label options_values=$cfe0
+.label nb_params=$02ff
+.label options_params=$02fe
+.label scan_params=$02fd
+.label options_values=$02e0
+
+//.label vars=$cf00
+//.label nb_params=$cfff
+//.label options_params=$cffe
+//.label scan_params=$cffd
+//.label options_values=$cfe0
 .label OPT_PIPE=128
 
 .namespace bios 
@@ -66,6 +72,8 @@
     .label cursor_unblink=105
     .label malloc=107
     .label get_basic_string=109
+    .label bank_basic=111
+    .label success=113
 }
 
 //===============================================================

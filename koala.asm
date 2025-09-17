@@ -69,6 +69,7 @@ koala_end:
     jsr CHROUT
     jsr clr
     clc
+    swi success
     rts
     
 clr:
@@ -94,8 +95,8 @@ help:
     sec
     rts
 load_error:
-    swi pprint_nl,msg_load_error
-    sec
+    clc
+    swi error,msg_load_error
     rts
 msg_load_error:
     pstring("LOAD ERROR")

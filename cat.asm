@@ -54,6 +54,7 @@ boucle_params:
 fin_params:
     swi pipe_end
     clc
+    swi success
     rts
 
 do_cat:
