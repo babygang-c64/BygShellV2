@@ -104,6 +104,29 @@ def handle_add(elems):
         return table[(p0, p1)]()
     raise ValueError(f"Invalid ADD instruction: {' '.join(elems)}")
 
+# --------------------------------------------------------------------
+# SUB
+# --------------------------------------------------------------------
+
+def handle_sub(elems):
+    p0, v0 = param_type(elems[1])
+    p1, v1 = param_type(elems[3])
+    size = get_size(v1) if p1 == "i" else None
+
+    table = {
+        ("r", "a"): lambda: f"sub_r({v0})",
+        ("w", "a"): lambda: f"sub_r({v0})",
+        ("r", "i"): lambda: f"{'subw_i8' if size == 8 else 'subw_i'}({v0}, {v1})",
+        ("w", "i"): lambda: f"{'subw_i8' if size == 8 else 'subw_i'}({v0}, {v1})",
+        ("w", "w"): lambda: f"subr_r({v0}, {v1})",
+        ("r", "r"): lambda: f"subr_r({v0}, {v1})",
+        ("w", "r"): lambda: f"subr_r({v0}, {v1})",
+        ("w", "r"): lambda: f"subr_r({v0}, {v1})",
+    }
+    if (p0, p1) in table:
+        return table[(p0, p1)]()
+    raise ValueError(f"Invalid SUB instruction: {' '.join(elems)}")
+
 
 # --------------------------------------------------------------------
 # Other handlers
@@ -155,9 +178,9 @@ def handle_brw(elems):
     if p0 in ["r","w"] and p1 in ["r","w"]:
         return f"{elems[0]}({v0},{v1},{v2})"
     if p0 in ["r","w"] and p1 == 'i':
-        return f"{elems[0]}_ri({v0},{v1},{v2})"
+        return f"{elems[0]}({v0},{v1},{v2})"
     if p1 in ["r","w"] and p0 == 'i':
-        return f"{elems[0]}_ir({v0},{v1},{v2})"
+        return f"{elems[0]}({v0},{v1},{v2})"
     raise ValueError(f"Invalid BRW instruction: {' '.join(elems)}")
 
 def handle_simple(elems, instr):
@@ -207,6 +230,7 @@ handlers = {
     "ble": handle_brw,
     "bgt": handle_brw,
     "bge": handle_brw,
+    "sub": handle_sub,
 }
 
 

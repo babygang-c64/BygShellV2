@@ -15,13 +15,14 @@ pstring("KOALA")
 
 koala:
 {
-    .label params_buffer=$cd80
+    .label work_buffer=$ce00
+    .label params_buffer=$cd00
     .label OPT_S=1
 
     // initialisation
 
     sec
-    swi param_init,params_buffer,options_koala
+    swi param_init,buffer,options_koala
 
     lda options_params
     and #OPT_S
@@ -30,16 +31,24 @@ koala:
     ldx nb_params
     jeq help
 
+    ldy #0
     sec
 boucle:
-    ldy #0
     swi param_process,params_buffer
     bcs koala_end
 
+    mov r1, #work_buffer
+    swi str_expand
+    mov r0,#work_buffer
+    lda #'#'
+    jsr CHROUT
+    swi pprint_nl
+    
     ldy #0
-    mov r1, #$4000
+    mov r1, #$8000
     sec
     swi file_load
+    bcs load_error
 
 opt_s:
     sec
@@ -50,6 +59,7 @@ opt_s:
     ldx #0
     jsr picture_show
     
+    clc
     jmp boucle
         
 koala_end:
@@ -83,7 +93,12 @@ help:
     swi pprint_lines,help_msg
     sec
     rts
-
+load_error:
+    swi pprint_nl,msg_load_error
+    sec
+    rts
+msg_load_error:
+    pstring("LOAD ERROR")
 help_msg:
     pstring("*KOALA (<FILENAME>) (-S)")
     pstring(" S = SHOW PIC ALREADY LOADED")
@@ -91,7 +106,7 @@ help_msg:
 options_koala:
     pstring("S")
 
- } // koala namespace
+} // koala namespace
  
 //---------------------------------------------------------------
 // picture_show : show picture
@@ -120,34 +135,76 @@ pas_txt:
     cpx #1
     bne pas_koala
 
-    // screen to 6800, color to d800
+    // screen to A800, color to d800
     // screen offset is 2800
 
-    ldx #0
-copy_color:
-    lda $6328,x
-    sta $d800,x
-    lda $6428,x
-    sta $d900,x
-    lda $6528,x
-    sta $da00,x
-    lda $6628,x
-    sta $db00,x
-    lda $5f40,x
-    sta $6800,x
-    lda $6040,x
-    sta $6900,x
-    lda $6140,x
-    sta $6a00,x
-    lda $6240,x
-    sta $6b00,x
-    dex
-    bne copy_color
+
+    sei
+    lda #$36
+    sta $01
 
     // background color
 
-    lda $6710
+    lda $A710
     sta $d021
+    lda #0
+    sta $d020
+
+    ldy #0
+copy_color:
+    // --- colorram (source déplacée de $6328 -> $A328 etc.)
+    lda $A328,y
+    sta $d800,y
+    lda $A428,y
+    sta $d900,y
+    lda $A528,y
+    sta $da00,y
+    lda $A628,y
+    sta $db00,y
+    
+    // backup buffers
+    lda $ce00,y
+    sta $0400,y
+    lda $cf00,y
+    sta $0500,y
+
+    // --- video matrix (source déplacée de $5F40/$6040/$6140/$6240 -> $9F40/$A040/$A140/$A240)
+    lda $9F40,y
+    sta $cc00,y    // destination aussi déplacée de $6800 -> $A800
+    lda $A040,y
+    sta $cd00,y
+    lda $A140,y
+    sta $ce00,y
+    lda $A240,y
+    sta $cf00,y
+
+    iny
+    bne copy_color
+
+    lda #$34
+    sta $01
+
+// copy_hires: $8000-$9F3F vers $e000
+
+    ldy #0
+    sty zr1l
+    sty zr2l
+    lda #$80
+    sta zr1h
+    lda #$e0
+    sta zr2h
+copy_hires:
+    lda (zr1),y
+    sta (zr2),y
+    iny
+    bne copy_hires
+    inc zr1h
+    inc zr2h
+    bne copy_hires
+    
+    lda #$36
+    sta $01
+    cli
 
     jsr go_gfx
     jmp fin_show
@@ -161,6 +218,19 @@ fin_show:
 no_keypress:
     lda save_d021
     sta $d021
+    
+    ldy #0
+recup:
+    lda $0400,y
+    sta $ce00,y
+    lda $0500,y
+    sta $cf00,y
+    iny
+    bne recup
+
+    lda #$37
+    sta $01
+    cli
     clc
     rts
 
@@ -168,13 +238,13 @@ save_d021:
     .byte 0
 
 go_gfx:
-    lda #$38
+    lda #$3B
     sta $d011
     lda #$18
     sta $d016
-    lda #$02
+    lda #$00
     sta $dd00
-    lda #$A0
+    lda #$38
     sta $d018
     rts
 
@@ -185,7 +255,7 @@ go_txt:
     sta $d016
     lda #$03
     sta $dd00
-    lda #$17
+    lda #$14
     sta $d018
     rts
 

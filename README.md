@@ -24,6 +24,9 @@ being able to run with a fastloader
 - Keep a minimum of internal commands / the ability to add some of those
 - Play nicely along BASIC, and as much as possible avoid hitting the BASIC RAM space
 
+All of this has been developped using an iPad, you know, the "consume only device" :)
+ 
+
 ## Shell commands
 
 ### Script and external commands execution
@@ -38,7 +41,7 @@ There are no more shell scripts as you can use the commands within BASIC program
 
 All commands should load to $C000 and start with :
 
-- Their start address
+- Their start address as a word
 - The command name as a pstring (if the command is the same than the previous one then it's not re-loaded)
 
 Only a check to see if we loaded something after $C000 is done before trying to run the command.
@@ -210,7 +213,7 @@ mov r<n>, a         : register n = a
 
 Warning : indirect MOV operations rely on Y beeing set to 0, if not then Y will be added to address
 
-**ADD**
+**ADD, SUB**
 ```
 add r<n>, #<imm>    : add 8bit or 16bit immediate value to register n
 add r<n>, a         : add a to register n
@@ -218,6 +221,13 @@ add r<n>, r<m>      : add register m to register n
 add <addr>, a       : add a to value at address <addr>
 add <addr>, #<imm>  : add 8bit or 16bit immediate to value at address <addr>
 add <addr>, <addr2> : add value at <addr2> to value at <addr> 
+
+sub r<n>, #<imm>    : substract 8bit or 16bit immediate value from register n
+sub r<n>, a         : substract a from register n, preserves A
+sub r<n>, r<m>      : substract register m from register n
+sub <addr>, a       : substract a from value at address <addr>
+sub <addr>, #<imm>  : substract 8bit or 16bit immediate from value at address <addr>
+sub <addr>, <addr2> : substract value at <addr2> from value at <addr> 
 ```
 **INC, DEC, INCW, DECW**
 ```
@@ -236,6 +246,12 @@ bgt <item1>,<item2>,<label> : branch to <label> if <item1> > <item2>
 ble <item1>,<item2>,<label> : branch to <label> if <item1> <= <item2>
 blt <item1>,<item2>,<label> : branch to <label> if <item1> < <item2>
 ```
+**PUSH, POP**
+```
+push r<n> : push register on stack
+pop r<n>  : pop register from stack
+```
+
 **SWAP**
 ```
 swap r<n>, r<m> : swap registers

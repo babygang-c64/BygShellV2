@@ -47,6 +47,7 @@ rm -f ${disk}
 ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write shell_pp.prg "shell" -silent
 
+${VICE_PATH}/c1541 -attach ${disk} -write test2.asm "test2.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test.txt "test" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write edit.hlp "edit.hlp" -silent

@@ -293,6 +293,80 @@ pas_inc:
 }
 
 //---------------------------------------------------------------
+// subr_r : substract registers or address contents : 
+// 
+// reg1 = reg1 - reg2           : sub r0,r1
+// (adr1) = (adr1) - (adr2)     : sub adr1,adr2
+// reg1 = reg1 - (adr2)         : sub r1,adr2
+// (adr1) = (adr1) - (reg2)     : sub adr1,r2
+//---------------------------------------------------------------
+
+.macro subr_r(reg1, reg2) {
+    lda reg1
+    sec
+    sbc reg2
+    sta reg1
+    lda reg1+1
+    sbc reg2+1
+    sta reg1+1
+}
+
+//---------------------------------------------------------------
+// subw_i : substract 16bits value to addresses contents or
+// register
+//
+// (adr1) = (adr1) - value
+// reg = reg - value
+//---------------------------------------------------------------
+
+.macro subw_i(adr1, value) {
+    lda adr1
+    sec
+    sbc #<value
+    sta adr1
+    lda adr1+1
+    sbc #>value
+    sta adr1+1
+}
+
+//---------------------------------------------------------------
+// subw_i8 : subtract 8-bit immediate value from 16-bit reg/mem
+//
+// reg = reg - imm8
+// (adr) = (adr) - imm8
+//---------------------------------------------------------------
+.macro subw_i8(reg, imm8) {
+    lda reg
+    sec
+    sbc #imm8
+    sta reg
+    bcs pas_dec
+    dec reg+1
+pas_dec:
+}
+
+//---------------------------------------------------------------
+// sub_r(reg) : reg -= A
+// Y preserved, A preserved
+// sub reg, a
+//---------------------------------------------------------------
+
+.macro sub_r(reg)
+{
+    pha
+    eor #$ff
+    clc
+    adc #1
+    adc reg
+    sta reg
+    bcc pas_inc
+    inc reg+1
+pas_inc:
+    pla
+}
+
+
+//---------------------------------------------------------------
 // addi_w(addr) : (addr) += 8 bits immediate value
 // Y preserved
 // add addr, #<value>
