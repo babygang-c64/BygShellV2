@@ -17,6 +17,7 @@ pstring("TOUCH")
 touch:
 {
     .label work_buffer = $ce00
+    .label OPT_P = 1
 
     //-- init options
     sec
@@ -25,7 +26,7 @@ touch:
 
     //-- no parameters = print help
     ldx nb_params
-    beq help
+    jeq help
 
     ldy #0
     sec
@@ -44,32 +45,50 @@ fin_params:
     rts
 
 do_touch:
+    ldy #0
     mov r1,#work_buffer
     swi str_cpy
-    mov a,(r1)
-    tay
-    dey
-    mov a,(r1)
-    cmp #','
-    beq ok_suffix
-    ldy #0
-    mov r1,#seq_suffix
-    swi str_cat
+
+    swi file_exists
+    bcc error_exists
+
+    lda options_params
+    and #OPT_P
+    beq add_suffix
+    
+    swi str_cat,work_buffer,prg_suffix
+    jmp ok_suffix
+
+
+add_suffix:
+    swi str_cat,work_buffer,seq_suffix
 
 ok_suffix:
-    ldy #0
-    mov r1,#write_suffix
-    swi str_cat
-    
-    mov r0,r1
-    swi pprint_nl
+    swi str_cat,work_buffer,write_suffix
+
+    ldx #5
+    sec
+    swi file_open,work_buffer
+    ldx #5
+    swi file_close
+
     clc
     rts
 
+error_exists:
+    sec
+    mov r1,#$fffe
+    swi error,msg_error_exists
+    rts
+
+msg_error_exists:
+    pstring("FILE EXISTS")
 write_suffix:
     pstring(",W")
 seq_suffix:
     pstring(",S")
+prg_suffix:
+    pstring(",P")
 
 help:
     swi pprint_lines, help_hw
@@ -84,10 +103,11 @@ help:
     
     //-- options available
 options_touch:
-    pstring("H")
+    pstring("P")
 
 help_hw:
     pstring("*TOUCH <FILE> : CREATE EMPTY FILE")
+    pstring(" -P : create PRG file")
     .byte 0
 
 }

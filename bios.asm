@@ -82,6 +82,7 @@
 .label get_basic_string=109
 .label bank_basic=111
 .label success=113
+.label file_exists=115
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -141,6 +142,7 @@ bios_jmp:
     .word do_get_basic_string
     .word do_bank_basic
     .word do_success
+    .word do_file_exists
 
 * = * "BIOS code"
 
@@ -1274,11 +1276,31 @@ vide:
 }
 
 //----------------------------------------------------
-// file_open : ouverture fichier en lecture
-// r0 : pstring nom, X = canal
-// C=0 : lecture, C=1 : read/write
-// retour C=0 OK, C=1 KO
-// le fichier est ouvert en X,<device>,X
+// file_exists : test if files exists using file_open
+//
+// input : r0 = pstring name
+// output : C=0 file exists, C=1 file does not exist
+//----------------------------------------------------
+
+do_file_exists:
+{
+    ldx #6
+    clc
+    jsr do_file_open
+    php
+    ldx #6
+    jsr do_file_close
+    plp
+    rts
+}
+
+//----------------------------------------------------
+// file_open : file open for reading / writing
+//
+// r0 : pstring name, X = channel
+// C=0 : read, C=1 : read/write
+// output : C=0 OK, C=1 KO
+// file is opened in X,<device>,X
 //----------------------------------------------------
 
 do_file_open:

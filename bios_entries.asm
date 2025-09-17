@@ -74,6 +74,7 @@
     .label get_basic_string=109
     .label bank_basic=111
     .label success=113
+    .label file_exists=115
 }
 
 //===============================================================
