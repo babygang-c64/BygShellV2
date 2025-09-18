@@ -1185,49 +1185,14 @@ add4:
     
     jsr goto_line_at_cursor
     
-    mov a,(r0++)
-    
+    mov a,(r0)
     ldx cursor_y
     sta lines_length,x
     
-    tax
-    stx cpt_x
-    cmp #0
-    beq pad_line
+    ldx view_offset
+    swi screen_write_line
 
-    ldy #0
-    sty cpt_x
-paint:
-    txa
-    pha
-    mov a,(r0++)
-    tax
-    swi ascii_to_screen
-    mov (r1++),a
-    pla
-    tax
-    inc cpt_x
-    lda cpt_x
-    cmp #40
-    beq fin
-    dex
-    bne paint
-
-pad_line:
-    lda #32
-paint_pad:
-    ldx cpt_x
-    cpx #40
-    beq fin
-    bcs fin
-    mov (r1++),a
-    inc cpt_x
-    bne paint_pad
-fin:
     jmp update_screen.end
-
-cpt_x:
-    .byte 0
 }
 
 //----------------------------------------------------

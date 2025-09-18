@@ -39,6 +39,34 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    // test screen_write_all
+    
+    mov r0,#0
+    mov r1,#data
+    ldy #15
+    ldx #2
+    swi screen_write_all
+    rts
+    
+data:
+    .word 5
+    .word line1
+    .word line2
+    .word line3
+    .word line4
+    .word line5
+line1:
+    pstring("THIS IS LINE ONE")
+line2:
+    pstring("AND LINE NUMBER TWO")
+line3:
+    pstring("THIS IS LINE 3")
+line4:
+    pstring("THIS IS LINE FOUR, LIKE FANTASTIC FOUR, THIS IS A VERY LONG LINE FOR TESTING")
+line5:
+    pstring("THIS IS LINE FIVE, THE LAST ONE")
+
+
     //-- init options
     sec
     swi param_init,buffer,options_hw

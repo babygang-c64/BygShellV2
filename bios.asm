@@ -94,7 +94,8 @@
 .label node_goto=129
 .label ascii_to_screen=131
 .label screen_to_ascii=133
-.label line_to_screen=135
+.label screen_write_line=135
+.label screen_write_all=137
 
 
 //===============================================================
@@ -165,7 +166,8 @@ bios_jmp:
     .word do_node_goto
     .word do_ascii_to_screen
     .word do_screen_to_ascii
-    .word do_line_to_screen
+    .word do_screen_write_line
+    .word do_screen_write_all
 
 * = * "BIOS code"
 
@@ -995,21 +997,83 @@ msg_option_error:
 // helpers :
 // 
 // ascii_to_screen
-// screen_to_ascii
+// screen_write_line
+// screen_write_all
 //===============================================================
 
 //----------------------------------------------------
-// line_to_screen : write a line to screen
+// screen_write_all : write Y lines to screen
+// 
+// input : r0 = nodes starting line number
+//         r1 = nodes root
+//         Y = number of lines to fill
+//----------------------------------------------------
+
+do_screen_write_all:
+{
+    sty pos_y
+    ldy #0
+    mov current_line,r0
+    mov lines_root,r1
+    mov r0,(r1)
+    mov total_lines,r0
+    mov screen_pos,#$0400
+
+draw:
+    incw current_line
+    mov r0,current_line
+    mov r1,lines_root
+    jsr do_node_goto
+    
+    mov r1,screen_pos
+    jsr do_screen_write_line
+    mov screen_pos,r1
+    
+    dec pos_y
+    beq fin
+
+    cmpw total_lines,current_line
+    bne draw
+
+no_more_lines:
+    // fill remaining screen space while Y not 0
+    mov r1,screen_pos
+    mov r0,#filler
+    jsr do_screen_write_line
+    mov screen_pos,r1
+    
+    dec pos_y
+    bne no_more_lines
+fin:
+    rts
+
+filler:
+    pstring("-")
+
+    .label current_line = vars+2
+    .label lines_root = vars+4
+    .label screen_pos = vars+6
+    .label total_lines = vars+8
+    .label pos_y = vars+10
+}
+
+//----------------------------------------------------
+// screen_write_line : write a line to screen
 //
 // input : R0 pstring to write, R1 screen position
 //         X = view_offset
 //
 // output : A = string length (r0)
+//
+// preserves Y,X
 //----------------------------------------------------
 
-do_line_to_screen:
+do_screen_write_line:
 {
     stx view_offset
+    tya
+    pha
+
     lda #40
     sta pos_x
 
@@ -1051,6 +1115,11 @@ pad_line:
 
 end_line:
     pla
+    tax // lgr
+    pla
+    tay // original Y
+    txa
+    ldx view_offset
     rts
     
 .label pos_x=vars
