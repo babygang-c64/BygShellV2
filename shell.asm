@@ -89,6 +89,11 @@ copy_command:
     stx buffer
 
     jsr exec_command
+    sec
+//    swi bank_basic
+//    lda #55
+//    sta $01
+//    cli
     jmp NEWSTT
 
 do_token:
@@ -192,8 +197,10 @@ device_ok:
     lda #0
     jsr LOAD
     bcs load_error
-    cpy #$c0
+    cpy #$a0
     bcc no_run
+
+    jsr cache_check
 
 already_loaded:
     jsr start_command
@@ -206,13 +213,53 @@ load_error:
 exec_end:
     lda #MSG_ALL
     jmp SETMSG
+
 start_command:
+    cpx #$c0
+    bne under_basic
     jmp ($c000)
-    
+
+under_basic:
+//    sei
+//    lda #54
+//    sta $01
+//    clc
+//    swi bank_basic
+    jmp ($a000)
+
 cache_check:
+    ldx #$c0
     mov r0,#buffer
     mov r1,#$c002
     swi str_cmp
+    bcs found
+    ldx #$a0
+    clc
+    
+//    sei
+//    lda #54
+//    sta $01
+
+//    swi bank_basic 
+    mov r0,#buffer
+    mov r1,#$a002
+    swi str_cmp
+    bcs found
+//    sec 
+//    swi bank_basic
+//    lda #55
+//    sta $01
+//    cli
+    clc
+    rts
+
+found:
+//    sec
+//    lda #55
+//    sta $01
+//    cli
+//    swi bank_basic
+    sec
     rts
 }
 
@@ -329,7 +376,7 @@ do_help:
 {
     lda nb_params
     beq help_help
-    
+
     mov r0, #buffer
     swi str_next
 

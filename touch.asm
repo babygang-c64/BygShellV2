@@ -77,8 +77,7 @@ ok_suffix:
 
 error_exists:
     sec
-    mov r1,#$fffe
-    swi error,msg_error_exists
+    swi error,msg_error_exists,$fffd
     rts
 
 msg_error_exists:
@@ -95,8 +94,7 @@ help:
     clc
     rts
 
-    //-- return with C=1 : ERROR
-    sec
+    clc
     swi error
     rts
 

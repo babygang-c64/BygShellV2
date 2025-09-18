@@ -83,6 +83,14 @@
 .label bank_basic=111
 .label success=113
 .label file_exists=115
+.label str_chr=117
+.label str_rchr=119
+.label str_pad=121
+.label node_append=123
+.label node_push=123
+.label node_remove=125
+.label node_pop=125
+
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -143,6 +151,11 @@ bios_jmp:
     .word do_bank_basic
     .word do_success
     .word do_file_exists
+    .word do_str_chr
+    .word do_str_rchr
+    .word do_str_pad
+    .word do_node_append
+    .word do_node_remove
 
 * = * "BIOS code"
 
@@ -205,6 +218,7 @@ not_default:
     jsr do_return_int
     sec
     rts
+
 error_default:
     pstring("SHELL")
 error_msg:
@@ -1752,21 +1766,24 @@ new_block:
 do_bank_basic:
 {
     bcs bank_back
-    lda #$35
-do_bank:
+    lda #54
     sta $01
     clc
     rts
 bank_back:
-    lda #$37
-    bne do_bank
+    lda #55
+    sta $01
+    clc
+    rts
 }
 
 //===============================================================
 // Nodes : routines to manage list of pointers
 //
-// node_delete : delete existing node
-// node_insert : insert new node 
+// node_delete : delete existing node at given position
+// node_insert : insert new node at given position
+// node_append / push : append new node at end
+// node_remove / pop  : remove node at end
 //
 // Data structure (through r1) :
 //
@@ -1775,6 +1792,39 @@ bank_back:
 //
 // uses ztmp
 //===============================================================
+
+//---------------------------------------------------------------
+// node_append / push : append node at end
+//
+// input : r1 = root entry, r0 = new node value
+//---------------------------------------------------------------
+
+do_node_append:
+{
+    push r0
+    mov r0, (r1)
+    jsr node_precalc
+    pop r0
+    mov (r2),r0
+    incw r1
+    rts
+}
+
+//---------------------------------------------------------------
+// node_remove / pop : remove last node and get value
+//
+// input : r1 = root entry
+// output : r0 = value of last node
+//---------------------------------------------------------------
+
+do_node_remove:
+{
+    mov r0, (r1)
+    jsr node_precalc
+    mov r0, (r2)
+    decw r1
+    rts
+}
 
 //---------------------------------------------------------------
 // node_calc_nb : calculates number of moves for copy
@@ -1945,15 +1995,95 @@ no_need:
 // lines_find
 // lines_goto
 // is_filter
+// str_del
+// str_chr
+// str_rchr
+// str_pad
 //
 // missing from v1 :
 //
 // str_empty
-// str_del
-// str_chr
-// str_rchr
 // str_ncpy
 //===============================================================
+
+//---------------------------------------------------------------
+// str_pad : truncate or completes string to length X
+//
+// input : r0 = pstring, X = target length
+//---------------------------------------------------------------
+
+do_str_pad:
+{
+    stx ztmp
+    ldy #0
+    lda (zr0),y
+    cmp ztmp
+    beq do_str_chr.end
+    sta (zr0),y
+    tay
+    lda #32
+pad:
+    cpy ztmp
+    bcs do_str_chr.end
+    sta (zr0),y
+    iny
+    bne pad
+pb:
+    sec
+    rts
+}
+
+
+//---------------------------------------------------------------
+// str_chr : lookup X in pstring R0, C=1 if found and
+// Y = position
+//---------------------------------------------------------------
+
+do_str_chr:
+{
+    stx ztmp
+    ldy #0
+    lda (zr0),y
+    beq pas_trouve
+    sta longueur
+    iny
+    lda ztmp
+recherche:
+    cmp (zr0),y
+    beq trouve
+    iny
+    dec longueur
+    bne recherche
+pas_trouve:
+end:
+    clc
+    rts
+trouve:
+    sec
+    rts
+.label longueur = vars
+}
+
+//---------------------------------------------------------------
+// str_rchr : reverse lookup X in pstring R0, C=1 if find and
+// Y = position
+//---------------------------------------------------------------
+
+do_str_rchr:
+{
+    stx ztmp
+    ldy #0
+    lda (zr0),y
+    beq do_str_chr.pas_trouve
+    tay
+    lda ztmp
+recherche:
+    cmp (zr0),y
+    beq do_str_chr.trouve
+    dey
+    bne recherche
+    beq do_str_chr.pas_trouve
+}
 
 //---------------------------------------------------------------
 // str_del : supprime Y caractères à partir de la position X

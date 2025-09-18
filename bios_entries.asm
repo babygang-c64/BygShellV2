@@ -75,6 +75,9 @@
     .label bank_basic=111
     .label success=113
     .label file_exists=115
+    .label str_chr=117
+    .label str_rchr=119
+    .label str_pad=121
 }
 
 //===============================================================
