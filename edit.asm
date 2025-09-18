@@ -984,9 +984,9 @@ not_backspace:
     bne insert_car_not_end
 
     inc work_buffer
+    ldx navigation.current_key
+    swi screen_to_ascii
     ldx work_buffer
-    lda navigation.current_key
-    jsr screen_to_ascii
     sta work_buffer,x
 insert_end:
     ldx cursor_y
@@ -995,9 +995,9 @@ insert_end:
     jmp navigation.cursor_right
 
 insert_car_not_end:
-    lda navigation.current_key
-    jsr screen_to_ascii
-    sta insert_char+1
+    ldx navigation.current_key
+    swi screen_to_ascii
+    stx insert_char+1
     mov r0, #work_buffer
     mov r1, #insert_char
     ldx cursor_x
@@ -1198,9 +1198,14 @@ add4:
     ldy #0
     sty cpt_x
 paint:
+    txa
+    pha
     mov a,(r0++)
-    jsr ascii_to_screen
+    tax
+    swi ascii_to_screen
     mov (r1++),a
+    pla
+    tax
     inc cpt_x
     lda cpt_x
     cmp #40
@@ -1288,11 +1293,15 @@ smaller:
 
 write_line:
     ldy view_offset
+    txa
+    pha
     mov a,(r0++)
-
-    jsr ascii_to_screen
-
+    tax
+    swi ascii_to_screen
     sta screen_write:$0400
+    pla
+    tax
+
     incw screen_write
     incw screen_write2
     inc pos_x
@@ -1360,53 +1369,6 @@ max_offset:
 }
 
 //----------------------------------------------------
-// ascii_to_screen : convert character in A for screen
-//----------------------------------------------------
-
-ascii_to_screen:
-{
-    cmp #97
-    bcc not_lowercase
-    cmp #123
-    bcs not_lowercase
-    sec
-    sbc #$60
-not_lowercase:
-    pha
-    lda block_set
-    cmp #3
-    bne end
-end:
-    pla
-    rts
-}
-
-//----------------------------------------------------
-// screen_to_ascii : convert character in A to ASCII
-//----------------------------------------------------
-
-screen_to_ascii:
-{
-    cmp #65
-    bcc not_lowercase
-    cmp #65+26
-    bcs not_lowercase
-    clc
-    adc #$20
-    rts
-
-not_lowercase:
-    cmp #65+128
-    bcc not_uppercase
-    cmp #65+26+128
-    bcs not_uppercase
-    sec
-    sbc #$80
-not_uppercase:
-    rts
-}
-
-//----------------------------------------------------
 // goto_line : get pointer of specific line
 //
 // input : line number in R0
@@ -1416,27 +1378,11 @@ not_uppercase:
 
 goto_line:
 {
-    asl zr0l
-    rol zr0h
-    clc
-    lda zr0l
-    adc #<lines_ptr
-    sta zr0l
-    sta cursor_line_ptr
-
-    lda zr0h
-    adc #>lines_ptr
-    sta zr0h
-    sta cursor_line_ptr+1
-    ldy #0
-    lda (zr0l),y
-    pha
-    iny
-    lda (zr0l),y
-    dey
-    sta zr0h
-    pla
-    sta zr0l    
+    push r1
+    mov r1,#lines_ptr
+    swi node_goto
+    mov cursor_line_ptr,r1
+    pop r1
     rts
 }
 

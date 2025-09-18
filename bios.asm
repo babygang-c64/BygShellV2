@@ -91,6 +91,9 @@
 .label node_remove=125
 .label node_pop=125
 .label str_ltrim=127
+.label node_goto=129
+.label ascii_to_screen=131
+.label screen_to_ascii=133
 
 
 //===============================================================
@@ -158,6 +161,9 @@ bios_jmp:
     .word do_node_append
     .word do_node_remove
     .word do_str_ltrim
+    .word do_node_goto
+    .word do_ascii_to_screen
+    .word do_screen_to_ascii
 
 * = * "BIOS code"
 
@@ -982,7 +988,62 @@ msg_option_error:
 // file_load
 // pprint_hex_buffer
 // cursor_unblink
+//
+// helpers :
+// 
+// ascii_to_screen
+// screen_to_ascii
 //===============================================================
+
+//----------------------------------------------------
+// ascii_to_screen : convert character in X for screen
+// 
+// input : X, output : A and X
+//----------------------------------------------------
+
+do_ascii_to_screen:
+{
+    txa
+    cmp #97
+    bcc not_lowercase
+    cmp #123
+    bcs not_lowercase
+    sec
+    sbc #$60
+not_lowercase:
+    tax
+    rts
+}
+
+//----------------------------------------------------
+// screen_to_ascii : convert character in X to ASCII
+//
+// input : X, output : A and X
+//----------------------------------------------------
+
+do_screen_to_ascii:
+{
+    txa
+    cmp #65
+    bcc not_lowercase
+    cmp #65+26
+    bcs not_lowercase
+    clc
+    adc #$20
+    tax
+    rts
+
+not_lowercase:
+    cmp #65+128
+    bcc not_uppercase
+    cmp #65+26+128
+    bcs not_uppercase
+    sec
+    sbc #$80
+not_uppercase:
+    tax
+    rts
+}
 
 //----------------------------------------------------
 // cursor_unblink : unblink cursor, restore character
@@ -1786,6 +1847,7 @@ bank_back:
 // node_insert : insert new node at given position
 // node_append / push : append new node at end
 // node_remove / pop  : remove node at end
+// node_goto : goto specified node
 //
 // Data structure (through r1) :
 //
@@ -1794,6 +1856,24 @@ bank_back:
 //
 // uses ztmp
 //===============================================================
+
+//---------------------------------------------------------------
+// node_goto : goto node
+//
+// input : r1 = root entry, r0 = node number
+// output : r0 = node value, r1 = node address
+//---------------------------------------------------------------
+
+do_node_goto:
+{
+    asl zr0l
+    rol zr0h
+    add r0,r1
+
+    mov r1,r0
+    mov r0,(r1)
+    rts
+}
 
 //---------------------------------------------------------------
 // node_append / push : append node at end

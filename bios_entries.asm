@@ -9,11 +9,6 @@
 .label scan_params=$02fd
 .label options_values=$02e0
 
-//.label vars=$cf00
-//.label nb_params=$cfff
-//.label options_params=$cffe
-//.label scan_params=$cffd
-//.label options_values=$cfe0
 .label OPT_PIPE=128
 
 .namespace bios 
@@ -83,7 +78,9 @@
     .label node_remove=125
     .label node_pop=125
     .label str_ltrim=127
-
+    .label node_goto=129
+    .label ascii_to_screen=131
+    .label screen_to_ascii=133
 }
 
 //===============================================================
