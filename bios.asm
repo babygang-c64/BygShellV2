@@ -90,6 +90,7 @@
 .label node_push=123
 .label node_remove=125
 .label node_pop=125
+.label str_ltrim=127
 
 
 //===============================================================
@@ -156,6 +157,7 @@ bios_jmp:
     .word do_str_pad
     .word do_node_append
     .word do_node_remove
+    .word do_str_ltrim
 
 * = * "BIOS code"
 
@@ -2745,6 +2747,55 @@ do_str_len:
     ldy #0
     mov a, (r0)
     rts
+}
+
+//---------------------------------------------------------------
+// str_ltrim : removes spaces at the start of R0
+//---------------------------------------------------------------
+
+do_str_ltrim:
+{
+    push r0
+    push r1
+    txa
+    pha
+    mov r1,r0
+    inc r1
+    ldy #0
+    mov a, (r0++)
+    sta length
+    sty new_length
+    beq fini
+    
+    // r1 write, r0 read
+spaces:
+    mov a,(r0)
+    cmp #32
+    bne no_spaces
+    inc r0
+    dec length
+    beq fini
+    bne spaces
+no_spaces:
+    mov (r1++),a
+    inc r0
+    inc new_length
+    dec length
+    beq fini
+    mov a,(r0)
+    jmp no_spaces
+    
+fini:
+    pla
+    tax
+    pop r1
+    pop r0
+    lda new_length
+    mov (r0),a
+    rts
+
+.label length = vars
+.label new_length = vars + 1
 }
 
 //---------------------------------------------------------------

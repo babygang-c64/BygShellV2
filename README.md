@@ -517,6 +517,10 @@ by the node values.
     On exit : C = 1 if split occurs, 
               A = number of items after split
 ```
+**str_next**
+```
+    r0 = pstring after r0, when there is a contiguous list
+```
 **str_pad**
 ```
     Pad or cut pstring(r0) to length X

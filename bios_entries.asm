@@ -78,6 +78,12 @@
     .label str_chr=117
     .label str_rchr=119
     .label str_pad=121
+    .label node_append=123
+    .label node_push=123
+    .label node_remove=125
+    .label node_pop=125
+    .label str_ltrim=127
+
 }
 
 //===============================================================
