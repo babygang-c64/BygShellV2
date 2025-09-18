@@ -94,6 +94,7 @@
 .label node_goto=129
 .label ascii_to_screen=131
 .label screen_to_ascii=133
+.label line_to_screen=135
 
 
 //===============================================================
@@ -164,6 +165,7 @@ bios_jmp:
     .word do_node_goto
     .word do_ascii_to_screen
     .word do_screen_to_ascii
+    .word do_line_to_screen
 
 * = * "BIOS code"
 
@@ -988,12 +990,73 @@ msg_option_error:
 // file_load
 // pprint_hex_buffer
 // cursor_unblink
+// line_to_screen
 //
 // helpers :
 // 
 // ascii_to_screen
 // screen_to_ascii
 //===============================================================
+
+//----------------------------------------------------
+// line_to_screen : write a line to screen
+//
+// input : R0 pstring to write, R1 screen position
+//         X = view_offset
+//
+// output : A = string length (r0)
+//----------------------------------------------------
+
+do_line_to_screen:
+{
+    stx view_offset
+    lda #40
+    sta pos_x
+
+    ldy #0
+    mov a,(r0++)
+    pha
+
+    sec
+    sbc view_offset
+    tax
+    
+    cmp #0
+    beq pad_line
+    bmi pad_line
+
+write_line:
+    ldy view_offset
+    txa
+    pha
+    mov a,(r0++)
+    tax
+    swi ascii_to_screen
+    ldy #0
+    mov (r1++),a
+    pla
+    tax
+
+    dec pos_x
+    beq end_line
+    dex
+    bne write_line
+
+pad_line:
+    lda #32
+    mov (r1++),a
+    
+    dec pos_x
+    bne pad_line
+
+end_line:
+    pla
+    rts
+    
+.label pos_x=vars
+.label view_offset=vars+1
+}
+
 
 //----------------------------------------------------
 // ascii_to_screen : convert character in X for screen

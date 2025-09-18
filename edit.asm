@@ -1289,7 +1289,6 @@ smaller:
     cmp #0
     beq do_pad_line
     bmi do_pad_line
-    jmp write_line
 
 write_line:
     ldy view_offset

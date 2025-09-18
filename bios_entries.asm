@@ -81,6 +81,7 @@
     .label node_goto=129
     .label ascii_to_screen=131
     .label screen_to_ascii=133
+    .label line_to_screen=135
 }
 
 //===============================================================
