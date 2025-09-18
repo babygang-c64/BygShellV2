@@ -398,11 +398,25 @@ Y = bit to set in A
 
 ## Nodes
 
+Node structure is a list of word pointers to data.
+1st word of structure is the total number of nodes, followed
+by the node values.
+
 **node_insert**
 ```
+    Insert blank node at position R0 in node structure R1
 ```
 **node_delete**
 ```
+    Delete node at position R0 in node structure R1
+```
+**node_append/push**
+```
+    Add node value in R0 to the end of node structure R1
+```
+**node_remove/pop**
+```
+    Get into R0 and remove value at end of node structure R1
 ```
 
 ## Parameters
@@ -502,6 +516,10 @@ Y = bit to set in A
     Split pstring(r0) with separator X
     On exit : C = 1 if split occurs, 
               A = number of items after split
+```
+**str_pad**
+```
+    Pad or cut pstring(r0) to length X
 ```
 
 ## lines

@@ -148,7 +148,7 @@ def handle_single_reg(elems, instr):
 def handle_incdecw(elems, instr):
     instr = {"inw": "incw", "dew": "decw"}.get(instr, instr)
     p0, v0 = param_type(elems[1])
-    return f"{instr[:3]}_w({v0})" if p0 == "w" else " ".join(elems)
+    return f"{instr[:3]}_w({v0})" if p0 in ["w","r"] else " ".join(elems)
 
 
 def handle_swap(elems):
@@ -184,7 +184,9 @@ def handle_brw(elems):
     raise ValueError(f"Invalid BRW instruction: {' '.join(elems)}")
 
 def handle_simple(elems, instr):
-    return f"{instr}({elems[1]})"
+    p0, v0 = param_type(elems[1])
+    return f"{instr}({v0})"
+#    return f"{instr}({elems[1]})"
 
 
 def handle_swi(elems):
