@@ -1035,6 +1035,8 @@ draw:
     cmpw total_lines,current_line
     bne draw
 
+    inc $d020
+
 no_more_lines:
     // fill remaining screen space while Y not 0
     mov r1,screen_pos
@@ -1048,7 +1050,7 @@ fin:
     rts
 
 filler:
-    pstring("-")
+    pstring("----")
 
     .label current_line = vars+2
     .label lines_root = vars+4
