@@ -256,7 +256,7 @@ go_txt:
     sta $d016
     lda #$03
     sta $dd00
-    lda #$14
+    lda #23
     sta $d018
     rts
 
