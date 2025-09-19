@@ -142,15 +142,15 @@ help:
     rts
 
 default_message:
-    pstring("HELLO WORLD!")
+    pstring("Hello World !")
     
     //-- options available
 options_hw:
     pstring("DTNM")
 
 help_hw:
-    pstring("*HW [MESSAGE] [-D] : PRINTS MESSAGE")
-    pstring(" D = PRINT DEFAULT MESSAGE")
+    pstring("*hw [message] [-d] : Prints message")
+    pstring(" d = Print default message")
     .byte 0
 return_string:
     .text "SH$"

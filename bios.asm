@@ -96,6 +96,7 @@
 .label screen_to_ascii=133
 .label screen_write_line=135
 .label screen_write_all=137
+.label str_rtrim=139
 
 
 //===============================================================
@@ -168,6 +169,7 @@ bios_jmp:
     .word do_screen_to_ascii
     .word do_screen_write_line
     .word do_screen_write_all
+    .word do_str_rtrim
 
 * = * "BIOS code"
 
@@ -232,9 +234,9 @@ not_default:
     rts
 
 error_default:
-    pstring("SHELL")
+    pstring("Shell")
 error_msg:
-    pstring(" ERROR")
+    pstring(" error")
 }
 
 //---------------------------------------------------------------
@@ -601,7 +603,7 @@ error:
     rts
 
 error_pipe_msg:
-    pstring("PIPE OPTION")
+    pstring("Pipe option")
 }
 
 //---------------------------------------------------------------
@@ -976,7 +978,7 @@ prefix_pipe:
 suffix_pipe:
     pstring(",S,W")
 msg_option_error:
-    pstring("INVALID OPTION")
+    pstring("Invalid option")
 }
 
 //===============================================================
@@ -1176,6 +1178,33 @@ not_lowercase:
     sbc #$80
 not_uppercase:
     tax
+    rts
+}
+
+//----------------------------------------------------
+// ascii_to_petscii : convert character 
+//
+// input : A, output : A
+//----------------------------------------------------
+
+ascii_to_petscii:
+{
+    cmp #$41
+    bcc not_lowercase
+    cmp #$5a
+    bcs not_lowercase
+    clc
+    adc #$20
+    rts
+
+not_lowercase:
+    cmp #$61
+    bcc not_uppercase
+    cmp #$7a
+    bcs not_uppercase
+    sec
+    sbc #$20
+not_uppercase:
     rts
 }
 
@@ -1476,6 +1505,7 @@ do_pprint:
 boucle:
     iny
     lda (zr0),y
+    jsr ascii_to_petscii
     jsr CHROUT
     dex
     bne boucle
@@ -2929,6 +2959,30 @@ do_str_len:
 {
     ldy #0
     mov a, (r0)
+    rts
+}
+
+//---------------------------------------------------------------
+// str_rtrim : removes spaces at the end of R0
+//---------------------------------------------------------------
+
+do_str_rtrim:
+{
+    ldy #0
+    mov a,(r0)
+    tay
+    beq fini
+look:
+    mov a,(r0)
+    cmp #32
+    bne adjust
+    dey
+    bne look
+adjust:
+    tya
+    ldy #0
+    mov (r0),a
+fini:
     rts
 }
 

@@ -125,11 +125,11 @@ option_pagination:
     rts
 
 help_msg:
-    pstring("*HEAD <FILENAME> [-NQVP]")
-    pstring(" N = NUMBERS OF LINES")
-    pstring(" Q = NO FILENAME")
-    pstring(" V = ALWAYS FILENAME")
-    pstring(" P = PAGINATE OUTPUT")
+    pstring("*head <filename> [-nqvp]")
+    pstring(" n = Number of lines")
+    pstring(" q = No filename")
+    pstring(" v = Always filename")
+    pstring(" p = Paginate output")
     .byte 0
 
 options_head:

@@ -137,11 +137,11 @@ error:
     rts
     
 help_msg:
-    pstring("*SEARCH <STRING> <FILE> [-NLVC]")
-    pstring(" N = PRINT LINE NUMBER")
-    pstring(" L = PRINT LINE NUMBER ONLY")
-    pstring(" V = LINES NOT MATCHING")
-    pstring(" C = COUNT LINES MATCHING")
+    pstring("*search <string> <file> [-nlvc]")
+    pstring(" n = Print line number")
+    pstring(" l = Print line numbers only")
+    pstring(" v = Lines not matching")
+    pstring(" c = Count lines matching")
     .byte 0
 
 options_list:

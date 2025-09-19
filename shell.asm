@@ -50,7 +50,7 @@ start_cartridge:
 start_message:
     .byte 16
     .byte $0d
-    .text "*BYG-SHELL V2.0"
+    .text "*BYG-Shell v2.0"
 
 basic_hook:
     jsr CHRGET
@@ -363,9 +363,9 @@ internal_commands_jump:
     .word do_memory
 
 internal_commands_help:
-    pstring("*HELP [COMMAND] : HELP ON COMMANDS")
-    pstring("*M <START> [END]: MEM DUMP")
-    pstring("*<COMMAND>      : RUN EXTERNAL COMMAND")
+    pstring("*Help [Command] : Help on commands")
+    pstring("*M <start> [end]: Memory hex dump")
+    pstring("*<Command>      : Run external command")
     .byte 0
 
 

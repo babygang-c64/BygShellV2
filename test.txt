@@ -1,6 +1,6 @@
 LINE 1
 
-
+this is a lowercase string
 LINE 4
 
 6.THIS IS A TEXT TEST FILE
