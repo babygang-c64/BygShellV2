@@ -1,0 +1,28 @@
+
+![Print file content with CAT](images/Cat.png)
+
+```
+*cat <file> [<file> ...]
+
+print file(s) contents to screen
+    options : 
+    N = numbers all lines
+    E = print $ at EOL
+    B = numbers all non empty lines
+    P = paginates output
+    H = hexdump with a difference
+    A = read C64 binary start address for hexdump
+```
+
+**WC**
+```
+*wc <file> [<file> ...] [options]
+
+count lines / words / bytes of files
+    options :
+    L = count lines
+    W = count words
+    C = count bytes
+    Q = don't print filename
+    Z = false option
+```

@@ -49,6 +49,8 @@ ${VICE_PATH}/c1541 -attach ${disk} -write shell_pp.prg "shell" -silent
 
 ${VICE_PATH}/c1541 -attach ${disk} -write test2.asm "test2.asm" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test.txt "test" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write file1.txt "file1" -silent
+${VICE_PATH}/c1541 -attach ${disk} -write file2.txt "file2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write edit.hlp "edit.hlp" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write empty.txt "empty" -silent
@@ -70,3 +72,4 @@ build_command edit -symbolfile
 build_command menu
 build_command chars
 build_command touch
+build_command diff

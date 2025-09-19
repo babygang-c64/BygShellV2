@@ -81,7 +81,7 @@ error_exists:
     rts
 
 msg_error_exists:
-    pstring("FILE EXISTS")
+    pstring("File exists")
 write_suffix:
     pstring(",W")
 seq_suffix:
@@ -104,8 +104,8 @@ options_touch:
     pstring("P")
 
 help_hw:
-    pstring("*TOUCH <FILE> : CREATE EMPTY FILE")
-    pstring(" -P : create PRG file")
+    pstring("*touch <file> : Create empty file")
+    pstring(" -p : create PRG file")
     .byte 0
 
 }

@@ -2934,9 +2934,11 @@ process_sep:
 do_str_cmp:
 {
     // si pas même longueur = KO
-    swi str_len
+    mov a,(r0)
     cmp (zr1),y
     bne comp_ko
+    cmp #0
+    beq comp_ok
     tay
 do_comp:
     lda (zr0),y
@@ -2944,6 +2946,7 @@ do_comp:
     bne comp_ko
     dey
     bne do_comp
+comp_ok:
     sec
     rts
 comp_ko:

@@ -111,6 +111,15 @@ create new empty file
     P = create PRG file instead of default SEQ
 ```
 
+**DIFF**
+```
+*dif <file1> <file2>]
+
+compare files
+    options :
+    Q = quiet mode, only return value in SH%
+```
+
 **HEAD**
 ```
 *head <file> [<file> ...]
