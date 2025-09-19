@@ -85,9 +85,9 @@ current_color:
     .byte 3,8,15,1
 
 help_msg:
-    pstring("*CHARS [-CH]")
-    pstring(" C = LIST OF COLORS")
-    pstring(" H = HELP")
+    pstring("*chars [-ch]")
+    pstring(" c = List of colors")
+    pstring(" h = Help")
     .byte 0
 
 options_chars:

@@ -13,7 +13,6 @@
 .word edit
 pstring("EDIT")
 
-
 edit:
 {
     .label work_buffer = $ce80

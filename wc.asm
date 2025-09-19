@@ -169,15 +169,15 @@ write_number:
 
 
 help_msg:
-    pstring("*WC <FILENAME> [-LWCQ]")
-    pstring(" L = COUNT LINES")
-    pstring(" W = COUNT WORDS")
-    pstring(" C = COUNT BYTES")
-    pstring(" Q = NO NAME")
+    pstring("*wc <filename> [-lwcq]")
+    pstring(" l = Count lines")
+    pstring(" w = Count words")
+    pstring(" c = Count bytes")
+    pstring(" q = No name")
     .byte 0
 
 options_wc:
-    pstring("LWCQ**")
+    pstring("LWCQ")
     
 num_lines:
     .word 0

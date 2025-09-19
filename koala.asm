@@ -99,10 +99,10 @@ load_error:
     swi error,msg_load_error
     rts
 msg_load_error:
-    pstring("LOAD ERROR")
+    pstring("Load")
 help_msg:
-    pstring("*KOALA (<FILENAME>) (-S)")
-    pstring(" S = SHOW PIC ALREADY LOADED")
+    pstring("*koala (<filename>) (-s)")
+    pstring(" s = Show pic if already loaded")
     .byte 0
 options_koala:
     pstring("S")
@@ -215,7 +215,7 @@ pas_koala:
 fin_show:
     lda has_keypress
     beq no_keypress
-    swi key_wait
+    jsr key_wait_ram
 no_keypress:
     lda save_d021
     sta $d021
@@ -262,4 +262,25 @@ go_txt:
 
 has_keypress:
     .byte 0
+}
+
+key_wait_ram:
+{
+wait_key:
+    jsr SCNKEY
+    jsr GETIN
+    cmp #$20
+    beq wait_key
+    cmp #$03
+    beq key_ok
+    cmp #$51
+    beq key_ok
+    cmp #$0d
+    beq key_ok
+    cmp #$11
+    beq key_ok
+    bne wait_key
+key_ok:
+    clc
+    rts
 }

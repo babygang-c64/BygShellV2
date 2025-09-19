@@ -183,13 +183,13 @@ pas_numero:
 
 
 help_msg:
-    pstring("*CAT <FILENAME> [-BENPHA]")
-    pstring(" N = NUMBERS ALL LINES")
-    pstring(" E = $ AT EOL")
-    pstring(" B = NUMBERS NON EMPTY LINES")
-    pstring(" P = PAGINATES OUTPUT")
-    pstring(" H = HEXDUMP")
-    pstring(" A = START ADDRESS FOR HEXDUMP")
+    pstring("*cat <filename> [-benpha]")
+    pstring(" n = Numbers all lines")
+    pstring(" e = $ At EOL")
+    pstring(" b = Numbers non empty lines")
+    pstring(" p = Paginates output")
+    pstring(" h = Hexdump")
+    pstring(" a = Start address for hexdump")
     .byte 0
 
 options_cat:
@@ -270,7 +270,7 @@ cpt_ligne:
 is_break:
     .byte 0
 msg_suite:
-    pstring("<MORE>")
+    pstring("<More>")
 }
 
 } // CAT namespace

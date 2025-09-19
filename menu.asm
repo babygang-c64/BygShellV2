@@ -449,8 +449,8 @@ help:
     rts
     
 help_msg:
-    pstring("*MENU [ITEM OR FILE PATTERN] [-L]")
-    pstring(" L = PLACE MENU ON LEFT")
+    pstring("*menu [item or file pattern] [-l]")
+    pstring(" l = Place menu on left")
     .byte 0
 }
 
