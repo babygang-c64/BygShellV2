@@ -225,7 +225,7 @@ under_basic:
 //    sta $01
 //    clc
 //    swi bank_basic
-    jmp ($a000)
+    jmp ($c000)
 
 cache_check:
     ldx #$c0

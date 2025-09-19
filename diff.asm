@@ -21,6 +21,8 @@ diff:
     .label params_buffer = $cd00
     
     .label OPT_Q=1
+    .label OPT_F=1
+    .label OPT_N=1
 
     sec
     swi param_init,buffer,options_diff
@@ -32,6 +34,15 @@ diff:
     ldx nb_params
     cpx #2
     bne help
+
+    ldx #'N'
+    swi param_get_value
+    bcc no_value
+    lda zr0l
+    sta nb_diff_max
+    inc nb_diff_max
+no_value:
+
 
     ldy #0
     sec
@@ -48,6 +59,7 @@ diff:
     ldx #4
     swi file_open
 
+    mov nb_diff,#0
     jsr do_diff
 
 fin_params:
@@ -85,6 +97,7 @@ do_diff:
     jmp do_diff
     
 is_diff:
+    incw nb_diff
     lda #'<'
     jsr CHROUT
     swi pprint_nl,buffer1
@@ -93,19 +106,41 @@ is_diff:
     swi pprint_nl,buffer2
 
     swi pipe_output
+    
+    lda options_params
+    and #OPT_F
+    bne option_f
+
+    lda options_params
+    and #OPT_N
+    bne option_n
+    
     jmp do_diff
 
+option_n:
+    cmpw nb_diff,nb_diff_max
+    beq option_f
+    jmp do_diff
+
+option_f:
 no_more_data_file1:
 no_more_data_file2:
     rts
 
+nb_diff:
+    .word 0
+nb_diff_max:
+    .word 0
+
 different_msg:
     pstring("Files are different")
 help_msg:
-    pstring("*diff <file A> <file B> [-q]")
+    pstring("*diff <file A> <file B> [-qfn]")
+    pstring(" n = stop after X differences")
+    pstring(" f = Stop after 1 difference")
     pstring(" q = Quiet mode")
     .byte 0
 
 options_diff:
-    pstring("Q")
+    pstring("QFN")
 }

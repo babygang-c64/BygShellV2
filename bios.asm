@@ -2937,9 +2937,11 @@ do_str_cmp:
     mov a,(r0)
     cmp (zr1),y
     bne comp_ko
-    cmp #0
-    beq comp_ok
     tay
+    bne do_comp
+    mov a,(r1)
+    beq comp_ok
+
 do_comp:
     lda (zr0),y
     cmp (zr1),y
