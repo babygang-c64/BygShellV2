@@ -39,32 +39,58 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    // test screen_write_all
+    // test str_pat
     
-    mov r0,#0
-    mov r1,#data
-    ldy #15
-    ldx #2
-    swi screen_write_all
+    mov r1,#pattern2
+    mov r0,#line1
+    jsr test_pat
+    mov r1,#pattern2
+    mov r0,#line2
+    jsr test_pat
+    mov r1,#pattern2
+    mov r0,#line3
+    jsr test_pat
+    mov r1,#pattern2
+    mov r0,#line4
+    jsr test_pat
+    mov r1,#pattern2
+    mov r0,#line5
+    jsr test_pat
     rts
+
+test_pat:
+    push r0
+    push r1
+    swi pprint_nl
+    mov r0,r1
+    swi pprint_nl
+    pop r1
+    pop r0
+    swi str_pat
+    bcc no_match
+    swi pprint_nl,match
+no_match:
+    rts 
     
-data:
-    .word 5
-    .word line1
-    .word line2
-    .word line3
-    .word line4
-    .word line5
+match:
+    pstring("MATCH!")   
+pattern1:
+    pstring("*D*")
+pattern2:
+    pstring("*LI*NE*")
+pattern3:
+    pstring("*.ASM*")
+    
 line1:
-    pstring("THIS IS LINE ONE")
+    pstring("CAT.ASM")
 line2:
     pstring("AND LINE NUMBER TWO")
 line3:
-    pstring("THIS IS LINE 3")
+    pstring("THIS IS LIONNE 3")
 line4:
-    pstring("THIS IS LINE FOUR, LIKE FANTASTIC FOUR, THIS IS A VERY LONG LINE FOR TESTING")
+    pstring("SHELL")
 line5:
-    pstring("THIS IS LINE FIVE, THE LAST ONE")
+    pstring("THIS IS FIVE, THE LAST ONE")
 
 
     //-- init options

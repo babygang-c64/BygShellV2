@@ -281,6 +281,7 @@ prep_params:
 //
 // input : A = token
 // output : Y = token pos in RESLST, no check if token exists
+//          C = 1 = ignore token (for print), else C = 0
 //---------------------------------------------------------------
 
 token_lookup:

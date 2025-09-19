@@ -481,9 +481,9 @@ fini:
     sec
     rts
 
-.label in_quotes=vars
-.label type=vars+1
-.label is_filter=vars+2
+.label in_quotes=vars+7
+.label type=vars+8
+.label is_filter=vars+9
 }
 
 //---------------------------------------------------------------
@@ -1050,7 +1050,7 @@ fin:
     rts
 
 filler:
-    pstring("----")
+    pstring(" ")
 
     .label current_line = vars+2
     .label lines_root = vars+4
@@ -2657,154 +2657,123 @@ sh_string:
 //  C=1 if found, C=0 if not found
 //---------------------------------------------------------------
 
+
 do_str_pat:
 {
-    .label zstring = zr0
-    .label zwild = zr1
-    .label multiple = '*'
-    .label single = '#'
+// Variables definitions
+.label string_len = vars
+.label pattern_len = vars + 1
+.label s_idx = vars + 2
+.label p_idx = vars + 3
+.label star_pos = vars + 4
+.label match_pos = vars + 5
+.label temp = vars + 6
 
-    ldy #0
-    lax (zstring),y
-    inx
-    stx lgr_string
-    lax (zwild),y
-    inx
-    stx lgr_wild
+// Function to match pattern in zr1l against string in zr0l
+wildcard_match:
+    ldy #0              // Load lengths
+    lda (zr0l),y
+    sta string_len
+    lda (zr1l),y
+    sta pattern_len
     
-    lda lgr_string
-    cmp lgr_wild
-    bpl lgr_ok
-    clc
-    rts
+    lda #0              // Initialize indices
+    sta s_idx
+    sta p_idx
+    lda #$ff            // Initialize star_pos to -1
+    sta star_pos
+
+loop:
+    lda s_idx           // While s_idx < string_len
+    cmp string_len
+    bcc continue
+    jmp end_string
+
+continue:
+    lda p_idx           // If p_idx >= pattern_len, skip to not_normal
+    cmp pattern_len
+    bcs not_normal
     
-lgr_ok:
+    ldy p_idx           // Load pattern char
     iny
-    sty pos_wild
-    sty pos_string
-    sty pos_cp
-    sty pos_mp
-
-while1:
-    lda pos_string
-    cmp lgr_string
-    beq end_while1
-
-    ldy pos_wild
-    lda (zwild),y
-    cmp #multiple
-    beq end_while1
-
-    ldy pos_wild
-    lda (zwild),y
-    ldy pos_string
-    cmp (zstring),y
-    beq suite_while1
-    cmp #single
-    beq suite_while1
-    clc
-    rts
-
-suite_while1:
-    inc pos_wild
-    inc pos_string
-    jmp while1
-
-end_while1:
-
-while2:
-    lda pos_string
-    cmp lgr_string
-    beq end_while2
-
-    ldy pos_wild
-    //cmp lgr_wild
-    //beq pas_etoile
-    lda (zwild),y
-    cmp #multiple
-    bne pas_etoile
-
-    inc pos_wild
-    lda pos_wild
-    cmp lgr_wild
-    bne suite
-    sec
-    rts
-suite:
-    lda pos_wild
-    sta pos_mp
-    ldy pos_string
-    iny
-    sty pos_cp
-    jmp while2
-
-pas_etoile:
-    ldy pos_wild
-    //cpy lgr_wild
-    //beq end_while2
-
-    lda (zwild),y
-    cmp #single
-    beq ok_comp
-    ldy pos_string
-    cpy lgr_string
-    beq end_while2
-    cmp (zstring),y
-    beq ok_comp
+    lda (zr1l),y
+    sta temp            // Store in temp
     
-not_ok_comp:
-    lda pos_mp
-    sta pos_wild
-    inc pos_cp
-    lda pos_cp
-    sta pos_string
-    jmp while2
+    cmp #'?'            // If '?', match any char
+    beq match_char
+    
+    ldy s_idx           // Load string char
+    iny
+    lda (zr0l),y
+    cmp temp            // Compare with pattern char
+    beq match_char
+    jmp not_normal      // No match, go to not_normal
 
-ok_comp:
-    inc pos_wild
-    inc pos_string
-    lda pos_wild
-    cmp lgr_wild
-    beq ok_wild
-    bcs ko_inc
-ok_wild:
-    lda pos_string
-    cmp lgr_string
-    beq ok_string
-    bcs ko_inc
-ok_string:
-    jmp while2
-ko_inc:
-    sec
-    rts
-end_while2:
+match_char:
+    inc s_idx           // Advance both indices
+    inc p_idx
+    jmp loop            // Continue loop
 
-while3:
-    ldy pos_wild
-    cpy lgr_wild
-    beq fini_wild
-    lda (zwild),y
-    cmp #multiple
-    bne end_while3
-    inc pos_wild
-    jmp while3
+not_normal:
+    lda p_idx           // If p_idx >= pattern_len, skip to not_star
+    cmp pattern_len
+    bcs not_star
+    
+    ldy p_idx           // Load pattern char
+    iny
+    lda (zr1l),y
+    cmp #'*'            // If not '*', go to not_star
+    bne not_star
+    
+    lda p_idx           // Record star position
+    sta star_pos
+    lda s_idx           // Record current string position for backtracking
+    sta match_pos
+    inc p_idx           // Advance past '*'
+    jmp loop            // Continue loop
 
-end_while3:
-    lda pos_wild
-    cmp lgr_wild
-    beq fini_wild
+not_star:
+    lda star_pos        // If no star_pos, no match
+    cmp #$ff
+    beq no_match
+    
+    lda star_pos        // Backtrack: set p_idx to star_pos + 1
     clc
-    rts
-fini_wild:
-    sec
+    adc #1
+    sta p_idx
+    inc match_pos       // Advance match_pos
+    lda match_pos
+    sta s_idx           // Set s_idx to new match_pos
+    jmp loop            // Continue loop
+
+no_match:
+    clc                 // Clear carry for no match
     rts
 
-.label lgr_string = vars
-.label lgr_wild = vars+1
-.label pos_wild = vars+2
-.label pos_string = vars+3
-.label pos_cp = vars+4
-.label pos_mp = vars+5
+end_string:
+    // Consume any trailing '*' in pattern
+post_loop:
+    lda p_idx
+    cmp pattern_len
+    bcs check_match
+    ldy p_idx
+    iny
+    lda (zr1l),y
+    cmp #'*'
+    bne check_match
+    inc p_idx
+    jmp post_loop
+
+check_match:
+    lda p_idx           // If p_idx == pattern_len, match
+    cmp pattern_len
+    beq yes_match
+    clc                 // No match
+    rts
+
+yes_match:
+    sec                 // Set carry for match
+    rts
 }
 
 //----------------------------------------------------

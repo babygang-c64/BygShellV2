@@ -3,8 +3,8 @@
 .byte $00,$00,$00,$40           // Header length: 64 bytes (big-endian)
 .byte $01,$00                   // Version: 1.0 (big-endian) 
 .byte $00,$00                   // Hardware type: 0 (big-endian)
-.byte $01                       // EXROM line: 1 (active)
-.byte $00                       // GAME line: 0 (inactive)
+.byte $00                       // EXROM line: 1 (active)
+.byte $01                       // GAME line: 0 (inactive)
 .byte $00,$00,$00,$00,$00,$00   // Reserved (6 bytes)
 .text "BYG SHELL V2"           // Cartridge name
 .fill 32-"BYG SHELL V2".size(),$00  // Pad name to 32 bytes
