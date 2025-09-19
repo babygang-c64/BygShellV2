@@ -2498,7 +2498,7 @@ test_str:
     lda (zr0),y
     cmp #'*'
     beq filtre_trouve    
-    cmp #'?'
+    cmp #'#'
     beq filtre_trouve    
     dey
     bne test_str
@@ -2699,7 +2699,7 @@ continue:
     lda (zr1l),y
     sta temp            // Store in temp
     
-    cmp #'?'            // If '?', match any char
+    cmp #'#'            // If '#', match any char
     beq match_char
     
     ldy s_idx           // Load string char

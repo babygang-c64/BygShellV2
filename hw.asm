@@ -77,7 +77,7 @@ match:
 pattern1:
     pstring("*D*")
 pattern2:
-    pstring("*LI*NE*")
+    pstring("*LI#E*")
 pattern3:
     pstring("*.ASM*")
     
