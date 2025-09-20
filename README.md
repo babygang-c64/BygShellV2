@@ -25,15 +25,22 @@ being able to run with a fastloader
 - Play nicely along BASIC, and as much as possible avoid hitting the BASIC RAM space
 
 All of this has been developped using an iPad, you know, the "consume only device" :)
- 
+
+## What it's not ##
+
+- A new OS : the objective is to complete existing C64 BASIC invite capabilities, not to build something new from the ground up (and there are some nice things available already for that : C64OS, GEOS, CP/M65...)
+- A GUI/TUI : even if the BIOS functions provide some capabilities, it's not a GUI framework (don't expect mouse support too)
+- A shell with file and directory commands : we're not going to bring cp / cd / rm / rmdir / mkdir... and any command that already exists in the JiffyDOS wedge (and space is precious)
+- A shell loop with a prompt, that was the first attempt, and that was a wrong idea : BYG Shell needs to live alongside BASIC invite and DOS wedge, and to coexist with your C64 programs as much as possible (we call it "shell extension" for a reason)
 
 ## Shell commands
 
 ### Script and external commands execution
 
-All commands (internal and external) start with *
+All commands (internal and external) start with * (hello BBC)
 When a command is not found in the internal commands list then a lookup is done on disk on the current device for the
-time beeing, if the currrent device is not defined, tries on disk #8.
+time beeing, if the currrent device is not defined, tries on disk #8. It is planned to provide the ability to choose the
+device / directory location of commands.
 
 There are no more shell scripts as you can use the commands within BASIC programs baby !
 
@@ -49,11 +56,11 @@ The command should end with either a CLC if OK or SEC if KO and a RTS.
 
 All external commands can :
 
-- Process multiple files
+- Process multiple files if needed
 - Process files from a directory wildcard expression using * character
 - Have a combination of single letters options, starting with "-"
-- Can have integer values associated to options with "-X=<value>" syntax
-- Can return integer and string results to BASIC SH% and SH$ variables
+- Have integer values associated to options with "-X=<value>" syntax
+- Return integer and string results to BASIC SH% and SH$ variables
 - Pipe and pipe append results to an output SEQ file with ">" and ">>"
 
 ## Internal commands
