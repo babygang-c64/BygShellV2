@@ -378,7 +378,7 @@ internal_commands_jump:
 
 internal_commands_help:
     pstring("*Help [Command] : Help on commands")
-    pstring("*M <start> [end]: Memory hex dump")
+    pstring("*M <start> [end]: Memory hex dump / write")
     pstring("*<Command>      : Run external command")
     .byte 0
 
@@ -432,14 +432,14 @@ do_memory:
 ok_params:
     cmp #1
     beq juste_8
-    
     mov r0, #buffer
     swi str_next
     push r0
+
     swi str_next
     mov a,(r0)
-    cmp #4
-    jne not_address
+    cmp #2
+    jeq not_address
 
     swi hex2int
     mov stop_address, r0
@@ -496,23 +496,37 @@ fin_hex:
     rts
 
 not_address:
+    pop r0
     lda #8
     sta nb_bytes
+
+    mov r0, #buffer
+    swi str_next
+
+    mov r1,r0
+    swi hex2int
+    mov r2,r0
+
+    mov r0, r1
+    swi str_next
+    mov r1,r0
+
 boucle_write:
+    inc r0
     jsr bios.do_hex2int.conv_hex_byte
-    tax
-    pop r0
-    txa
-    mov (r0++),a
-    push r0
+    mov (r2++),a
+
+    mov r0,r1
     swi str_next
     bcs fini
+    
     dec nb_bytes
     beq fini
+
+    mov r1,r0
     jmp boucle_write
 
 fini:
-    pop r0
     jmp fin_hex
 
 .label stop_address = vars

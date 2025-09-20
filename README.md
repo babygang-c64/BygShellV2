@@ -61,7 +61,10 @@ All external commands can :
 ### Commands ###
 
 - HELP : lists the internal commands and retrieves help for internal commands
-- M : memory dump
+- M : memory dump / write, takes one start address or start / end address and
+when a single address is given you can write bytes just after it
+
+![Help and M commands](images/help_mem.png)
 
 ### Keys ###
 
