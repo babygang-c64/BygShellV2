@@ -583,9 +583,81 @@ go_back:
     jsr CHROUT
     dex
     bne go_back
+
+    //-----------------------------------
+    // C = copy buffer to $a000
+    //-----------------------------------
     
 not_a:
+    cmp #$14
+    bne not_c
+    
+    ldx PNTR
+    stx $a000
+    ldy #0
+copie:
+    lda (PNT),y
+    iny
+    sta $a000,y
+    dey
+    iny
+    dex
+    bne copie
     jmp end_irq
+
+    //-----------------------------------
+    // V = paste buffer from $a000
+    //-----------------------------------
+    
+not_c:
+    cmp #$1f
+    bne not_v
+    
+    swi cursor_unblink
+    ldy #0
+    sty zr0l
+    lda #$a0
+    sta zr0h
+    jsr bios.bios_ram_get_byte
+    tax
+    ldy #1
+paste:
+    jsr bios.bios_ram_get_byte
+    jsr screen_to_petscii
+    jsr CHROUT
+    iny
+    dex
+    bne paste
+
+not_v:
+end:
+    jmp end_irq
+    
+//----------------------------------------------------
+// screen_to_petscii 
+//----------------------------------------------------
+
+screen_to_petscii:
+{
+    cmp #1
+    bcc not_letter
+    cmp #1+26
+    bcs not_letter
+    clc
+    adc #$40
+    rts
+
+not_letter:
+    cmp #65
+    bcc not_uppercase
+    cmp #65+26
+    bcs not_uppercase
+    clc
+    adc #$20
+not_uppercase:
+    rts
+}
+
 }
 
 shell_top:

@@ -183,11 +183,13 @@ bios_exec_ref:
 
 ram_get_byte:
     sei
+    stx ztmp
     ldx #$34
     stx $01
     lda (zr0l),y
     ldx #$37
     stx $01
+    ldx ztmp
     cli
     rts
 
@@ -206,7 +208,7 @@ do_reset:
 {
     lda #0
     sta $c002
-    ldx #5+13
+    ldx #5+13+4
 copy_bios_exec:
     lda bios_exec_ref,x
     sta bios_exec,x
