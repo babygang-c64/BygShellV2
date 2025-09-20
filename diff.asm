@@ -28,13 +28,18 @@ diff:
     sec
     swi param_init,buffer,options_diff
     jcs error
-    swi pipe_init
-    jcs error
-    swi pipe_output
     
     ldx nb_params
     cpx #2
-    bne help
+    beq ok_nb_params
+    cpx #3
+    beq ok_nb_params
+    jmp help
+
+ok_nb_params:
+
+    swi pipe_init
+    jcs error
 
     ldx #'N'
     swi param_get_value
@@ -68,11 +73,11 @@ no_value:
 
 
 fin_params:
+    swi pipe_end
     ldx #3
     swi file_close
     ldx #4
     swi file_close
-    swi pipe_end
     clc
     rts
 
@@ -168,6 +173,8 @@ write_diff:
     lda options_params
     and #diff.OPT_Q
     bne no_write
+
+    swi pipe_output
     lda #'<'
     jsr CHROUT
     swi pprint_nl,diff.buffer1
@@ -175,7 +182,6 @@ write_diff:
     jsr CHROUT
     swi pprint_nl,diff.buffer2
 
-    swi pipe_output
 no_write:
     rts
 }
@@ -190,6 +196,7 @@ write_nb_diff:
     and #diff.OPT_Q
     beq no_write
     
+    swi pipe_output
     mov r0,diff.nb_diff
     jsr write_number
     lda #13
