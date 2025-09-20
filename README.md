@@ -61,6 +61,8 @@ All external commands can :
 
 ## External commands
 
+The following commands are available : cat, wc, search, touch, diff, head, chars, koala, edit, menu
+
 **CAT**
 
 ![Print file content with CAT](images/Cat.png)
@@ -100,6 +102,10 @@ search for pattern in files
     L = print only line number
     V = lines not matching
     C = count lines matching
+    
+Note:
+    patterns rely only on * character at the moment,
+    you should also use * on start / end when needed
 ```
 
 **TOUCH**
