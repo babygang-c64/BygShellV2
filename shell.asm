@@ -559,17 +559,24 @@ ctrl_k:
 
     lda #64
     sta KEYPRESS
-    lda #1
+
+    lda k_flag
+    bmi end_irq
+    
+    lda #128
+    ora 646
     sta k_flag
+
     lda #5
     sta 646
     jmp end_irq
 
 special_keys:
+    lda k_flag
+    and #$7f
+    sta 646
     lda #0
     sta k_flag
-    lda #1
-    sta 646
     dec NDX
     lda KEYPRESS
     

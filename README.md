@@ -58,8 +58,23 @@ All external commands can :
 
 ## Internal commands
 
+### Commands ###
+
 - HELP : lists the internal commands and retrieves help for internal commands
 - M : memory dump
+
+### Keys ###
+
+CTRL-K is mapped as a master key for some internal shortcuts
+The shortcuts are deactivated for the moment within the EDIT command
+When you press CTRL-K the cursor changes color to green indicating that the
+system is waiting for the end of the key sequence
+
+Existing shortcuts :
+
+- CTRL-K-A : go to the start of current logical screen line
+- CTRL-K-C : copy to clipboard from cursor position to start of logical line
+- CTRL-K-V : paste from clipboard
 
 ## External commands
 
