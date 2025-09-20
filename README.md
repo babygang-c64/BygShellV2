@@ -50,8 +50,10 @@ The command should end with either a CLC if OK or SEC if KO and a RTS.
 All external commands can :
 
 - Process multiple files
-- Process files from a directory wildcard expression
+- Process files from a directory wildcard expression using * character
 - Have a combination of single letters options, starting with "-"
+- Can have integer values associated to options with "-X=<value>" syntax
+- Can return integer and string results to BASIC SH% and SH$ variables
 - Pipe and pipe append results to an output SEQ file with ">" and ">>"
 
 ## Internal commands
@@ -61,9 +63,16 @@ All external commands can :
 
 ## External commands
 
-The following commands are available : cat, wc, search, touch, diff, head, chars, koala, edit, menu
+The following commands are available : 
+
+- cat, wc, search, touch, diff, head, chars, koala, edit, menu
 
 **CAT**
+
+CAT prints the content of a single file or a list of files to screen
+CAT can perform an hexdump of files, with or without starting addresses
+Output is done asuming the input files are ASCII encoded when not in HEX mode
+You can exit CAT in paginate mode with Q, X or run/stop
 
 ![Print file content with CAT](images/Cat.png)
 
@@ -81,6 +90,9 @@ print file(s) contents to screen
 ```
 
 **WC**
+
+WC counts lines, words and bytes of files
+
 ```
 *wc <file> [<file> ...]
 
@@ -93,6 +105,9 @@ count lines / words / bytes of files
 ```
 
 **SEARCH**
+
+SEARCH performs pattern matching on files, and prints matching lines of files
+
 ```
 *search <pattern> <file> [<file> ...]
 
@@ -109,6 +124,11 @@ Note:
 ```
 
 **TOUCH**
+
+TOUCH creates empty files, by default the filetype is SEQ
+You can bypass filetype using the P option or by adding ,P to you filenames
+An error is thrown if a file already exists
+
 ```
 *touch <file> [<file> ...]
 
@@ -118,6 +138,10 @@ create new empty file
 ```
 
 **DIFF**
+
+DIFF compares two files, and writes the differences
+The total number of different lines found so far is returned in SH% to BASIC
+You can run DIFF in quiet mode with the Q option
 
 ![Diff on files](images/diff.png)
 
@@ -133,6 +157,9 @@ compare files
 ```
 
 **HEAD**
+
+HEAD shows the first lines of files
+
 ```
 *head <file> [<file> ...]
 
@@ -146,6 +173,9 @@ print first lines of files
 
 **CHARS**
 
+CHARS displays a character set map by default
+You can display a colour palette with the C option
+
 ![Char map](images/Chars.png)
 ![Colorr map](images/CharsC.png)
 ```
@@ -157,6 +187,10 @@ print first lines of files
 ```
 
 **KOALA**
+
+KOALA loads and display a koalapaint image and wait for a key press
+The image is moved to the last VIC II bank for display
+
 ```
 *koala <image>
     load and view Koala format image (.KLA file)
@@ -166,8 +200,13 @@ print first lines of files
 
 **EDIT**
 
-![Edit is a small text editor](images/Edit.png)
+EDIT is a small text editor allowing ASCII files editing
+If launched with a non-existing filename, EDIT will use the filename provided and create
+a new file when saving
+EDIT will replace existing files when saving
+Memory management is limited at the moment, each update consumes memory
 
+![Edit is a small text editor](images/Edit.png)
 
 ```
 *edit [<file>]
@@ -193,6 +232,20 @@ print first lines of files
 
 **MENU**
 
+MENU allows the user to choice between different items presented in a non destructive list on screen
+The list can be displayed on the right (default) or left top side of screen
+The items come from the MENU parameters including files from current directory when pattern matching 
+character is used (ex: MENU *.koa)
+When run/stop or q/x are pressed, sh%=0, sh$= non affected
+You can surround items containing spaces with double quotes. When using quoted values an expansion of
+the string is done using the % character, as follows : 
+
+- %% => %
+- %' => "
+- %$ => value of BASIC SH$ variable
+
+Expansion still contains bugs
+
 ![Menu can be on left or right](images/menuR.png)
 
 ```
@@ -215,9 +268,9 @@ avoid conflicting with BASIC which uses a lot of those.
 ```
 8 x 16bit registers (R0 to R7) are stored on ZP, see macros.asm for locations
 They are referenced with the following pre-defined labels :
-zr0 to zr1 : base address of registers
-zr0l to zr1l : lower bytes of registers
-zr0h to zr1h : higher bytes of registers
+zr0 to zr7 : base address of registers
+zr0l to zr7l : lower bytes of registers
+zr0h to zr7h : higher bytes of registers
 ```
 ### macro instructions with pre-processor for 16 bit registers
 
@@ -314,12 +367,14 @@ swi <bios_function>, <addr> [,<addr2>] : calls bios function with r0 = addr, r1 
 
 Pstrings are Pascal like strings consisting of a length byte followed by max 255 characters
 
-related macro :
+The following macro is provided in macros.asm in order to insert pstring values into you code :
 
-**pstring("STRING VALUE")**
+**pstring("String Value")**
 
-Initializes a pstring value with length preset according to the "STRING VALUE" length
-    
+Initializes a pstring value with length preset according to the "String Value" length
+
+Note that pStrings don't contain a zero at the end
+
 ### Lists
 
 A list data structure contains multiple pStrings
@@ -445,7 +500,7 @@ by the node values.
 **param_init**
 ```
 ```
-**param_proces**
+**param_process**
 ```
 ```
 
@@ -598,6 +653,8 @@ by the node values.
 ```
 
 ## Directory
+
+Warning : deprecated section, hasn't been fully moved from old version yet
 
 **directory_open**
 ```
