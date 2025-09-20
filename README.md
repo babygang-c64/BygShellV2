@@ -202,7 +202,9 @@ The image is moved to the last VIC II bank for display
 
 EDIT is a small text editor allowing ASCII files editing
 If launched with a non-existing filename, EDIT will use the filename provided and create
-a new file when saving
+a new file when saving, if no name is provided, default filename is "tmp"
+Default filetype for file creation is SEQ, you can force filetype to PRG with ,P suffix on
+your filename
 EDIT will replace existing files when saving
 Memory management is limited at the moment, each update consumes memory
 

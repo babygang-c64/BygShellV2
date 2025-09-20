@@ -543,8 +543,8 @@ lbl_ea61:
     lda KEYPRESS
     cmp #64
     beq end_irq
-    cmp #$2a
-    beq ctrl_l
+    cmp #$25
+    beq ctrl_k
 
     lda k_flag
     bne special_keys
@@ -552,7 +552,7 @@ lbl_ea61:
 end_irq:
     jmp $ea7e
     
-ctrl_l:
+ctrl_k:
     lda SHFLAG
     cmp #4
     bne end_irq
@@ -575,7 +575,11 @@ special_keys:
     
     cmp #$0a
     bne not_a
-    
+
+    //-----------------------------------
+    // A = goto start of logical line
+    //-----------------------------------
+
     swi cursor_unblink
     ldx PNTR
 go_back:
@@ -623,7 +627,7 @@ not_c:
     ldy #1
 paste:
     jsr bios.bios_ram_get_byte
-    jsr screen_to_petscii
+    jsr bios.screen_to_petscii
     jsr CHROUT
     iny
     dex
@@ -632,31 +636,6 @@ paste:
 not_v:
 end:
     jmp end_irq
-    
-//----------------------------------------------------
-// screen_to_petscii 
-//----------------------------------------------------
-
-screen_to_petscii:
-{
-    cmp #1
-    bcc not_letter
-    cmp #1+26
-    bcs not_letter
-    clc
-    adc #$40
-    rts
-
-not_letter:
-    cmp #65
-    bcc not_uppercase
-    cmp #65+26
-    bcs not_uppercase
-    clc
-    adc #$20
-not_uppercase:
-    rts
-}
 
 }
 

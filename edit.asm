@@ -118,7 +118,14 @@ blank_file:
     
     lda #0
     sta BLNSW
-    
+
+// deactivate IRQ key intercept
+
+    mov save_irq,$0314
+    sei
+    mov $0314,#$ea31
+    cli
+
 main_loop:
     jsr get_true_y
     mov cursor_line,r0
@@ -130,12 +137,23 @@ main_loop:
     jsr save_file
 
 no_save:
+    // reactivate IRQ
+    sei
+    mov $0314,save_irq
+    lda #55
+    sta $01
+    cli
+    
+    // quit editor
     swi cursor_unblink
     jsr clear_screen
     jsr CLRCHN
     swi success
     clc
     rts
+
+save_irq:
+    .word 0
 
 options_edit:
     pstring("H")

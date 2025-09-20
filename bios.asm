@@ -183,13 +183,9 @@ bios_exec_ref:
 
 ram_get_byte:
     sei
-    stx ztmp
-    ldx #$34
-    stx $01
+    dec $01
     lda (zr0l),y
-    ldx #$37
-    stx $01
-    ldx ztmp
+    inc $01
     cli
     rts
 
@@ -208,7 +204,7 @@ do_reset:
 {
     lda #0
     sta $c002
-    ldx #5+13+4
+    ldx #5+9
 copy_bios_exec:
     lda bios_exec_ref,x
     sta bios_exec,x
@@ -1192,6 +1188,31 @@ not_lowercase:
     sbc #$80
 not_uppercase:
     tax
+    rts
+}
+
+//----------------------------------------------------
+// screen_to_petscii 
+//----------------------------------------------------
+
+screen_to_petscii:
+{
+    cmp #1
+    bcc not_letter
+    cmp #1+26
+    bcs not_letter
+    clc
+    adc #$40
+    rts
+
+not_letter:
+    cmp #65
+    bcc not_uppercase
+    cmp #65+26
+    bcs not_uppercase
+    clc
+    adc #$20
+not_uppercase:
     rts
 }
 
