@@ -82,7 +82,7 @@
 .label cursor_unblink=105
 .label malloc=107
 .label get_basic_string=109
-.label bank_basic=111
+.label copy_ram_block=111
 .label success=113
 .label file_exists=115
 .label str_chr=117
@@ -157,7 +157,7 @@ bios_jmp:
     .word do_cursor_unblink
     .word do_malloc
     .word do_get_basic_string
-    .word do_bank_basic
+    .word do_copy_ram_block
     .word do_success
     .word do_file_exists
     .word do_str_chr
@@ -2020,22 +2020,20 @@ new_block:
 }
 
 //----------------------------------------------------
-// bank_basic : BASIC ROM banking
+// copy_ram_block : copy block of RAM under basic ROM
 //
-// input : C=1 bank BASIC ROM back, C=0 bank out
+// input : r0 = address of block to copy,
+//         r1 = destination
 //----------------------------------------------------
 
-do_bank_basic:
+do_copy_ram_block:
 {
-    bcs bank_back
-    lda #54
-    sta $01
-    clc
-    rts
-bank_back:
-    lda #55
-    sta $01
-    clc
+    ldy #0
+copy:
+    jsr bios_ram_get_byte
+    mov (r1),a
+    iny
+    bne copy
     rts
 }
 

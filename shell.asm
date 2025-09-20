@@ -496,6 +496,22 @@ fin_hex:
     rts
 
 not_address:
+    lda #8
+    sta nb_bytes
+boucle_write:
+    jsr bios.do_hex2int.conv_hex_byte
+    tax
+    pop r0
+    txa
+    mov (r0++),a
+    push r0
+    swi str_next
+    bcs fini
+    dec nb_bytes
+    beq fini
+    jmp boucle_write
+
+fini:
     pop r0
     jmp fin_hex
 

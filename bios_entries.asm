@@ -67,7 +67,7 @@
     .label cursor_unblink=105
     .label malloc=107
     .label get_basic_string=109
-    .label bank_basic=111
+    .label copy_ram_block=111
     .label success=113
     .label file_exists=115
     .label str_chr=117
