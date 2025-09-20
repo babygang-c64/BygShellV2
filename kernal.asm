@@ -25,6 +25,8 @@
 
 // Kernal vectors
 
+.label IIRQ = $0314
+
 .label DSPP   = $EA13   // print character at screen pos
 .label GETIN  = $FFE4
 .label SETNAM = $FFBD
@@ -76,8 +78,10 @@
 .label BLNON         = $cf  // cursor blink on flag
 .label GDBLN         = $ce  // character under cursor
 .label PNT           = $d1  // address of current screen line
+.label PNTR          = $d3  // logical X cursor position in line (0-79)
 .label GDCOL         = 647  // character under cursor color
 .label CURSOR_COLOR  = 646  // write color
+.label SHFLAG        = $28d // shift,ctrl,c= flag, ctrl=4
 
 // Definitions
 

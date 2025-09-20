@@ -13,7 +13,7 @@
 
 .namespace bios 
 {
-    .label bios_exec=$cf70
+    .label bios_exec=$cf68
     
     .label reset=9
     .label str_split=11

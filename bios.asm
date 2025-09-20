@@ -16,6 +16,7 @@
 .label nb_params=$02ff
 .label options_params=$02fe
 .label scan_params=$02fd
+.label k_flag=$02fc
 .label options_values=$02e0
 
 .label OPT_PIPE=$80
@@ -26,7 +27,8 @@
 // BIOS functions list
 //===============================================================
 
-.label bios_exec=$cf70
+.label bios_exec=$cf68
+.label bios_ram_get_byte=bios_exec+5
 
 .label reset=9
 .label str_split=11
@@ -179,6 +181,16 @@ bios_exec_ref:
     sta bios_exec+4
     jmp (bios_jmp)
 
+ram_get_byte:
+    sei
+    ldx #$34
+    stx $01
+    lda (zr0l),y
+    ldx #$37
+    stx $01
+    cli
+    rts
+
 //===============================================================
 // bios functions and variables
 //===============================================================
@@ -194,7 +206,7 @@ do_reset:
 {
     lda #0
     sta $c002
-    ldx #5
+    ldx #5+13
 copy_bios_exec:
     lda bios_exec_ref,x
     sta bios_exec,x

@@ -31,11 +31,25 @@ start_cartridge:
     jsr $e3bf
     jsr $e422
 
+
+    // change basic hook to our routine
+    
     lda #<basic_hook
     sta VECT_BASICEXEC
     lda #>basic_hook
     sta VECT_BASICEXEC+1
-
+    
+    // change IRQ hook to our routine
+    
+    sei
+    lda #0
+    sta k_flag
+    lda #<irq_hook
+    sta IIRQ
+    lda #>irq_hook+1
+    sta IIRQ+1
+    cli
+    
     lda #7
     sta CURSOR_COLOR
 
@@ -490,5 +504,89 @@ not_address:
 .label bytes = vars+2
 
 }
+
+//---------------------------------------------------------------
+// irq_hook : check for specific key presses
+//---------------------------------------------------------------
+
+irq_hook:
+{
+    jsr $ffea
+    lda $cc
+    bne lbl_ea61
+    dec $cd
+    bne lbl_ea61
+    lda #$14
+    sta $cd
+    ldy $d3
+    lsr $cf
+    ldx $0287
+    lda ($d1),y
+    bcs lbl_ea5c
+    inc $cf
+    sta $ce
+    jsr $ea24
+    lda ($f3),y
+    sta $0287
+    ldx $0286
+    lda $ce
+lbl_ea5c:
+    eor #$80
+    jsr $ea1c
+lbl_ea61:
+    // removed K7 sense
+    
+    // scan keyboard
+    jsr $ea87
+
+
+    lda KEYPRESS
+    cmp #64
+    beq end_irq
+    cmp #$2a
+    beq ctrl_l
+
+    lda k_flag
+    bne special_keys
+
+end_irq:
+    jmp $ea7e
+    
+ctrl_l:
+    lda SHFLAG
+    cmp #4
+    bne end_irq
+
+    lda #64
+    sta KEYPRESS
+    lda #1
+    sta k_flag
+    lda #5
+    sta 646
+    jmp end_irq
+
+special_keys:
+    lda #0
+    sta k_flag
+    lda #1
+    sta 646
+    dec NDX
+    lda KEYPRESS
+    
+    cmp #$0a
+    bne not_a
+    
+    swi cursor_unblink
+    ldx PNTR
+go_back:
+    lda #LEFT
+    jsr CHROUT
+    dex
+    bne go_back
+    
+not_a:
+    jmp end_irq
+}
+
 shell_top:
 .fill $a000-*, $00
