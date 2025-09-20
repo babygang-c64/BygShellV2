@@ -112,11 +112,17 @@ create new empty file
 ```
 
 **DIFF**
+
+![Diff on files](images/diff.png)
+
 ```
 *dif <file1> <file2>]
 
 compare files
     options :
+    F = stop after first difference
+    P = paginate output
+    N = stop after N differences
     Q = quiet mode, only return value in SH%
 ```
 
