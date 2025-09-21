@@ -370,18 +370,33 @@ not_found:
 internal_commands:
     pstring("HELP")
     pstring("M")
+    pstring("LSBLK")
     .byte 0
 
 internal_commands_jump:
     .word do_help
     .word do_memory
+    .word do_cmd_lsblk
 
 internal_commands_help:
     pstring("*Help [Command] : Help on commands")
     pstring("*M <start> [end]: Memory hex dump / write")
+    pstring("*Lsblk          : List devices")
     pstring("*<Command>      : Run external command")
     .byte 0
 
+
+//---------------------------------------------------------------
+// lsblk : list devices
+//---------------------------------------------------------------
+
+do_cmd_lsblk:
+{
+    clc
+    swi lsblk
+    sec
+    rts
+}
 
 //---------------------------------------------------------------
 // help : internal help command

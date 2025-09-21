@@ -99,6 +99,7 @@
 .label screen_write_line=135
 .label screen_write_all=137
 .label str_rtrim=139
+.label lsblk=141
 
 
 //===============================================================
@@ -172,6 +173,7 @@ bios_jmp:
     .word do_screen_write_line
     .word do_screen_write_all
     .word do_str_rtrim
+    .word do_lsblk
 
 * = * "BIOS code"
 
@@ -1005,6 +1007,7 @@ msg_option_error:
 // pprint_hex_buffer
 // cursor_unblink
 // line_to_screen
+// lsblk
 //
 // helpers :
 // 
@@ -1012,6 +1015,362 @@ msg_option_error:
 // screen_write_line
 // screen_write_all
 //===============================================================
+
+
+//---------------------------------------------------------------
+// lsblk : scan des disques, retour dans bios.devices et 
+// nb_devices.
+// en entrée si C=1 mode silencieux
+// retour A = nb devices, X = 1er device trouvé
+//---------------------------------------------------------------
+// 00 - No serial device available
+// 01 - foreign drive (MSD, Excelerator, Lt.Kernal, etc.)
+// 41 - 1541 drive
+// 71 - 1571 drive
+// 81 - 1581 drive
+// e0 - FD drive
+// c0 - HD drive
+// f0 - RD drive
+// 80 - RAMLink
+// si %11xxxxxx : capacités CMD
+//---------------------------------------------------------------
+
+do_lsblk:
+{
+    stc affichage_lecteurs
+
+    //-- raz liste et nb de devices
+    ldy #31
+    lda #0
+    sta first_device
+    sta nb_devices
+
+raz_devices:
+    sta devices,y
+    dey
+    bpl raz_devices
+
+    lda #8
+    sta cur_device
+
+test_listen:
+    lda cur_device
+    ldy #0
+    sty STATUS
+    jsr LISTEN
+    lda #$ff
+    jsr SECOND
+    lda STATUS
+    bpl dev_present
+    jsr UNLSTN
+
+next_device:
+    inc cur_device
+    lda cur_device
+    cmp #31
+    beq fin_test_listen
+    bne test_listen
+
+dev_present:
+    lda first_device
+    bne premier_deja_trouve
+    lda cur_device
+    sta first_device
+premier_deja_trouve:
+    ldy cur_device
+    tya
+    sta devices,y
+    inc nb_devices
+    bne next_device
+
+fin_test_listen:
+
+    //-- après test listen, recherche type drive
+    ldy #8
+    lda devices,y
+    jeq boucle_drive
+
+test_type_drive:
+
+    sta cur_device
+    jsr open_cmd
+    ldx #<cmdinfo // test CMD drive
+    ldy #>cmdinfo
+    jsr send_cmd
+
+    // retour commande, est-ce FD ?
+    jsr CHRIN
+    cmp #'F'
+    bne pas_fd
+    jsr CHRIN
+    cmp #'D'
+    bne test_cbm15xx
+
+    lda #$e0
+    jmp next_drive
+
+pas_fd:
+    // est-ce HD ?
+    cmp #'H'
+    bne pas_hd
+    jsr CHRIN
+    cmp #'D'
+    bne test_cbm15xx
+
+    lda #$c0
+    jmp next_drive
+
+pas_hd:
+    // est-ce RL / RD ?
+    cmp #'R'
+    bne test_cbm15xx
+    jsr CHRIN
+    cmp #'D'
+    bne pas_rd
+
+    lda #$f0
+    jmp next_drive
+
+pas_rd:
+    cmp #'L'
+    bne test_cbm15xx
+
+    lda #$80
+    jmp next_drive
+
+
+    //-- test 1541/1571
+test_cbm15xx:
+    mov r0, #cbminfo
+    jsr send_test_next
+
+    jsr CHRIN
+    cmp #'5'
+    bne test_cbm1581
+    jsr CHRIN
+    cmp #'4'
+    bne pas_1541
+
+    lda #41
+    jmp next_drive
+
+pas_1541:
+    cmp #'7'
+    bne test_cbm1581
+
+    lda #71
+    jmp next_drive
+
+test_cbm1581:
+    mov r0, #info1581
+    jsr send_test_next
+
+    jsr CHRIN
+    cmp #'5'
+    bne pas_cbm1581
+    jsr CHRIN
+    cmp #'8'
+    bne pas_cbm1581
+
+    lda #81
+    jmp next_drive
+
+    // other, valeur $01
+pas_cbm1581:
+    lda #1
+
+next_drive:
+    ldy cur_device
+    sta devices,y
+    jsr close_cmd
+
+boucle_drive:
+    inc cur_device
+    lda cur_device
+    cmp #31
+    beq fin_lsblk
+    ldy cur_device
+    lda devices,y
+    beq boucle_drive
+
+    jmp test_type_drive
+
+    // fin des tests, affiche la liste si pas en
+    // mode silencieux
+fin_lsblk:
+    lda affichage_lecteurs
+    bne pas_affichage
+    jsr affiche_lecteurs
+
+pas_affichage:
+    lda nb_devices
+    ldx first_device
+    mov r0, #devices
+    jsr CLRCHN
+    clc
+    rts
+
+send_test_next:
+    jsr close_cmd
+    jsr open_cmd
+    ldx zr0l
+    ldy zr0h
+    jmp send_cmd
+
+
+    // affichage des types de lecteurs identifiés
+affiche_lecteurs:
+    lda #0
+    sta cur_device
+
+aff_suivant:
+    ldy cur_device
+    lda devices,y
+    beq pas_present
+
+    // affiche numero:type
+    pha
+    tya
+    jsr aff_numero_drive
+    lda #':'
+    jsr CHROUT
+    pla
+    jsr affiche_type
+
+pas_present:
+    inc cur_device
+    lda cur_device
+    cmp #31
+    bne aff_suivant
+
+fin_aff_total:
+    lda #13
+    jmp CHROUT
+
+affiche_type:
+    cmp #1
+    bne aff_pas_autre
+    swi pprint, msg_type_other
+    jmp fin_aff_type
+
+aff_pas_autre:
+    cmp #$80
+    bne aff_pas_ram
+    swi pprint, msg_type_ramlink
+    jmp fin_aff_type
+
+aff_pas_ram:
+    cmp #$c0
+    bne aff_15xx
+    cmp #$e0
+    bne aff_15xx
+    cmp #$f0
+    bne aff_15xx
+    tax
+    lda #32
+    jsr CHROUT
+    txa
+    cmp #$e0
+    bne aff_pas_e
+    lda #'F'
+    jsr CHROUT
+    jmp aff_fin_hd
+aff_pas_e:
+    cmp #$c0
+    bne aff_pas_c
+    lda #'H'
+    jsr CHROUT
+    jmp aff_fin_hd
+aff_pas_c:
+    lda #'R'
+    jsr CHROUT
+aff_fin_hd:
+    lda #'D'
+    jsr CHROUT
+    lda #32
+    jsr CHROUT
+    jmp fin_aff_type
+
+aff_15xx:
+    pha
+    mov r0, #msg_type_15
+    swi pprint
+    pla
+    cmp #41
+    bne aff_pas41
+    lda #'4'
+    jmp fin_aff_15xx
+aff_pas41:
+    cmp #71
+    bne aff_pas71
+    lda #'7'
+    jmp fin_aff_15xx
+aff_pas71:
+    lda #'8'
+fin_aff_15xx:
+    jsr CHROUT
+    lda #'1'
+    jsr CHROUT
+
+fin_aff_type:
+    lda #32
+    jmp CHROUT
+
+    //-- ouverture pour envoi commande
+open_cmd:
+    lda #$0f // 15,dev,15
+    tay
+    ldx cur_device
+    jsr SETLFS
+    lda #7 // longueur commande m-r
+    rts
+
+    //-- envoi commande
+send_cmd:
+    jsr SETNAM
+    jsr OPEN
+    ldx #$0f  // 15
+    jmp CHKIN // redirect input
+
+    //-- fermeture cmd
+close_cmd:
+    ldx #15
+    jmp do_file_close
+
+.print "devices=$"+toHexString(devices)
+
+aff_numero_drive:
+    sta zr0l
+    lda #0
+    sta zr0h
+    ldx #%00000011
+    swi pprint_int
+    rts
+
+.label first_device = buffer
+.label cur_device = buffer+1
+.label affichage_lecteurs = buffer+2
+.label nb_devices = buffer+3
+.label devices = buffer+4
+
+cmdinfo: // CMD info at $fea4 in drive ROM
+    .text "M-R"
+    .byte $a4,$fe,$02,$0d
+cbminfo: // 1541, 1571, info at $e5c5
+    .text "M-R"
+    .byte $c5,$e5,$02,$0d
+info1581: // 1581, info at $a6e8
+    .text "M-R"
+    .byte $e8,$a6,$02,$0d
+
+msg_type_other:
+    pstring("OTHR")
+msg_type_ramlink:
+    pstring("RAML")
+msg_type_15:
+    pstring("15")
+}
+
 
 //----------------------------------------------------
 // screen_write_all : write Y lines to screen
