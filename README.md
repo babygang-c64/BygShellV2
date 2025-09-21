@@ -73,6 +73,10 @@ when a single address is given you can write bytes just after it
 
 ![Help and M commands](images/help_mem.png)
 
+- LSBLK : identify and list connected disk devices
+
+![Lsblk](images/lsblk.png)
+
 ### Keys ###
 
 CTRL-K is mapped as a master key for some internal shortcuts
