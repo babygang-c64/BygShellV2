@@ -106,6 +106,7 @@
 .label screen_write_all=137
 .label str_rtrim=139
 .label int2str=141
+.label get_basic_int=143
 
 
 //===============================================================
@@ -180,6 +181,7 @@ bios_jmp:
     .word do_screen_write_all
     .word do_str_rtrim
     .word do_int2str
+    .word do_get_basic_int
 
 * = * "BIOS code"
 
@@ -326,29 +328,25 @@ do_get_basic_string:
     mov $7a,r0
     jsr $b08b
     
-    lda $4a
-    bne is_ok
-    lda $49
-    beq is_zero
     
 is_ok:
     // length
-    ldy #0
-    lda ($49),y
+    ldy #2
+    lda ($5f),y
     tax
     // address of string, move to r0
     iny
-    lda ($49),y
+    lda ($5f),y
     sta zr0l
     iny
-    lda ($49),y
+    lda ($5f),y
     sta zr0h
+    ldy #0
 
     lda ztmp
-    bne no_copy
+    bne end
     
     // copy to r1, start with length
-    ldy #0
     txa
     mov (r1),a
 copie:
@@ -358,9 +356,6 @@ copie:
     dex
     bne copie
 
-no_copy:
-    ldy #0
-    
 end:
     pla
     sta $7b
@@ -368,18 +363,6 @@ end:
     sta $7a
     clc
     rts
-    
-is_zero:
-    lda ztmp
-    beq zero_with_copy
-    ldx #0
-    beq end
-    
-zero_with_copy:
-    ldy #0
-    tya
-    mov (r1),a
-    jmp end
 }
 
 //===============================================================
@@ -3458,6 +3441,35 @@ do_pprinthex8a_swi:
     jmp do_pprinthex8a
 }
 
+
+//---------------------------------------------------------------
+// get_basic_int : get int value from BASIC variable
+//
+// input : R0 pointer to variable name
+// output : R0 value of variable
+//---------------------------------------------------------------
+
+do_get_basic_int:
+{
+    lda $7a
+    pha
+    lda $7b
+    pha
+    mov $7a,r0
+    jsr $b08b
+    ldy #3
+    lda ($5f),y
+    sta zr0l
+    dey
+    lda ($5f),y
+    sta zr0h
+    pla
+    sta $7b
+    pla
+    sta $7a
+    clc
+    rts
+}
 
 //---------------------------------------------------------------
 // return_int : return int value to variable SH%

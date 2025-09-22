@@ -417,17 +417,27 @@ print_sh_string:
     jsr CHROUT
     dex
     bne print_sh_string
+    lda #13
+    jsr CHROUT
+
     jmp end
-    
+
 empty_sh_string:
     swi pprint_nl,msg_none
     
 end:
+    swi pprint,msg_sh_int
+    swi get_basic_int,var_int_sh_desc
+    ldx #%10011111
+    swi pprint_int
+    lda #13
+    jsr CHROUT
     sec
     rts
 
 sh_string:
     .text "SH$"
+    .byte 0
 msg_clipboard:
     pstring("LAST CLIPBOARD : ")
 msg_sh_string:
@@ -436,6 +446,9 @@ msg_sh_int:
     pstring("LAST SH% : ")
 msg_none:
     pstring("(None)")
+var_int_sh_desc:
+    .text "SH%"
+    .byte 0
 }
 
 //---------------------------------------------------------------

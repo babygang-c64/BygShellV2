@@ -85,6 +85,7 @@
     .label screen_write_all=137
     .label str_rtrim=139
     .label int2str=141
+    .label get_basic_int=143
 }
 
 //===============================================================
