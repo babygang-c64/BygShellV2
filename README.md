@@ -132,7 +132,7 @@ count lines / words / bytes of files
 **LSBLK**
 
 LSBLK identifies and lists connected disk devices,
-it returns number of drives in SH%
+it returns number of drives in SH% and devices list in SH$
 
 ![Lsblk](images/lsblk.png)
 
