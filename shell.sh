@@ -73,3 +73,4 @@ build_command menu
 build_command chars
 build_command touch
 build_command diff
+build_command lsblk

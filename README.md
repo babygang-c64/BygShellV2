@@ -73,10 +73,6 @@ when a single address is given you can write bytes just after it
 
 ![Help and M commands](images/help_mem.png)
 
-- LSBLK : identify and list connected disk devices
-
-![Lsblk](images/lsblk.png)
-
 ### Keys ###
 
 CTRL-K is mapped as a master key for some internal shortcuts
@@ -131,6 +127,23 @@ count lines / words / bytes of files
     W = count words
     C = count bytes
     Q = don't print filename
+```
+
+**LSBLK**
+
+LSBLK identifies and lists connected disk devices,
+it returns number of drives in SH%
+
+![Lsblk](images/lsblk.png)
+
+```
+*lsblk
+
+Scan attached devices for disk drives
+    options :
+    Q = quiet mode
+    H = help
+    
 ```
 
 **SEARCH**

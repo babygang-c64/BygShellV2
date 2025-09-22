@@ -84,7 +84,6 @@
     .label screen_write_line=135
     .label screen_write_all=137
     .label str_rtrim=139
-    .label lsblk=141
 }
 
 //===============================================================
