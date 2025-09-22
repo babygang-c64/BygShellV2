@@ -177,6 +177,9 @@ An error is thrown if a file already exists
 create new empty file
     options :
     P = create PRG file instead of default SEQ
+    S = size of fille to create (fill with # by default)
+    B = byte value to use for filling
+    T = create text compatible file (adds LF)    
 ```
 
 **DIFF**
