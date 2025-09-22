@@ -99,6 +99,7 @@
 .label screen_write_line=135
 .label screen_write_all=137
 .label str_rtrim=139
+.label int2str=141
 
 
 //===============================================================
@@ -172,6 +173,7 @@ bios_jmp:
     .word do_screen_write_line
     .word do_screen_write_all
     .word do_str_rtrim
+    .word do_int2str
 
 * = * "BIOS code"
 
@@ -3194,7 +3196,9 @@ pas_affiche:
     bne suite_affiche
     pla
     tax
+    mov r0,#int_conv
     rts
+
 pas_test_padding:
     jsr CHROUT
     lda #0
@@ -3257,6 +3261,7 @@ do_int2str:
     jsr conv_bcd
     lda bcd_buffer+0
     jsr conv_bcd
+    ldy #0
     rts
 
 conv_bcd:

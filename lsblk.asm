@@ -19,7 +19,6 @@ pstring("LSBLK")
 
 lsblk:
 {
-    .label buffer1 = $ce00
     .label params_buffer = $cd00
     
     .label OPT_Q=1
@@ -44,6 +43,10 @@ lsblk:
     ldy #0
     sty zr0h
     swi return_int
+    mov r0,#buffer1
+    mov a,(r0)
+    sta string_len
+    swi set_basic_string,return_string
 
 end:
     // swi pipe_end
@@ -70,6 +73,17 @@ help_msg:
 
 options_lsblk:
     pstring("QH")
+
+return_string:
+    .text "SH$"
+string_len:
+    .byte 0
+    .word buffer1
+buffer1:
+    .fill 80,0
+
+buffer_int2str:
+    pstring("0123456789ABCDEF")
 
 //---------------------------------------------------------------
 // lsblk : scan devices for disks, try to identify disk type
@@ -309,12 +323,18 @@ affiche_type:
     cmp #1
     bne aff_pas_autre
     swi pprint, msg_type_other
+    mov r1,#msg_type_other
+    mov r0,r2
+    swi str_cat
     jmp fin_aff_type
 
 aff_pas_autre:
     cmp #$80
     bne aff_pas_ram
     swi pprint, msg_type_ramlink
+    mov r0,r2
+    mov r1,#msg_type_ramlink
+    swi str_cat
     jmp fin_aff_type
 
 aff_pas_ram:
@@ -351,8 +371,10 @@ aff_fin_hd:
 
 aff_15xx:
     pha
-    mov r0, #msg_type_15
-    swi pprint
+    swi pprint,msg_type_15
+    mov r0,r2
+    mov r1,#msg_type_15
+    swi str_cat
     pla
     cmp #41
     bne aff_pas41
@@ -403,6 +425,13 @@ aff_numero_drive:
     sta zr0h
     ldx #%00000011
     swi pprint_int
+    ldy #5
+    mov a,(r0)
+    jsr print_and_add_char.no_print
+    iny
+    mov a,(r0)
+    jsr print_and_add_char.no_print
+    ldy #0
     rts
 
 cmdinfo: // CMD info at $fea4 in drive ROM
@@ -442,18 +471,22 @@ devices:
 print_and_add_char:
 {
     jsr CHROUT
-    tya
+no_print:
+    sty save_y
     pha
     ldy #0
-    pha
     mov a,(r2)
     tay
+    iny
     pla
     mov (r2),a
-    inc r2
-    pla
-    tay
+    tya
+    ldy #0
+    mov (r2),a
+    ldy save_y
     rts
+save_y:
+    .byte 0
 }
 
 }
