@@ -70,6 +70,7 @@ All external commands can :
 - HELP : lists the internal commands and retrieves help for internal commands
 - M : memory dump / write, takes one start address or start / end address and
 when a single address is given you can write bytes just after it
+- ENV : view some environment info
 
 ![Help and M commands](images/help_mem.png)
 

@@ -19,6 +19,12 @@
 .label k_flag=$02fc
 .label options_values=$02e0
 
+.label clipboard=$a000
+.label history=$a100
+
+.label K_FLAG_ON=128
+.label K_FLAG_CLIPBOARD=64
+
 .label OPT_PIPE=$80
 
 .namespace bios 

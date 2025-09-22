@@ -224,6 +224,7 @@ no_run:
 load_error:
     ldx #4
     jmp ERRORX
+
 exec_end:
     lda #MSG_ALL
     jmp SETMSG
@@ -370,18 +371,72 @@ not_found:
 internal_commands:
     pstring("HELP")
     pstring("M")
+    pstring("ENV")
     .byte 0
 
 internal_commands_jump:
     .word do_help
     .word do_memory
+    .word do_env
 
 internal_commands_help:
     pstring("*Help [Command] : Help on commands")
-    pstring("*M <start> [end]: Memory hex dump / write")
+    pstring("*M <start> [end]: Memory hexdump/write")
+    pstring("*ENV            : View env info")
     pstring("*<Command>      : Run external command")
     .byte 0
 
+//---------------------------------------------------------------
+// env : view env info : clipboard, sh%, sh$
+//---------------------------------------------------------------
+
+do_env:
+{
+    swi pprint,msg_clipboard
+    lda k_flag
+    and #K_FLAG_CLIPBOARD
+    beq no_clipboard
+    
+    jsr paste_buffer
+    lda #13
+    jsr CHROUT
+    jmp env_sh_string
+
+no_clipboard:
+    swi pprint_nl,msg_none
+
+env_sh_string:
+    swi pprint,msg_sh_string    
+    sec
+    swi get_basic_string, sh_string
+    cpx #0
+    beq empty_sh_string
+    ldy #0
+print_sh_string:
+    mov a,(r0++)
+    jsr CHROUT
+    dex
+    bne print_sh_string
+    jmp end
+    
+empty_sh_string:
+    swi pprint_nl,msg_none
+    
+end:
+    sec
+    rts
+
+sh_string:
+    .text "SH$"
+msg_clipboard:
+    pstring("LAST CLIPBOARD : ")
+msg_sh_string:
+    pstring("LAST SH$ : ")
+msg_sh_int:
+    pstring("LAST SH% : ")
+msg_none:
+    pstring("(None)")
+}
 
 //---------------------------------------------------------------
 // help : internal help command
@@ -577,6 +632,7 @@ lbl_ea61:
     beq ctrl_k
 
     lda k_flag
+    and #255-K_FLAG_CLIPBOARD
     bne special_keys
 
 end_irq:
@@ -593,19 +649,22 @@ ctrl_k:
     lda k_flag
     bmi end_irq
     
-    lda #128
-    ora 646
+    lda k_flag
+    and #K_FLAG_CLIPBOARD
+    ora #K_FLAG_ON
+    ora CURSOR_COLOR
     sta k_flag
 
     lda #5
-    sta 646
+    sta CURSOR_COLOR
     jmp end_irq
 
 special_keys:
     lda k_flag
-    and #$7f
-    sta 646
-    lda #0
+    and #$0f
+    sta CURSOR_COLOR
+    lda k_flag
+    and #K_FLAG_CLIPBOARD
     sta k_flag
     dec NDX
     lda KEYPRESS
@@ -633,13 +692,17 @@ not_a:
     cmp #$14
     bne not_c
     
+    lda k_flag
+    ora #K_FLAG_CLIPBOARD
+    sta k_flag
+
     ldx PNTR
-    stx $a000
+    stx clipboard
     ldy #0
 copie:
     lda (PNT),y
     iny
-    sta $a000,y
+    sta clipboard,y
     dey
     iny
     dex
@@ -655,9 +718,21 @@ not_c:
     bne not_v
     
     swi cursor_unblink
+    jsr paste_buffer
+
+
+not_v:
+end:
+    jmp end_irq
+
+}
+
+paste_buffer:
+{
     ldy #0
-    sty zr0l
-    lda #$a0
+    lda #<clipboard
+    sta zr0l
+    lda #>clipboard
     sta zr0h
     jsr bios.bios_ram_get_byte
     tax
@@ -669,11 +744,7 @@ paste:
     iny
     dex
     bne paste
-
-not_v:
-end:
-    jmp end_irq
-
+    rts
 }
 
 shell_top:
