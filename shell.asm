@@ -398,8 +398,7 @@ do_env:
     beq no_clipboard
     
     jsr paste_buffer
-    lda #13
-    jsr CHROUT
+    jsr carriage_return
     jmp env_sh_string
 
 no_clipboard:
@@ -417,8 +416,7 @@ print_sh_string:
     jsr CHROUT
     dex
     bne print_sh_string
-    lda #13
-    jsr CHROUT
+    jsr carriage_return
 
     jmp end
 
@@ -430,6 +428,17 @@ end:
     swi get_basic_int,var_int_sh_desc
     ldx #%10011111
     swi pprint_int
+    jsr carriage_return
+    
+    swi pprint,msg_device
+    ldy #0
+    sty zr0h
+    lda CURRDEVICE
+    sta zr0l
+    ldx #%10011111
+    swi pprint_int
+
+carriage_return:
     lda #13
     jsr CHROUT
     sec
@@ -439,11 +448,13 @@ sh_string:
     .text "SH$"
     .byte 0
 msg_clipboard:
-    pstring("LAST CLIPBOARD : ")
+    pstring("CLIPBOARD : ")
 msg_sh_string:
-    pstring("LAST SH$ : ")
+    pstring("SH$ : ")
 msg_sh_int:
-    pstring("LAST SH% : ")
+    pstring("SH% : ")
+msg_device:
+    pstring("DEVICE : ")
 msg_none:
     pstring("(None)")
 var_int_sh_desc:
