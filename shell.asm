@@ -448,13 +448,13 @@ sh_string:
     .text "SH$"
     .byte 0
 msg_clipboard:
-    pstring("CLIPBOARD : ")
+    pstring("Clipboard : ")
 msg_sh_string:
     pstring("SH$ : ")
 msg_sh_int:
     pstring("SH% : ")
 msg_device:
-    pstring("DEVICE : ")
+    pstring("Device : ")
 msg_none:
     pstring("(None)")
 var_int_sh_desc:
@@ -707,12 +707,50 @@ go_back:
     jsr CHROUT
     dex
     bne go_back
+    jmp end_irq
+
+not_a:
+    //-----------------------------------
+    // E = goto end of logical line
+    //-----------------------------------
+
+    cmp #$0e
+    bne not_e
+    
+    swi cursor_unblink
+    ldy LNMX
+find_end_e:
+    lda (PNT),y
+    cmp #32
+    bne found_end_e
+    dey
+    bpl find_end_e
+
+found_end_e:
+    iny
+    tya
+    sec
+    sbc PNTR
+    tay
+    bmi goto_left
+go_forward:
+    lda #RIGHT
+    jsr CHROUT
+    dey
+    bne go_forward
+    jmp end_irq
+goto_left:
+    lda #LEFT
+    jsr CHROUT
+    iny
+    bne goto_left
+    jmp end_irq
 
     //-----------------------------------
     // C = copy buffer to $a000
     //-----------------------------------
     
-not_a:
+not_e:
     cmp #$14
     bne not_c
     
@@ -743,9 +781,49 @@ not_c:
     
     swi cursor_unblink
     jsr paste_buffer
-
+    jmp end_irq
 
 not_v:
+
+    //-----------------------------------
+    // D = copy whole current line
+    //-----------------------------------
+    
+    cmp #$12
+    bne not_d
+    
+    lda k_flag
+    ora #K_FLAG_CLIPBOARD
+    sta k_flag
+
+    swi cursor_unblink
+
+    ldy LNMX
+find_end:
+    lda (PNT),y
+    cmp #32
+    bne found_end
+    dey
+    bpl find_end
+    lda #0
+    sta clipboard
+    jmp end_irq
+
+found_end:
+    iny
+    sty clipboard
+    sty ztmp
+    ldx #1
+    ldy #0
+copy_line:
+    lda (PNT),y
+    sta clipboard,x
+    inx
+    iny
+    cpy ztmp
+    bne copy_line
+    
+not_d:
 end:
     jmp end_irq
 
