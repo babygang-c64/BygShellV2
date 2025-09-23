@@ -151,6 +151,22 @@ Scan attached devices for disk drives
     
 ```
 
+**JOIN**
+
+JOIN appends binary or text files to an output file.
+
+![Join files](images/join.png)
+
+```
+*join
+
+Append files to output
+    options :
+    A = append instead of create output file
+    Q = quiet mode
+    H = help
+```
+
 **SEARCH**
 
 SEARCH performs pattern matching on files, and prints matching lines of files

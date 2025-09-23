@@ -94,12 +94,19 @@ help:
 
 do_join_files:
 {
+    lda options_params
+    and #OPT_Q
+    bne no_filename
+    swi pprint
+    lda #32
+    jsr CHROUT
+
+no_filename:
     ldx #4
     clc
     swi file_open
     bcs error_file_not_found
-    
-    
+
 loop_copy:
     lda #100
     sta buffer1
@@ -107,12 +114,32 @@ loop_copy:
     ldx #4
     swi buffer_read,buffer1
     bcs end_copy
-    swi pprint_nl,buffer1
+
+    ldx #5
+    swi buffer_write,buffer1
+
+    lda options_params
+    and #OPT_Q
+    bne no_progress
+
+    lda #'.'
+    jsr CHROUT
+
+no_progress:
     bvc loop_copy
 
 end_copy:
+    lda buffer1
+    beq no_data
+
+    ldx #5
+    swi buffer_write,buffer1
+
+no_data:
     ldx #4
     swi file_close
+    lda #13
+    jsr CHROUT
     rts
 }
 

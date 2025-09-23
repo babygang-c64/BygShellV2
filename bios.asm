@@ -107,7 +107,7 @@
 .label str_rtrim=139
 .label int2str=141
 .label get_basic_int=143
-
+.label buffer_write=145
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -182,6 +182,7 @@ bios_jmp:
     .word do_str_rtrim
     .word do_int2str
     .word do_get_basic_int
+    .word do_buffer_write
 
 * = * "BIOS code"
 
@@ -1452,6 +1453,33 @@ pas_erreur:
 .label lgr_max = vars+2
 }
 
+//----------------------------------------------------
+// buffer_write : buffered file write
+// entrée : R0 = pstring of data buffer
+// X = id fichier
+//----------------------------------------------------
+
+do_buffer_write:
+{
+    jsr CHKOUT
+    swi str_len
+    sta nb_lu
+    iny
+    sty pos_lecture
+ecriture:
+    ldy pos_lecture
+    lda (zr0),y
+    jsr CHROUT
+    inc pos_lecture
+    dec nb_lu
+    bne ecriture
+    jsr CLRCHN
+    clc
+    rts
+
+.label nb_lu = vars
+.label pos_lecture = vars + 1
+}
 
 //---------------------------------------------------------------
 // key_wait : wait for keypress
