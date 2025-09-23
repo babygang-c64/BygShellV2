@@ -19,8 +19,19 @@
 .label k_flag=$02fc
 .label options_values=$02e0
 
+// temp dir and work vars
+
+.label is_filter=$cfff
+.label type=$cffe
+.label in_quotes=$cffd
+.label tmpC=$cffc
+
+// Under BASIC ROM
+
 .label clipboard=$a000
 .label history=$a100
+
+// flags definitions
 
 .label K_FLAG_ON=128
 .label K_FLAG_CLIPBOARD=64
@@ -315,7 +326,7 @@ do_set_basic_string:
 
 do_get_basic_string:
 {
-    stc ztmp
+    stc tmpC
     push TXTPTR
     
     mov TXTPTR,r0
@@ -336,7 +347,7 @@ is_ok:
     sta zr0h
     ldy #0
 
-    lda ztmp
+    lda tmpC
     bne end
     
     // copy to r1, start with length
@@ -377,18 +388,23 @@ do_directory_open:
     clc
     ldx #9
     swi file_open,dirname
-    
-    ldx #9
-    jsr CHKIN
-    
-    // skip 2 bytes
-    jsr CHRIN
-    jsr CHRIN
+
+    jsr chkin_skip2    
     clc
     rts
 
 dirname:
     pstring("$")
+}
+
+chkin_skip2:
+{
+    ldx #9
+    jsr CHKIN
+skip2:
+    // skip 2 bytes
+    jsr CHRIN
+    jmp CHRIN
 }
 
 //---------------------------------------------------------------
@@ -413,18 +429,12 @@ get_entry:
     tya
     mov (r0++),a
 
-    ldx #9
-    jsr CHKIN
-    // skip 2 bytes
-    jsr CHRIN
-    jsr CHRIN
+    jsr chkin_skip2
     
     lda STATUS
     bne fini
     
-    // size
-    jsr CHRIN
-    jsr CHRIN
+    jsr chkin_skip2.skip2
     
     ldx #0
 read_name:
@@ -477,10 +487,6 @@ fini:
     pop r0
     sec
     rts
-
-.label in_quotes=vars+7
-.label type=vars+8
-.label is_filter=vars+9
 }
 
 //---------------------------------------------------------------
@@ -552,6 +558,8 @@ not_found:
 // pipe_init : check if there is a pipe option, if yes open the
 //             output file
 //
+// Pipe file channel is 5
+//
 // input : should call param_init before
 // output : C=0 OK, C=1 Error
 // todo ? flag to bypass nb_params check for CMD > OUT syntax
@@ -611,10 +619,10 @@ do_pipe_end:
     and #OPT_PIPE
     beq pas_option_pipe
 
-    lda #3
-    jsr CLRCHN
     ldx #5
     swi file_close
+    jsr CLRCHN
+
 pas_option_pipe:
     clc
     rts    
@@ -723,9 +731,10 @@ fini:
     
 dec_params:
     ldy scan_params
-    lda scan_params
+    tya
     and #$7f
     sta scan_params
+
     dec scan_params
     tya
     and #$80
@@ -974,7 +983,7 @@ prefix_pipe:
     .byte 2
     .byte 64
     .byte ':'
-    pstring("@:")
+//    pstring("@:")
 suffix_pipe:
     pstring(",S,W")
 msg_option_error:
@@ -1387,32 +1396,37 @@ load_error:
 
 //----------------------------------------------------
 // buffer_read : buffered file read
+//
 // entrée : R0 = buffer de lecture (pstring)
 // longueur buffer = pstring, longueur = max buffer
 // C=0 lecture normale, C=1 arrêt si 0d ou 0a (ligne)
 // X = id fichier
+//
 // sortie : buffer à jour et longueur à jour
 // C=0 si pas fini, C=1 si EOF
 //----------------------------------------------------
 
 do_buffer_read:
 {
-    stc lecture_ligne
+    stc tmpC
     jsr CHKIN
 
     swi str_len
     sta lgr_max
     sty nb_lu
+
 lecture:
     jsr READST
     bne fin_lecture
     jsr CHRIN
-    ldy lecture_ligne
+
+    ldy tmpC
     beq pas_test
     cmp #13
     beq fin_buffer
     cmp #10
     beq fin_buffer
+
 pas_test:
     ldy nb_lu
     iny
@@ -1421,13 +1435,14 @@ pas_test:
     cpy lgr_max
     beq fin_buffer
     bne lecture
+
 fin_buffer:
     lda nb_lu
     ldy #0
     sta (zr0),y
     jsr READST
     bne fin_lecture
-    // jsr CLRCHN
+
     clc
     rts
 
@@ -1442,13 +1457,11 @@ pas_erreur:
     lda nb_lu
     ldy #0
     sta (zr0),y
-    // jsr CLRCHN
     sec
     rts
 
-.label lecture_ligne = vars
-.label nb_lu = vars+1
-.label lgr_max = vars+2
+.label nb_lu = vars
+.label lgr_max = vars+1
 }
 
 //----------------------------------------------------
@@ -1461,22 +1474,16 @@ do_buffer_write:
 {
     jsr CHKOUT
     swi str_len
-    sta nb_lu
+    tax
     iny
-    sty pos_lecture
 ecriture:
-    ldy pos_lecture
     lda (zr0),y
     jsr CHROUT
-    inc pos_lecture
-    dec nb_lu
+    iny
+    dex
     bne ecriture
-    jsr CLRCHN
     clc
     rts
-
-.label nb_lu = vars
-.label pos_lecture = vars + 1
 }
 
 //---------------------------------------------------------------
