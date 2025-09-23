@@ -717,33 +717,7 @@ not_a:
     cmp #$0e
     bne not_e
     
-    swi cursor_unblink
-    ldy LNMX
-find_end_e:
-    lda (PNT),y
-    cmp #32
-    bne found_end_e
-    dey
-    bpl find_end_e
-
-found_end_e:
-    iny
-    tya
-    sec
-    sbc PNTR
-    tay
-    bmi goto_left
-go_forward:
-    lda #RIGHT
-    jsr CHROUT
-    dey
-    bne go_forward
-    jmp end_irq
-goto_left:
-    lda #LEFT
-    jsr CHROUT
-    iny
-    bne goto_left
+    jsr goto_end_of_line
     jmp end_irq
 
     //-----------------------------------
@@ -783,7 +757,32 @@ not_c:
     jsr paste_buffer
     jmp end_irq
 
+    //-----------------------------------
+    // BACKSPACE = delete to end of line
+    //-----------------------------------
+    
 not_v:
+    cmp #0
+    bne not_delete
+
+    lda PNTR
+    pha
+    jsr goto_end_of_line
+    pla
+    sta ztmp
+    txa
+    sec
+    sbc ztmp
+    tay
+supp_end:
+    lda #BACKSPACE
+    jsr CHROUT
+    dey
+    bne supp_end
+    
+    jmp end_irq
+
+not_delete:
 
     //-----------------------------------
     // D = copy whole current line
@@ -829,6 +828,10 @@ end:
 
 }
 
+//------------------------------------------------------------
+// paste_buffer : paste buffer content
+//------------------------------------------------------------
+
 paste_buffer:
 {
     ldy #0
@@ -846,6 +849,45 @@ paste:
     iny
     dex
     bne paste
+    rts
+}
+
+//------------------------------------------------------------
+// goto_end_of_line : from the cursor position, move to the
+// end of logical line, move left if past end of line
+// X = end of line
+//------------------------------------------------------------
+
+goto_end_of_line:
+{
+    swi cursor_unblink
+    ldy LNMX
+find_end_e:
+    lda (PNT),y
+    cmp #32
+    bne found_end_e
+    dey
+    bpl find_end_e
+
+found_end_e:
+    iny
+    tya
+    tax
+    sec
+    sbc PNTR
+    tay
+    bmi goto_left
+go_forward:
+    lda #RIGHT
+    jsr CHROUT
+    dey
+    bne go_forward
+    rts
+goto_left:
+    lda #LEFT
+    jsr CHROUT
+    iny
+    bne goto_left
     rts
 }
 

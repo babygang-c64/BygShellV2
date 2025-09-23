@@ -83,11 +83,14 @@ system is waiting for the end of the key sequence
 
 Existing shortcuts :
 
-- CTRL-K-A : go to the start of current logical screen line
-- CTRL-K-E : go to the end of the current logical screen line
-- CTRL-K-C : copy to clipboard from cursor position to start of logical line
-- CTRL-K-D : copy whole current line to clipboard
-- CTRL-K-V : paste from clipboard
+```
+CTRL-K-A   : go to the start of current logical screen line
+CTRL-K-E   : go to the end of the current logical screen line
+CTRL-K-C   : copy to clipboard from cursor position to start of logical line
+CTRL-K-DEL : delete from cursor position to end of line
+CTRL-K-D   : copy whole current line to clipboard
+CTRL-K-V   : paste from clipboard
+```
 
 You can view the current clipboard content using the ENV command
 
