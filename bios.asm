@@ -405,6 +405,9 @@ dirname:
 //---------------------------------------------------------------
 // directory_get_entry : reads one directory entry, output in r0
 //
+//
+// input : C=1 filter test with R1
+//
 // ouput :
 // C=1 : end, R0 = name, A = type
 //---------------------------------------------------------------
@@ -467,9 +470,10 @@ end_name:
     txa
     ldy #0
     mov (r0),a
-    
+
     ldc is_filter
     bcc no_filter
+    
     swi str_pat
     lda #0
     bcc no_filter
@@ -697,12 +701,17 @@ pas_init:
 
 deja_dir:
     inc scan_params
+    
+    // r1 = filter = input name
     mov r1,r0
+
 next_dir:
-    sec
     mov r0, r4
+
+    sec
     swi directory_get_entry
     bcs fini_dir
+
     cmp #0
     beq next_dir
 
@@ -1429,7 +1438,7 @@ fin_buffer:
     sta (zr0),y
     jsr READST
     bne fin_lecture
-    jsr CLRCHN
+    // jsr CLRCHN
     clc
     rts
 
@@ -1444,7 +1453,7 @@ pas_erreur:
     lda nb_lu
     ldy #0
     sta (zr0),y
-    jsr CLRCHN
+    // jsr CLRCHN
     sec
     rts
 

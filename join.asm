@@ -105,7 +105,7 @@ no_filename:
     ldx #4
     clc
     swi file_open
-    bcs error_file_not_found
+    bcs join_file_not_found
 
 loop_copy:
     lda #100
@@ -141,6 +141,9 @@ no_data:
     lda #13
     jsr CHROUT
     rts
+    
+join_file_not_found:
+    jmp error_file_not_found
 }
 
 suffix_write:
