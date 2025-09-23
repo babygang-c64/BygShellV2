@@ -140,6 +140,12 @@ def handle_movi(elems):
     raise ValueError("Invalid MOVI instruction")
 
 
+def handle_push_pop(elems, instr):
+    p0, v0 = param_type(elems[1])
+    if p0 == 'w':
+        return f"{instr}_r({v0})"
+    return f"{instr}_r({v0})" if p0 == "r" else " ".join(elems)
+
 def handle_single_reg(elems, instr):
     p0, v0 = param_type(elems[1])
     return f"{instr}_r({v0})" if p0 == "r" else " ".join(elems)
@@ -208,8 +214,8 @@ def handle_swi(elems):
 handlers = {
     "mov": handle_mov,
     "movi": handle_movi,
-    "push": lambda e: handle_single_reg(e, "push"),
-    "pop":  lambda e: handle_single_reg(e, "pop"),
+    "push": lambda e: handle_push_pop(e, "push"),
+    "pop":  lambda e: handle_push_pop(e, "pop"),
     "inc":  lambda e: handle_single_reg(e, "inc"),
     "dec":  lambda e: handle_single_reg(e, "dec"),
     "incw": lambda e: handle_incdecw(e, "incw"),

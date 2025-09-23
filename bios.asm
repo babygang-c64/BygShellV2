@@ -199,6 +199,7 @@ ram_get_byte:
     inc $01
     cli
     rts
+end_ref:
 
 //===============================================================
 // bios functions and variables
@@ -215,7 +216,7 @@ do_reset:
 {
     lda #0
     sta $c002
-    ldx #5+9
+    ldx #end_ref-bios_exec_ref
 copy_bios_exec:
     lda bios_exec_ref,x
     sta bios_exec,x
@@ -285,26 +286,20 @@ not_default:
 
 do_set_basic_string:
 {
-    lda $7a
-    pha
-    lda $7b
-    pha
+    push TXTPTR
     
-    mov $7a,r0
-    jsr $b08b
+    mov TXTPTR,r0
+    jsr PTRGET
 
-    sta $49
-    sty $4a
+    sta FORPNT
+    sty FORPNT+1
     push r0
     add r0, #3
     mov $64,r0
-    jsr $aa52
+    jsr COPY
     pop r0
     
-    pla
-    sta $7b
-    pla
-    sta $7a
+    pop TXTPTR
     clc
     rts
 }
@@ -321,13 +316,10 @@ do_set_basic_string:
 do_get_basic_string:
 {
     stc ztmp
-    lda $7a
-    pha
-    lda $7b
-    pha
+    push TXTPTR
     
-    mov $7a,r0
-    jsr $b08b
+    mov TXTPTR,r0
+    jsr PTRGET
     
     
 is_ok:
@@ -358,10 +350,7 @@ copie:
     bne copie
 
 end:
-    pla
-    sta $7b
-    pla
-    sta $7a
+    pop TXTPTR
     clc
     rts
 }

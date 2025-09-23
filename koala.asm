@@ -134,7 +134,7 @@ pas_txt:
     lda $d021
     sta save_d021
     cpx #1
-    bne pas_koala
+    jne pas_koala
 
     // screen to A800, color to d800
     // screen offset is 2800

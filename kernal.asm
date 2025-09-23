@@ -21,6 +21,8 @@
 .label STRPRT4 = STRPRT+4
 .label RESLST  = $A09E
 .label CLR     = $A65E
+.label COPY    = $aa52
+.label PTRGET  = $B08B
 
 
 // Kernal vectors
@@ -68,6 +70,8 @@
 .label MEMIO         = $35
 .label MEMSTD        = $37
 .label MEMIOKERNAL   = $36
+.label FORPNT        = $49
+.label TXTPTR        = $7A
 .label CURSOR_ONOFF  = 204
 .label CURSOR_STATUS = 207
 .label LGRNAM        = $B7
