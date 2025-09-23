@@ -119,6 +119,18 @@ print file(s) contents to screen
     A = read C64 binary start address for hexdump
 ```
 
+**CHECKSUM**
+
+CHECKSUM performs a CRC16 on files, returns last one in SH%
+
+```
+*checksum <file> [<file> ...] [-q]
+
+Calculates a CRC16 on files
+    options :
+    Q = don't print output
+```
+
 **WC**
 
 WC counts lines, words and bytes of files
