@@ -244,10 +244,12 @@ do_pagination:
 
     lda #0
     sta cpt_ligne
+    push r0
     swi pprint, msg_suite
     swi key_wait
     stc is_break
     jsr efface_msg_suite
+    pop r0
     ldc is_break
     rts
 
