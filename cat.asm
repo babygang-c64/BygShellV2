@@ -117,8 +117,6 @@ pas_hexdump:
 
 affiche_ligne:
     jsr option_numero
-    // convert ascii to petscii
-    swi convert_ascii_to_petscii, work_buffer
     swi pprint, work_buffer
 
     // option E = affiche $ en fin de ligne
