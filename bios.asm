@@ -17,6 +17,7 @@
 .label options_params=$02fe
 .label scan_params=$02fd
 .label k_flag=$02fc
+.label directory_ptr=$02fa
 .label options_values=$02e0
 
 // temp dir and work vars
@@ -25,6 +26,7 @@
 .label type=$cffe
 .label in_quotes=$cffd
 .label tmpC=$cffc
+.label directory_root=$a800
 
 // Under BASIC ROM
 
@@ -299,6 +301,7 @@ do_set_basic_string:
 {
     push TXTPTR
     
+    // lookup variable with name
     mov TXTPTR,r0
     jsr PTRGET
 
@@ -374,7 +377,7 @@ end:
 // directory_get_entry
 // directory_close
 // 
-// Uses channel #7 : 7,<device>,0
+// Uses channel #9 : 9,<device>,0
 //===============================================================
 
 //---------------------------------------------------------------
@@ -411,10 +414,9 @@ skip2:
 // directory_get_entry : reads one directory entry, output in r0
 //
 //
-// input : C=1 filter test with R1
+// input : C=1 filter test with R1, C=0 no filter
 //
-// ouput :
-// C=1 : end, R0 = name, A = type
+// ouput : C=1 : end, R0 = name, A = type
 //---------------------------------------------------------------
 
 do_directory_get_entry:
@@ -458,6 +460,11 @@ not_quote:
     sta type
     jmp read_name
 
+fini:
+    pop r0
+    sec
+    rts
+
 next_char:
     ldy #0
     inx
@@ -469,10 +476,10 @@ end_name:
     txa
     ldy #0
     mov (r0),a
-
+    
     ldc is_filter
     bcc no_filter
-    
+
     swi str_pat
     lda #0
     bcc no_filter
@@ -483,10 +490,6 @@ no_filter:
     clc
     rts
 
-fini:
-    pop r0
-    sec
-    rts
 }
 
 //---------------------------------------------------------------
@@ -516,10 +519,16 @@ do_directory_close:
 //===============================================================
 
 //---------------------------------------------------------------
-// param_get_value : returns value of parameter if it exists
+// param_get_value : returns int value of parameter if it exists
 //
 // input : X = parameter name
 // ouput : R0 = value, C=1 if found, C=0 if not found
+//         if not found R0 = 0
+//
+// options values format :
+//  Option name : 1 byte
+//  Option value : 1 word
+// ends with zero
 //---------------------------------------------------------------
 
 do_param_get_value:
@@ -529,8 +538,11 @@ lookup:
     txa
     cmp options_values,y
     beq found
+
+    // if zero : end of values
     lda options_values,y
     beq not_found
+
     iny
     iny
     iny
@@ -543,10 +555,10 @@ found:
     iny
     lda options_values,y
     sta zr0h
-    ldy #0
     sec
+    ldy #0
     rts
-    
+
 not_found:
     mov r0,#0
     ldy #0
@@ -569,13 +581,8 @@ do_pipe_init:
 {
     jsr check_pipe_option
     bcs error
-    
-option_ok:
-    lda options_params
-    and #OPT_PIPE
-    beq ok
 
-    // get output name = last parameter
+    // get output name = last parameter in buffer
     ldx nb_params
     swi lines_goto, buffer
     
@@ -585,18 +592,19 @@ option_ok:
     swi file_open
     bcs error
     jsr do_pipe_output
-ok:
+
+no_pipe_option:
     clc
     rts
 
 check_pipe_option:
     lda options_params
     and #OPT_PIPE
-    beq ok
+    beq no_pipe_option
     
     ldx nb_params
     cpx #2
-    bpl ok
+    bpl no_pipe_option
     sec
     rts
     
@@ -662,66 +670,128 @@ do_param_process:
     lda nb_params
     sta scan_params
     inc scan_params
+    
+    // if pipe output ignore last parameter
+    
     lda options_params
     and #OPT_PIPE
     beq pas_init
     dec scan_params
-    lda scan_params
 
 pas_init:
-    mov r4, r0
+    // save work buffer address into r4
+    mov r4,r0
 
     jsr dec_params
+    lda scan_params
     and #$7f
     jeq fini    
     
+    // read param value in r0
     tax
     swi lines_goto,buffer
     swi is_filter
-    bcc no_filter
+    jcc no_filter
 
+    //-- filter detected
+
+    mov r2,r0
+
+    // already in opened directory ? goto get entry
     lda scan_params
     and #$80
-    bne deja_dir
-    
-    // filter : open dir
+    beq start_dir
+    jmp deja_dir
+
+start_dir:
+    // indicate that we're in dir and open dir
     lda scan_params
     ora #$80
     sta scan_params
     
-    push r0
-    swi directory_open
-    clc
-    mov r0,r4
-    swi directory_get_entry
-    pop r0
-
-deja_dir:
-    inc scan_params
+    // init directory pointer and data pool
     
-    // r1 = filter = input name
+    mov directory_ptr,#directory_root
+    mov directory_root,#0
+    
+    // open directory and ignore disk name
+    swi directory_open
     mov r1,r0
+    mov r0,r4
+    clc
+    swi directory_get_entry
 
-next_dir:
-    mov r0, r4
+    // read all matching directory entries
+    
+read_all_dir:
+    mov r1,r2
+    mov r0,r4
 
     sec
     swi directory_get_entry
-    bcs fini_dir
-
+    bcs all_read
     cmp #0
-    beq next_dir
+    beq read_all_dir
+    
+    mov r1,directory_ptr
+    swi str_len
+    tax
+copy_entry:
+    mov a,(r0++)
+    mov (r1++),a
+    incw directory_ptr 
+    dex
+    bpl copy_entry
+
+    jmp read_all_dir
+    
+all_read:
+    swi directory_close
+
+    mov r1,directory_ptr
+    lda #0
+    mov (r1),a
+    mov directory_ptr,#directory_root
+
+    // inside directory scan : get next entry
+deja_dir:
+    inc scan_params
+        
+    // return result in work buffer
+    mov r1,r4
+    mov r0,directory_ptr
+    
+    // get directory entry
+    ldy #0
+
+    jsr bios_ram_get_byte
+    cmp #0
+    beq fini_dir
+    tax
+copy_dir_entry:
+    jsr bios_ram_get_byte
+    mov (r1++),a
+    incw directory_ptr
+    inc r0
+    dex
+    bpl copy_dir_entry
+
+    mov r0,r4
 
 no_filter:
     clc
     rts
 
+    // end of diretory = move to next parameter
 fini_dir:
-    swi directory_close
+    
+    // remove dir param from scan_params and 
+    // decrement scan_params = params number
     lda scan_params
     and #$7f
     sta scan_params
     dec scan_params
+
     clc
     jmp do_param_process
 
@@ -730,17 +800,16 @@ fini:
     rts
     
 dec_params:
-    ldy scan_params
-    tya
-    and #$7f
-    sta scan_params
-
+    lda scan_params
+    bmi dec_keep_flag
     dec scan_params
-    tya
-    and #$80
-    ora scan_params
+    rts
+dec_keep_flag:
+    and #$7f
+    sec
+    sbc #1
+    ora #$80
     sta scan_params
-    ldy #0
     rts
 }
 
@@ -775,8 +844,6 @@ do_param_top:
 
 do_param_init:
 {
-    .label OPT_PIPE=128
-
     stc avec_options
     ldy #0
     sty options_params
@@ -897,7 +964,6 @@ option_error:
 //-- retrieve option and value
 
 extract_value:
-
     push r1
 
     mov r1, #0
@@ -979,11 +1045,11 @@ not_append:
 .label last_option = vars+7
 .label ptr_values = vars+8
 
+// "@:"
 prefix_pipe:
     .byte 2
     .byte 64
     .byte ':'
-//    pstring("@:")
 suffix_pipe:
     pstring(",S,W")
 msg_option_error:
@@ -1466,8 +1532,9 @@ pas_erreur:
 
 //----------------------------------------------------
 // buffer_write : buffered file write
-// entrée : R0 = pstring of data buffer
-// X = id fichier
+//
+// input : R0 = pstring of data buffer
+//         X = file channel
 //----------------------------------------------------
 
 do_buffer_write:
@@ -1482,7 +1549,7 @@ ecriture:
     iny
     dex
     bne ecriture
-    clc
+    ldy #0
     rts
 }
 
@@ -3484,22 +3551,18 @@ do_pprinthex8a_swi:
 
 do_get_basic_int:
 {
-    lda $7a
-    pha
-    lda $7b
-    pha
-    mov $7a,r0
-    jsr $b08b
+    push TXTPTR
+
+    mov TXTPTR,r0
+    jsr PTRGET
     ldy #3
     lda ($5f),y
     sta zr0l
     dey
     lda ($5f),y
     sta zr0h
-    pla
-    sta $7b
-    pla
-    sta $7a
+
+    pop TXTPTR
     clc
     rts
 }
@@ -3512,16 +3575,10 @@ do_get_basic_int:
 
 do_return_int:
 {
-    lda $7a
-    pha
-    lda $7b
-    pha
-    
-    lda #<return_var_int
-    sta $7a
-    lda #>return_var_int
-    sta $7b
-    jsr $b08b
+    push TXTPTR
+
+    mov TXTPTR,#return_var_int
+    jsr PTRGET
     ldy #2
     lda zr0h
     sta ($5f),y
@@ -3529,18 +3586,15 @@ do_return_int:
     lda zr0l
     sta ($5f),y
     ldy #0
-    
-    pla
-    sta $7b
-    pla
-    sta $7a
+
+    pop TXTPTR    
     clc
     rts
-}
 
 return_var_int:
     .text "SH%"
     .byte 0
+}
 
 
 } // namespace bios
