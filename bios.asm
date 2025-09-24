@@ -121,6 +121,7 @@
 .label int2str=141
 .label get_basic_int=143
 .label buffer_write=145
+.label convert_ascii_to_petscii=147
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -196,6 +197,7 @@ bios_jmp:
     .word do_int2str
     .word do_get_basic_int
     .word do_buffer_write
+    .word do_convert_ascii_to_petscii
 
 * = * "BIOS code"
 
@@ -1306,6 +1308,27 @@ not_lowercase:
     sec
     sbc #$20
 not_uppercase:
+    rts
+}
+
+//----------------------------------------------------
+// convert_ascii_to_petscii : convert buffer from
+// ascii to petscii
+//
+// input : R0 = pstring to convert
+//----------------------------------------------------
+
+do_convert_ascii_to_petscii:
+{
+    ldy #0
+    mov a,(r0)
+    tay
+convert:
+    mov a,(r0)
+    jsr ascii_to_petscii
+    mov (r0),a
+    dey
+    bne convert
     rts
 }
 
