@@ -94,6 +94,12 @@ CTRL-K-V   : paste from clipboard
 
 You can view the current clipboard content using the ENV command
 
+### Add ons ###
+
+You can use hex values in basic using the $ prefix, for both byte and word values.
+
+Ex: ? $e2 + $fc * $0100
+
 ## External commands
 
 The following commands are available : 
