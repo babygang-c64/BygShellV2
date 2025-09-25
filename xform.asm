@@ -54,7 +54,18 @@ params:
     cpx nb_params
     beq end
     swi lines_goto, buffer
-    swi pprint_nl
+
+    mov r1,#buffer_line
+    swi str_cpy
+    mov r0,r1
+    
+    sec
+    ldx #';'
+    swi str_split
+    tax
+    mov r0,#buffer_line
+    jsr print_params
+
     inc pos_param
     ldx pos_param
     jmp params
@@ -68,12 +79,14 @@ end:
 
 pos_param:
     .byte 0
+    
 print_params:
-print_next:
     swi pprint_nl
-//    add r0,a
+    clc
+    add r0,a
+    inc r0    
     dex
-    bne print_next
+    bne print_params
     rts
 
 error_params:

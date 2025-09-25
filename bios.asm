@@ -1632,12 +1632,12 @@ do_pprint_nl:
 
 do_pprint:
 {
+    txa
+    pha
     ldy #0
     mov a, (r0)
     beq vide
-    pha
     tax
-    push r0
 boucle:
     iny
     lda (zr0),y
@@ -1645,10 +1645,11 @@ boucle:
     jsr CHROUT
     dex
     bne boucle
-    pop r0
-    pla
 vide:
     ldy #0
+    pla
+    tax
+    mov a,(r0)
     clc
     rts
 }
