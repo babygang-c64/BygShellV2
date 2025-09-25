@@ -39,60 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    // test str_pat
-    
-    mov r1,#pattern2
-    mov r0,#line1
-    jsr test_pat
-    mov r1,#pattern2
-    mov r0,#line2
-    jsr test_pat
-    mov r1,#pattern2
-    mov r0,#line3
-    jsr test_pat
-    mov r1,#pattern2
-    mov r0,#line4
-    jsr test_pat
-    mov r1,#pattern2
-    mov r0,#line5
-    jsr test_pat
-    rts
-
-test_pat:
-    push r0
-    push r1
-    swi pprint_nl
-    mov r0,r1
-    swi pprint_nl
-    pop r1
-    pop r0
-    swi str_pat
-    bcc no_match
-    swi pprint_nl,match
-no_match:
-    rts 
-    
-match:
-    pstring("MATCH!")   
-pattern1:
-    pstring("*D*")
-pattern2:
-    pstring("*LI#E*")
-pattern3:
-    pstring("*.ASM*")
-    
-line1:
-    pstring("CAT.ASM")
-line2:
-    pstring("AND LINE NUMBER TWO")
-line3:
-    pstring("THIS IS LIONNE 3")
-line4:
-    pstring("SHELL")
-line5:
-    pstring("THIS IS FIVE, THE LAST ONE")
-
-
     //-- init options
     sec
     swi param_init,buffer,options_hw
