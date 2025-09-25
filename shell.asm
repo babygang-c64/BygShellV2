@@ -32,12 +32,12 @@ start_cartridge:
     jsr $e422
 
 
-    // change basic hook to our routine
+    // change basic IGONE hook to our routine
     
     lda #<basic_hook
-    sta VECT_BASICEXEC
+    sta IGONE
     lda #>basic_hook
-    sta VECT_BASICEXEC+1
+    sta IGONE+1
     
     // change IRQ hook to our routine
     
@@ -49,6 +49,15 @@ start_cartridge:
     lda #>irq_hook+1
     sta IIRQ+1
     cli
+    
+    // change basic IEVAL to our routine for $
+
+    lda #<basic_ieval
+    sta IEVAL
+    lda #>basic_ieval
+    sta IEVAL+1
+    
+    // BIOS reset and start message
     
     lda #7
     sta CURSOR_COLOR
@@ -889,6 +898,70 @@ goto_left:
     iny
     bne goto_left
     rts
+}
+
+//------------------------------------------------------------
+// basic_ieval : IEVAL hook for hex numbers
+//------------------------------------------------------------
+
+basic_ieval:
+{
+    lda #0
+    sta $0d
+    jsr CHRGET
+    cmp #'$'
+    beq test_dollar
+not_ok_dollar:
+    jsr CHRGOT
+    jmp $ae8d
+test_dollar:
+    lda PNTR
+    bne not_ok_dollar
+process_dollar:
+    ldx #2
+    ldy #3
+    lda ($7a),y
+    cmp #$30
+    bcc not_num
+    cmp #$3a
+    bcc not_num2
+    cmp #$41
+    bcc not_num
+    cmp #$47
+    bcc not_num2
+not_num:
+    lda #0
+    pha
+    dex
+not_num2:
+    jsr CHRGET
+    cmp #$40
+    bcc not_alpha
+    adc #8
+not_alpha:
+    asl
+    asl
+    asl
+    asl
+    sta $fe
+    jsr CHRGET
+    bcc not_alpha2
+    adc #8
+not_alpha2:
+    and #15
+    ora $fe
+    pha
+    dex
+    bne not_num2
+    pla
+    sta $63
+    pla
+    sta $62
+    ldx #$90
+    sec
+    jsr $bc49
+    jmp CHRGET
+    
 }
 
 shell_top:

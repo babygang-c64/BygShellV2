@@ -9,7 +9,9 @@
 //---------------------------------------------------------------
 
 .label CHRGET = $0073
-.label VECT_BASICEXEC = $0308
+.label CHRGOT = $0079
+.label IGONE = $0308    // BASIC processing hook
+.label IEVAL = $030A
 
 // Basic vectors
 
