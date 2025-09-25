@@ -582,8 +582,18 @@ not_found:
 do_pipe_init:
 {
     jsr check_pipe_option
-    bcs error
+    beq do_pipe_end.no_pipe_option
 
+    ldx nb_params
+    cpx #2
+    bpl params_ok
+
+error:
+    sec
+    swi error, error_pipe_msg
+    rts
+
+params_ok:
     // get output name = last parameter in buffer
     ldx nb_params
     swi lines_goto, buffer
@@ -593,26 +603,12 @@ do_pipe_init:
     sec
     swi file_open
     bcs error
-    jsr do_pipe_output
-
-no_pipe_option:
-    clc
-    rts
+    jmp do_pipe_output
 
 check_pipe_option:
+    ldx #5
     lda options_params
     and #OPT_PIPE
-    beq no_pipe_option
-    
-    ldx nb_params
-    cpx #2
-    bpl no_pipe_option
-    sec
-    rts
-    
-error:
-    sec
-    swi error, error_pipe_msg
     rts
 
 error_pipe_msg:
@@ -625,15 +621,14 @@ error_pipe_msg:
 
 do_pipe_end:
 {
-    lda options_params
-    and #OPT_PIPE
-    beq pas_option_pipe
+    jsr do_pipe_init.check_pipe_option
+    beq no_pipe_option
 
-    ldx #5
+    // ldx #5 done by option check
     swi file_close
     jsr CLRCHN
 
-pas_option_pipe:
+no_pipe_option:
     clc
     rts    
 }
@@ -644,11 +639,10 @@ pas_option_pipe:
 
 do_pipe_output:
 {
-    lda options_params
-    and #OPT_PIPE
-    beq pas_option_pipe
+    jsr do_pipe_init.check_pipe_option
+    beq do_pipe_end.no_pipe_option
 
-    ldx #5
+    // ldx #5 done by option check
     jsr CHKOUT
 pas_option_pipe:
     clc
@@ -1616,14 +1610,16 @@ stop:
 // pprint_nl : print PSTRING using basic ROM + CR
 // 
 // input : R0 = PSTRING
+// output : A = pstring length
 //----------------------------------------------------
 
 do_pprint_nl:
 {
  jsr do_pprint
+ pha
  lda #13
  jsr CHROUT
- clc
+ pla
  rts    
 }
 
@@ -1631,27 +1627,17 @@ do_pprint_nl:
 // pprint : print PSTRING using basic ROM
 // 
 // input : R0 = PSTRING
+// output : A = pstring length
 //----------------------------------------------------
-
-do_pprint_rom:
-{
-    ldy #0
-    mov a, (r0++)
-    tax
-    mov $22, r0
-    jsr STRPRT4
-    dec r0
-    clc
-    rts
-}
 
 do_pprint:
 {
     ldy #0
-    push r0
     mov a, (r0)
     beq vide
+    pha
     tax
+    push r0
 boucle:
     iny
     lda (zr0),y
@@ -1659,9 +1645,10 @@ boucle:
     jsr CHROUT
     dex
     bne boucle
+    pop r0
+    pla
 vide:
     ldy #0
-    pop r0
     clc
     rts
 }
