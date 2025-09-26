@@ -16,6 +16,7 @@ pstring("XFORM")
 
 xform:
 {
+    .label actions_list = $cb00
     .label commands_list = $cc00
     .label buffer_line = $cd00
     .label params_buffer = $ce00
@@ -47,8 +48,13 @@ xform:
 
     lda options_params
     and #OPT_PIPE
-    beq params
+    beq no_pipe
     dec nb_params
+
+no_pipe:
+    ldy #0
+    sty actions_list
+    mov update_actions, #actions_list
 
 params:
     cpx nb_params
@@ -82,6 +88,22 @@ pos_param:
     
 print_params:
     swi pprint_nl
+    pha
+    push r0
+    stx save_x
+    jsr lookup_action
+    bcs action_not_found
+
+    pha
+    mov r1,update_actions
+    pla
+    mov (r1),a
+    incw update_actions
+
+action_not_found:
+    pop r0
+    pla
+    ldx save_x
     clc
     add r0,a
     inc r0    
@@ -107,6 +129,10 @@ help:
     sec
     rts
 
+save_x:
+    .byte 0
+update_actions:
+    .word 0
 nb_output:
     .word 0
 
@@ -122,4 +148,72 @@ msg_error_file_not_found:
 
 options_xform:
     pstring("F")
+    
+.label act_no_param=0
+.label act_col_list=1
+.label act_string=2
+.label act_int=3
+
+actions:
+    pstring("HEAD")
+    pstring("SEP")
+    pstring("SEL")
+    pstring("WRITE")
+    .byte 0
+
+actions_params:
+    .byte act_int
+    .byte act_int
+    .byte act_col_list
+    .byte act_col_list
+
+actions_jmp:
+    .word do_head
+    .word do_sep
+    .word do_sel
+    .word do_write
+    
+do_head:
+do_sep:
+do_sel:
+do_write:
+    clc
+    rts
+
+//----------------------------------------------------
+// lookup_action : find action
+// input : R0 = pararmeter string
+//
+// output : C=0 OK, C=1 KO, A = action ID, 
+// X= parameters type
+//----------------------------------------------------
+
+lookup_action:
+{
+    mov r1, #actions
+    ldx #0
+    ldy #0
+test_action:
+    mov a,(r1)
+    beq end_of_list
+    swi str_cmp
+    bcs found
+    inx
+    mov a,(r1)
+    clc
+    add r1,a
+    inc r1
+    jmp test_action
+
+found:
+    lda actions_params,x
+    txa
+    clc
+    rts
+
+end_of_list:
+    sec
+    rts
+}
+
 }

@@ -3069,6 +3069,7 @@ process_sep:
 
 do_str_cmp:
 {
+    ldy #0
     // si pas même longueur = KO
     mov a,(r0)
     cmp (zr1),y
@@ -3088,6 +3089,7 @@ comp_ok:
     sec
     rts
 comp_ko:
+    ldy #0
     clc
     rts
 }
