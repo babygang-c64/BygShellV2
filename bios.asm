@@ -1288,7 +1288,7 @@ ascii_to_petscii:
 {
     cmp #$41
     bcc not_lowercase
-    cmp #$5a
+    cmp #$5b
     bcs not_lowercase
     clc
     adc #$20
@@ -1297,7 +1297,7 @@ ascii_to_petscii:
 not_lowercase:
     cmp #$61
     bcc not_uppercase
-    cmp #$7a
+    cmp #$7b
     bcs not_uppercase
     sec
     sbc #$20

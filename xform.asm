@@ -37,6 +37,7 @@ xform:
     mov nb_output,#0
     mov commands_list,#0
     ldy #0
+    sty action_to_process
     ldx #1
     swi lines_goto, buffer
     swi pprint_nl
@@ -85,12 +86,21 @@ end:
 
 pos_param:
     .byte 0
+action_to_process:
+    .byte 0
     
 print_params:
     swi pprint_nl
     pha
     push r0
     stx save_x
+
+    lda action_to_process
+    beq no_action
+    
+    jsr process_action
+    
+no_action:
     jsr lookup_action
     bcs action_not_found
 
@@ -100,15 +110,21 @@ print_params:
     mov (r1),a
     incw update_actions
 
+    // has parameters ?
+    cpx #act_no_param
+    beq action_not_found
+    stx action_to_process
+    
 action_not_found:
     pop r0
     pla
     ldx save_x
     clc
     add r0,a
-    inc r0    
+    inc r0
     dex
-    bne print_params
+    stx save_x
+    jne print_params
     rts
 
 error_params:
@@ -206,8 +222,11 @@ test_action:
     jmp test_action
 
 found:
-    lda actions_params,x
     txa
+    pha
+    lda actions_params,x
+    tax
+    pla
     clc
     rts
 
@@ -216,4 +235,57 @@ end_of_list:
     rts
 }
 
+//----------------------------------------------------
+// process_action : do the action on current param
+//----------------------------------------------------
+
+process_action:
+{
+    lda action_to_process
+    cmp #act_int
+    bne no_action
+    
+    jsr str2int
+    lda zr1l
+    pha
+    mov r1,update_actions
+    pla
+    mov (r1),a
+    incw update_actions
+
+no_action:
+    ldy #0
+    sty action_to_process
+    rts
 }
+
+//----------------------------------------------------
+// convert pstring at R0 to integer in R1
+//----------------------------------------------------
+
+str2int:
+{
+    txa
+    pha
+    ldy #0
+    mov r1,#0
+    mov a,(r0)
+    tax
+    iny
+read_number:
+    swi mult10
+    mov a,(r0)
+    sec
+    sbc #$30
+    add r1, a
+    iny
+    dex
+    bne read_number
+end_number:
+    ldy #0
+    pla
+    tax
+    rts
+}
+
+} // xform
