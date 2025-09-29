@@ -202,34 +202,80 @@ exec_command:
     jsr prep_params
     
     jsr cache_check
-    bcs already_loaded
+    jcs already_loaded
     
     jsr internal_command_check
-    bcs no_run
-
+    jcs no_run
+    
+    //-----------------------------------------------------------
+    // Find device for command :
+    // check presence of value for BIN DEVICE
+    // if not is there a currdevice ? if not try on device 8
+    //-----------------------------------------------------------
     ldy #0
     mov r0,#bin_device
     jsr bios.bios_ram_get_byte
-    beq no_bin_configured
+    beq no_bin_device
     tax
     bne device_ok
 
-no_bin_configured:    
+no_bin_device:    
     ldx CURRDEVICE
     bne device_ok
     ldx #8
 device_ok:
+    lda CURRDEVICE
+    sta ztmp
     lda #1
     ldy #1
     jsr SETLFS
 
+    //-----------------------------------------------------------
+    // Command name : check if we need to add path from 
+    // BIN PATH
+    //-----------------------------------------------------------
+
+    ldy #0
+    mov r0,#bin_path
+    jsr bios.bios_ram_get_byte
+    beq no_bin_path
+
+    // copy path prefix to work_buffer, add :
+    tax
+    mov r1,#work_buffer
+copy_path_prefix:
+    jsr bios.bios_ram_get_byte
+    mov (r1),a
+    iny
+    dex
+    bpl copy_path_prefix
+    lda #':'
+    mov (r1),a
+    inc work_buffer
+    
+    // and add filename from buffer
+    ldy #0
+    mov r1,#buffer
+    swi str_cat,work_buffer
+    
+    lda work_buffer
+    ldx #<work_buffer+1
+    ldy #>work_buffer+1
+    jmp path_ok
+
+no_bin_path:
     lda buffer
     ldx #<buffer+1
     ldy #>buffer+1
+path_ok:
     jsr SETNAM
     lda #0
     jsr LOAD
     bcs load_error
+    
+    lda ztmp
+    sta CURRDEVICE
+    
     cpy #$a0
     bcc no_run
 
@@ -241,6 +287,8 @@ already_loaded:
 no_run:
     jmp exec_end
 load_error:
+    lda ztmp
+    sta CURRDEVICE
     ldx #4
     jmp ERRORX
 
@@ -252,6 +300,9 @@ start_command:
     cpx #$c0
     bne under_basic
     jmp ($c000)
+
+suffix_prg:
+    pstring(",P")
 
 under_basic:
 //    sei
