@@ -38,9 +38,8 @@ All of this has been developped using an iPad, you know, the "consume only devic
 ### Script and external commands execution
 
 All commands (internal and external) start with * (hello BBC)
-When a command is not found in the internal commands list then a lookup is done on disk on the current device for the
-time beeing, if the currrent device is not defined, tries on disk #8. It is planned to provide the ability to choose the
-device / directory location of commands.
+When a command is not found in the internal commands list then a lookup is done on disk on the current device or if configured with the ENV internal command lookup can be done on another device / directory location. If the currrent device is not defined and no device / directory is defined for binaries, lookup is performed on device #8.
+A boot script lookup and run feature is on the todo list in order to be able to soft define binaries location for external commands.
 
 There are no more shell scripts as you can use the commands within BASIC programs baby !
 
@@ -70,7 +69,15 @@ All external commands can :
 - HELP : lists the internal commands and retrieves help for internal commands
 - M : memory dump / write, takes one start address or start / end address and
 when a single address is given you can write bytes just after it
-- ENV : view some environment info
+- ENV : view some environment info, change device and path location of external commands
+    -q = quiet mode
+    -d <device> = define device for external commands lookup
+    -p <device> = define path for external commands lookup
+    
+Apart from -q option, env options have to be fed one at a time, for example to set the path
+to /bin on device 11 :
+*env -dq 11
+*env -pq //bin/
 
 ![Help and M commands](images/help_mem.png)
 
