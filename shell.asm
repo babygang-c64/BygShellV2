@@ -18,6 +18,8 @@
 
 #import "bios_pp.asm"
 
+.label work_buffer=$cf00
+
 start_cartridge:
 
     stx $d016
@@ -204,7 +206,15 @@ exec_command:
     
     jsr internal_command_check
     bcs no_run
-    
+
+    ldy #0
+    mov r0,#bin_device
+    jsr bios.bios_ram_get_byte
+    beq no_bin_configured
+    tax
+    bne device_ok
+
+no_bin_configured:    
     ldx CURRDEVICE
     bne device_ok
     ldx #8
@@ -401,6 +411,43 @@ internal_commands_help:
 
 do_env:
 {
+    .label OPT_D=1
+    .label OPT_P=2
+
+    lda nb_params
+    beq no_params
+    
+    sec
+    swi param_init,buffer,options_env
+
+
+    //-----------------------------------------------------------
+    // -P = read and store BIN PATH
+    //-----------------------------------------------------------
+    lda options_params
+    and #OPT_P
+    beq no_path
+    
+    sec
+    swi param_process,work_buffer
+    mov r1,#bin_path
+    swi str_cpy
+    
+    //-----------------------------------------------------------
+    // -D = read and store BIN DEVICE
+    //-----------------------------------------------------------
+no_path:
+    lda options_params
+    and #OPT_D
+    beq no_params
+    
+    sec
+    swi param_process,work_buffer
+    swi str2int
+    lda zr1l
+    sta bin_device
+    
+no_params:
     swi pprint,msg_clipboard
     lda k_flag
     and #K_FLAG_CLIPBOARD
@@ -440,19 +487,63 @@ end:
     jsr carriage_return
     
     swi pprint,msg_device
-    ldy #0
-    sty zr0h
     lda CURRDEVICE
-    sta zr0l
-    ldx #%10011111
-    swi pprint_int
+    bne is_value_device
+    swi pprint_nl,msg_none
+    jmp next_bin_device
 
+is_value_device:
+    jsr print_int8
+
+next_bin_device:
+    swi pprint,msg_bin
+    swi pprint,msg_device
+    mov r0,#bin_device
+    jsr bios.bios_ram_get_byte
+    cmp #0
+    bne is_value_bin_device
+    swi pprint_nl,msg_none
+    jmp next_bin_path
+    
+is_value_bin_device:
+    jsr print_int8
+
+next_bin_path:
+    swi pprint,msg_bin
+    swi pprint,msg_path
+    mov r0,#bin_path
+    jsr bios.bios_ram_get_byte
+    cmp #0
+    beq no_path_data
+    tax
+    iny
+boucle_path:
+    jsr bios.bios_ram_get_byte
+    jsr CHROUT
+    iny
+    dex
+    bne boucle_path
+    ldy #0
+    beq carriage_return
+
+no_path_data:
+    swi pprint,msg_none
 carriage_return:
     lda #13
     jsr CHROUT
     sec
     rts
+    
+print_int8:
+    ldy #0
+    sty zr0h
+    sta zr0l
+    ldx #%10011111
+    swi pprint_int
+    jmp carriage_return
 
+options_env:
+    pstring("DP")
 sh_string:
     .text "SH$"
     .byte 0
@@ -462,6 +553,10 @@ msg_sh_string:
     pstring("SH$ : ")
 msg_sh_int:
     pstring("SH% : ")
+msg_bin:
+    pstring("BIN ")
+msg_path:
+    pstring("Path : ")
 msg_device:
     pstring("Device : ")
 msg_none:

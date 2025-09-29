@@ -88,6 +88,7 @@
     .label get_basic_int=143
     .label buffer_write=145
     .label convert_ascii_to_petscii=147
+    .label str2int=149
 }
 
 //===============================================================

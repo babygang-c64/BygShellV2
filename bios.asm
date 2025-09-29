@@ -30,7 +30,9 @@
 
 // Under BASIC ROM
 
-.label clipboard=$a000
+.label bin_device=$a000
+.label bin_path=$a001
+.label clipboard=$a080
 .label history=$a100
 
 // flags definitions
@@ -122,6 +124,7 @@
 .label get_basic_int=143
 .label buffer_write=145
 .label convert_ascii_to_petscii=147
+.label str2int=149
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -198,6 +201,7 @@ bios_jmp:
     .word do_get_basic_int
     .word do_buffer_write
     .word do_convert_ascii_to_petscii
+    .word do_str2int
 
 * = * "BIOS code"
 
@@ -231,6 +235,8 @@ do_reset:
 {
     lda #0
     sta $c002
+    sta bin_device
+    sta bin_path
     ldx #end_ref-bios_exec_ref
 copy_bios_exec:
     lda bios_exec_ref,x
@@ -3342,6 +3348,35 @@ do_mult10:
 mult2:
     asl zr1l
     rol zr1h
+    rts
+}
+
+//----------------------------------------------------
+// str2int : convert pstring at R0 to integer in R1
+//----------------------------------------------------
+
+do_str2int:
+{
+    txa
+    pha
+    ldy #0
+    mov r1,#0
+    mov a,(r0)
+    tax
+    iny
+read_number:
+    swi mult10
+    mov a,(r0)
+    sec
+    sbc #$30
+    add r1, a
+    iny
+    dex
+    bne read_number
+end_number:
+    ldy #0
+    pla
+    tax
     rts
 }
 

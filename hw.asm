@@ -39,6 +39,8 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    swi pprint_nl,msg_test
+
     //-- init options
     sec
     swi param_init,buffer,options_hw
@@ -76,6 +78,8 @@ no_option_d:
     swi success
     rts
 
+msg_test:
+    pstring("This is device 9")
 
 help:
     swi pprint_lines, help_hw
