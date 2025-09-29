@@ -464,7 +464,10 @@ do_env:
 {
     .label OPT_D=1
     .label OPT_P=2
+    .label OPT_Q=4
 
+    ldy #0
+    sty options_params
     lda nb_params
     beq no_params
     
@@ -498,7 +501,13 @@ no_path:
     lda zr1l
     sta bin_device
     
+    
 no_params:
+    // Q = quiet mode
+    lda options_params
+    and #OPT_Q
+    jne end_env
+
     swi pprint,msg_clipboard
     lda k_flag
     and #K_FLAG_CLIPBOARD
@@ -582,6 +591,7 @@ no_path_data:
 carriage_return:
     lda #13
     jsr CHROUT
+end_env:
     sec
     rts
     
@@ -594,7 +604,7 @@ print_int8:
     jmp carriage_return
 
 options_env:
-    pstring("DP")
+    pstring("DPQ")
 sh_string:
     .text "SH$"
     .byte 0
