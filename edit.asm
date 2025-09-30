@@ -72,6 +72,7 @@ load_file:
     jsr status_line
 
     pop r0
+
     ldx #4
     clc
     swi file_open

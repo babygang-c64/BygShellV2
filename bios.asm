@@ -3137,25 +3137,19 @@ do_str_cmp:
     // si pas même longueur = KO
     mov a,(r0)
     cmp (zr1),y
-    bne comp_ko
+    bne do_str_str.not_found
     tay
     bne do_comp
     mov a,(r1)
-    beq comp_ok
+    beq do_str_str.found
 
 do_comp:
     lda (zr0),y
     cmp (zr1),y
-    bne comp_ko
+    bne do_str_str.not_found
     dey
     bne do_comp
-comp_ok:
-    sec
-    rts
-comp_ko:
-    ldy #0
-    clc
-    rts
+    beq do_str_str.found
 }
 
 //---------------------------------------------------------------
@@ -3197,49 +3191,55 @@ fini:
 // str_ltrim : removes spaces at the start of R0
 //---------------------------------------------------------------
 
+
 do_str_ltrim:
 {
-    push r0
-    push r1
+.label source_ndx=ztmp
+.label dest_ndx=zsave
+
     txa
     pha
-    mov r1,r0
-    inc r1
     ldy #0
-    mov a, (r0++)
-    sta length
-    sty new_length
-    beq fini
-    
-    // r1 write, r0 read
-spaces:
+    mov a,(r0)
+    beq done
+    tax
+    iny
+
+    // Find the first non-space character
+find_non_space:
     mov a,(r0)
     cmp #32
-    bne no_spaces
-    inc r0
-    dec length
-    beq fini
-    bne spaces
-no_spaces:
-    mov (r1++),a
-    inc r0
-    inc new_length
-    dec length
-    beq fini
+    bne found_non_space
+    iny
+    dex
+    bne find_non_space
+    beq update_length
+
+found_non_space:
+    sty source_ndx
+    ldy #1
+    sty dest_ndx
+
+shift_loop:
+    ldy source_ndx
     mov a,(r0)
-    jmp no_spaces
-    
-fini:
+    ldy dest_ndx
+    mov (r0),a
+    inc source_ndx
+    inc dest_ndx
+    dex
+    bne shift_loop
+    ldx dest_ndx
+    dex
+
+update_length:
+    txa
+    ldy #0
+    mov (r0),a
+done:
     pla
     tax
-    pop r1
-    pop r0
-    lda new_length
-    mov (r0),a
     rts
-
-.label length = vars
-.label new_length = vars + 1
 }
 
 //---------------------------------------------------------------
