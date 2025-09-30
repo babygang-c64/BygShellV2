@@ -380,20 +380,21 @@ pre-processor is done through the pkick.py Python script,
 mov r<n>, r<m>      : register n = register m
 mov r<n>, #<m>      : register n = word m
 mov r<n>, <addr>    : register n = content at address
+mov r<n>, a         : register n = value of A, high byte set to 0
 mov a, (r<n>)       : a = byte at register n address
 mov a, (r<n>++)     : a = byte at register n address, increment register
 mov (r<n>), a       : store a at register n address
 mov (r<n>++),a      : store a at register n address, increment register
 mov (r<n>), r<m>    : store register m at address in register n
-movi (r<n>), r<m>   : store r<m> at address stored at location r<n>
 mov r<n>, (r<m>)    : store value at address in register m
 mov <addr>, <addr2> : copy word at addr2 to addr
 mov <addr>, #<val>  : copy value to addr
 mov <addr>, r<n>    : store r<n> at address <addr>
-mov r<n>, a         : register n = a
+
+movi (r<n>), r<m>   : store r<m> at address stored at location of value of r<n>
 ```
 
-Warning : indirect MOV operations rely on Y beeing set to 0, if not then Y will be added to address
+Warning : MOV (m),n operations rely on Y beeing set to 0, if not then Y will be added to address
 
 **ADD, SUB**
 ```

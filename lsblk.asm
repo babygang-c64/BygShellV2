@@ -39,9 +39,7 @@ lsblk:
     clc
     mov r0,#buffer1
     jsr do_lsblk
-    sta zr0l
-    ldy #0
-    sty zr0h
+    mov r0,a
     swi return_int
     mov r0,#buffer1
     mov a,(r0)
