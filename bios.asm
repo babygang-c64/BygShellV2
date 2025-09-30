@@ -3111,6 +3111,7 @@ compare_loop:
     bne compare_loop    // No: continue
     
 found:
+    ldy #0
     sec                 // Yes: found
     rts
 
@@ -3121,6 +3122,7 @@ no_carry:
     bpl search_loop     // More positions? Continue
 
 not_found:
+    ldy #0
     clc
     rts
 }
