@@ -649,6 +649,11 @@ by the node values.
     Patterns can be ? or *
     On exit : C = 1 if filter matches
 ```
+**str_str**
+```
+    Substring search : lookup for pstring(r1) in pstring(r0)
+    On exit : C=1 if equals, C=0 otherwise
+```
 **str_cmp**
 ```
     Compare pstring(r0) and pstring(r1)
