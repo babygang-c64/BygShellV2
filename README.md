@@ -76,8 +76,11 @@ when a single address is given you can write bytes just after it
     
 Apart from -q option, env options have to be fed one at a time, for example to set the path
 to /bin on device 11 :
+
+```
 *env -dq 11
 *env -pq //bin/
+```
 
 ![Help and M commands](images/help_mem.png)
 

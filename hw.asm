@@ -39,7 +39,34 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    swi pprint_nl,msg_test
+    // test str_str
+    
+    swi pprint_nl,test_string1
+    swi pprint_nl,test_pattern1
+    swi str_str,test_string1,test_pattern1
+    bcc not_found1
+    swi pprint_nl,msg_found
+not_found1:
+    swi pprint_nl,test_string2
+    swi pprint_nl,test_pattern2
+    swi str_str,test_string2,test_pattern2
+    bcc not_found2
+    swi pprint_nl,msg_found
+not_found2:
+
+    clc
+    rts
+
+msg_found:
+    pstring("match")
+test_string1:
+    pstring("hello world")
+test_pattern1:
+    pstring("world")
+test_string2:
+    pstring("un")
+test_pattern2:
+    pstring("quatre")
 
     //-- init options
     sec

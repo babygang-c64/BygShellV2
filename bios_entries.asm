@@ -89,6 +89,7 @@
     .label buffer_write=145
     .label convert_ascii_to_petscii=147
     .label str2int=149
+    .label str_str=151
 }
 
 //===============================================================

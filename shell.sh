@@ -78,3 +78,4 @@ build_command lsblk
 build_command join
 build_command checksum
 build_command xform -symbolfile
+build_command unit

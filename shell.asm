@@ -12,7 +12,7 @@
 * = $8000
 
 .word start_cartridge
-.word start_cartridge
+.word start_cartridge   // later change to NMI
 .byte $c3,$c2,$cd
 .text "80"
 

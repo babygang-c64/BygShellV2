@@ -125,6 +125,7 @@
 .label buffer_write=145
 .label convert_ascii_to_petscii=147
 .label str2int=149
+.label str_str=151
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -202,6 +203,7 @@ bios_jmp:
     .word do_buffer_write
     .word do_convert_ascii_to_petscii
     .word do_str2int
+    .word do_str_str
 
 * = * "BIOS code"
 
@@ -3067,6 +3069,60 @@ process_sep:
 .label decoupe = vars+3
 .label nb_items = vars+4
 .label quotes = vars+5
+}
+
+
+//---------------------------------------------------------------
+// str_str : Substring search, searches R1 in R0
+//
+// input : R0 = string to search in, R1 = pattern to match
+// output : C=1 and R0 moved to matching position if match
+//          C=0 if not matching
+//---------------------------------------------------------------
+
+do_str_str:
+{
+    ldy #0
+    mov a,(r1)
+    beq found            // Empty: always found
+    
+    sta zsave            // tmp1 = sub_len
+    
+    mov a,(r0)
+    beq not_found       // Main=0: not found
+    cmp zsave
+    bcc not_found       // Main < sub: not found
+    
+    sec
+    sbc zsave
+    sta ztmp            // tmp0 = main_len - sub_len (max advances)
+    inc zsave            // tmp1 = sub_len + 1 (for comparison)
+
+search_loop:
+    ldy #1              // Y=1: skip lengths, point to first chars
+
+compare_loop:
+    lda (zr1l),y        // Sub char at Y
+    cmp (zr0l),y        // Main char at Y
+    bne advance_position
+    
+    iny                 // Next char offset
+    cpy zsave            // Matched all? (Y reaches sub_len+1)
+    bne compare_loop    // No: continue
+    
+found:
+    sec                 // Yes: found
+    rts
+
+advance_position:
+    inc r0
+no_carry:
+    dec ztmp
+    bpl search_loop     // More positions? Continue
+
+not_found:
+    clc
+    rts
 }
 
 //---------------------------------------------------------------
