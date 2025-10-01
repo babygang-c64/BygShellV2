@@ -2553,66 +2553,25 @@ copie:
 // sortie Y = 0
 //---------------------------------------------------------------
 
-do_str_cat_old:
-{
-    // pos_new = écriture = lgr + 1
-    ldy #0    
-    lda (zr0),y
-    tay
-    iny
-    sty pos_new
-
-    // pos_copie = lecture = 1
-    // lgr_ajout = nb de caractères à copier
-    ldy #0
-    lda (zr1),y
-    sta lgr_ajout
-    iny
-    sty pos_copie
-
-copie:
-    ldy pos_copie
-    lda (zr1),y
-    ldy pos_new
-    sta (zr0),y
-    inc pos_new
-    inc pos_copie
-    dec lgr_ajout
-    bne copie
-
-    // mise à jour longueur = position écriture suivante - 1
-    dec pos_new
-    lda pos_new
-    ldy #0
-    sta (zr0),y
-    clc
-    rts
-
-.label pos_copie = vars
-.label pos_new = vars+1
-.label lgr_ajout = vars+2
-}
-
 do_str_cat:
 {
+.label pos_copie = ztmp
+.label pos_new = zsave
+
     txa
     pha
     ldy #0    
     lda (zr1),y
-    beq fin             // Si r1 vide, sortir
-    tax                 // X = nb caractères à copier
+    beq fin
+    tax                 // X = longueur r1
     
-    lda (zr0),y         // A = longueur r0
-    tay                 // Y = longueur r0 (position d'écriture - 1)
-    iny
-    sty pos_new         // pos_new = position d'écriture
-    
-    tya                 // A = pos_new
-    dey                 // Y = 0
+    lda (zr0),y
+    sta pos_new         // Sauver longueur r0
     clc
-    adc (zr1),y         // A = pos_new + longueur r1 - 1
+    adc (zr1),y
     sta (zr0),y         // Stocker longueur finale
     
+    inc pos_new         // pos_new = position d'écriture
     ldy #1
     
 copie:
@@ -2632,9 +2591,6 @@ fin:
     ldy #0
     clc
     rts
-
-.label pos_copie = ztmp
-.label pos_new = zsave
 }
 
 //---------------------------------------------------------------
@@ -2744,6 +2700,9 @@ filtre_trouve:
 
 do_str_expand:
 {
+.label pos_write = zr7l
+.label pos_read = zr7h
+    
     push r7
     txa
     pha
@@ -2857,9 +2816,6 @@ empty_string:
     tax
     jmp copy_expand
 
-.label pos_write = zr7l
-.label pos_read = zr7h
-    
 sh_string:
     .text "SH$"
 }

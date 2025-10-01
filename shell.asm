@@ -196,6 +196,7 @@ fini:
 
 exec_command:
 {
+    .label save_currdevice=vars
     lda #MSG_NONE
     jsr SETMSG
 
@@ -225,9 +226,9 @@ no_bin_device:
     ldx #8
 device_ok:
     lda CURRDEVICE
-    sta ztmp
+    sta save_currdevice
     lda #1
-    ldy #1
+    tay
     jsr SETLFS
 
     //-----------------------------------------------------------
@@ -274,7 +275,7 @@ path_ok:
     bcs load_error
     
     // restore previous device or set to 8 if it was 0
-    lda ztmp
+    lda save_currdevice
     bne restore_device
     lda #8
 restore_device:
@@ -291,7 +292,7 @@ already_loaded:
 no_run:
     jmp exec_end
 load_error:
-    lda ztmp
+    lda save_currdevice
     sta CURRDEVICE
     ldx #4
     jmp ERRORX
