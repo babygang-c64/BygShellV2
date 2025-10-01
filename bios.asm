@@ -3005,10 +3005,10 @@ not_found:
 do_str_split:
 {
     stc quotes
+    push r1
     stx separateur
     swi str_len
-    sta lgr_total
-    sty decoupe
+    tax
     sty nb_items
     iny
     sty lgr_en_cours
@@ -3017,7 +3017,7 @@ do_str_split:
     inc r0
     
 parcours:
-    lda lgr_total
+    cpx #0
     beq fini
     mov a, (r0++)
     cmp #34
@@ -3034,43 +3034,41 @@ test_sep:
     bmi pas_process_sep
 
 no_quotes:
-    lda #1
-    sta decoupe
     jsr process_sep
 
 pas_process_sep:
     inc lgr_en_cours
-    dec lgr_total
+    dex
     bne parcours
 
     // traitement dernier
     jsr process_sep
 
 fini:
-    ldc decoupe
+    pop r1
     lda nb_items
+    cmp #1
+    beq do_lines_find.not_found
+    sec
     rts
 
 process_sep:
-    ldx lgr_en_cours
-    dex
-    txa
+    ldy lgr_en_cours
+    dey
+    tya
+    ldy #0
+    sty lgr_en_cours
     mov (r1), a
     mov r1, r0
     dec r1
-    ldx #0
-    stx lgr_en_cours
     inc nb_items
     rts
 
-.label separateur = vars
-.label lgr_total = vars+1
-.label lgr_en_cours = vars+2
-.label decoupe = vars+3
-.label nb_items = vars+4
-.label quotes = vars+5
+.label separateur = ztmp
+.label lgr_en_cours = zsave
+.label nb_items = vars
+.label quotes = vars+1
 }
-
 
 //---------------------------------------------------------------
 // str_str : Substring search, searches R1 in R0
