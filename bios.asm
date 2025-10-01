@@ -2994,17 +2994,19 @@ not_found:
 }
 
 //----------------------------------------------------
-// str_split : découpe une pstring en fonction d'un
-// séparateur
-// entrée = r0 pstring, X = séparateur, 
-// C=1 gère les guillemets, C=0 ignore les guillemets
-// en sortie = r0 pstring découpée, A = nb d'éléments
-// C=0 pas de découpe, C=1 découpe effectuée
+// str_split : in-place split of pstring with 
+//             separator
+//
+// Input : r0 = pstring, X = separator, 
+// C=1 keep quoted values, C=0 ignore quotes
+// Output : r0 pstring split, A = nb items
+// C=0 no cut made, single value C=1 cut made
 //----------------------------------------------------
 
 do_str_split:
 {
     stc quotes
+    push r0
     push r1
     stx separateur
     swi str_len
@@ -3046,6 +3048,7 @@ pas_process_sep:
 
 fini:
     pop r1
+    pop r0
     lda nb_items
     cmp #1
     beq do_lines_find.not_found

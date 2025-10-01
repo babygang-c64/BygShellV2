@@ -273,7 +273,11 @@ path_ok:
     jsr LOAD
     bcs load_error
     
+    // restore previous device or set to 8 if it was 0
     lda ztmp
+    bne restore_device
+    lda #8
+restore_device:
     sta CURRDEVICE
     
     cpy #$a0
