@@ -1727,11 +1727,9 @@ is_dir:
     jsr CHKIN
 
 not_only_read:
-
+    clc
     jsr do_get_device_status
     bcs error
-
-    clc
     rts
 
 error:
@@ -1747,31 +1745,59 @@ error:
 //----------------------------------------------------
 // get_device_status : current device status
 //
+// input : C=0 return only status bytes in R0,
+//         C=1 return whole message in R0
+//         X = device
+//
+// output :
 // R0 = status (2 bytes) C=0:OK, C=1:KO
 //----------------------------------------------------
 
 do_get_device_status:
 {
+    .label return_str=ztmp
+    stc return_str
+    lda return_str
     lda #0
     sta STATUS
-
+    txa
     jsr LISTEN     // call LISTEN
     lda #$6F       // secondary address 15 (command channel)
     jsr SECOND     // call SECLSN (SECOND)
     jsr UNLSTN     // call UNLSTN
-    lda STATUS
-    //bne devnp       // device not present
+//    lda STATUS
+//    bne status_ko  // device not present
 
     lda CURRDEVICE
     jsr TALK
     lda #$6F      // secondary address 15 (error channel)
     jsr TKSA
 
+    lda return_str
+    bne get_return_str
+
     jsr IECIN     // call IECIN (get byte from IEC bus)
     sta zr0l
     jsr IECIN
     sta zr0h
+    jmp done
 
+get_return_str:
+    ldy #1
+copy_str:
+    lda STATUS
+    bne end_str
+    jsr IECIN
+    mov (r0),a
+    iny
+    bne copy_str
+end_str:
+    dey
+    tya
+    ldy #0
+    mov (r0),a
+
+done:
     jsr UNTLK
     lda zr0l
     cmp #$30

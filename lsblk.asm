@@ -23,6 +23,7 @@ lsblk:
     
     .label OPT_Q=1
     .label OPT_H=2
+    .label OPT_S=4
 
     sec
     swi param_init,buffer,options_lsblk
@@ -32,6 +33,19 @@ lsblk:
     and #OPT_H
     bne help
     
+    lda options_params
+    and #OPT_S
+    beq no_sid_test
+    
+    swi pprint,msg_sid_type
+    jsr test_sid_model
+    bcc sid8580
+    swi pprint_nl,msg_6581
+    jmp no_sid_test
+sid8580:
+    swi pprint_nl,msg_8580
+    
+no_sid_test:
     // swi pipe_init
     // jcs error
 
@@ -63,14 +77,22 @@ help:
     rts
 
 help_msg:
-    pstring("*lsblk [-qh]")
+    pstring("*lsblk [-qhs]")
     pstring(" List attached devices")
     pstring(" q = Quiet mode")
     pstring(" h = Help")
+    pstring(" s = Test SID type")
     .byte 0
 
 options_lsblk:
-    pstring("QH")
+    pstring("QHS")
+
+msg_sid_type:
+    pstring("Sid type : ")
+msg_6581:
+    pstring("6581")
+msg_8580:
+    pstring("8580")
 
 return_string:
     .text "SH$"
@@ -82,6 +104,30 @@ buffer1:
 
 buffer_int2str:
     pstring("0123456789ABCDEF")
+
+//---------------------------------------------------------------
+// test_sid_model : check sid model, Soundemon / Daglem method
+//
+// return : C=0 8580, C=1 6581
+//---------------------------------------------------------------
+
+test_sid_model:
+{
+    sei
+	lda #$ff
+wait:
+	cmp $d012
+	bne wait
+	
+	sta $d412
+	sta $d40e
+	sta $d40f
+	lda #$20
+	sta $d412
+	lda $d41b
+	lsr
+	rts
+}
 
 //---------------------------------------------------------------
 // lsblk : scan devices for disks, try to identify disk type

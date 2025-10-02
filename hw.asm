@@ -39,6 +39,23 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    // test device status
+    
+    ldx #8
+    mov r0,#work_buffer
+    sec
+    swi get_device_status
+    swi pprint_nl
+
+    ldx #9
+    mov r0,#work_buffer
+    sec
+    swi get_device_status
+    swi pprint_nl
+    
+    clc
+    rts
+
     //-- init options
     sec
     swi param_init,buffer,options_hw
