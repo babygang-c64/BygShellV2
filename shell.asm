@@ -321,6 +321,71 @@ found:
 }
 
 //---------------------------------------------------------------
+// get_bin_name : check if we need to add path from BIN PATH to
+// name in buffer, return result in R0 in work_buffer
+//---------------------------------------------------------------
+
+get_bin_name:
+{
+    push r0
+    ldy #0
+    mov r0,#bin_path
+    jsr bios.bios_ram_get_byte
+    beq no_bin_path
+
+    // copy path prefix to work_buffer, add :
+    tax
+    mov r1,#work_buffer
+copy_path_prefix:
+    jsr bios.bios_ram_get_byte
+    mov (r1),a
+    iny
+    dex
+    bpl copy_path_prefix
+    lda #':'
+    mov (r1),a
+    inc work_buffer
+    
+    // and add filename from buffer
+    ldy #0
+    pop r1
+    swi str_cat,work_buffer
+    
+    mov r0,#work_buffer
+    rts
+
+no_bin_path:
+    pop r0
+    rts
+}
+
+//---------------------------------------------------------------
+// get_bin_device : find device to use, check presence of 
+// value for BIN DEVICE if not is there a currdevice ? 
+// if not try on device 8
+//
+// return device to use in X
+//---------------------------------------------------------------
+
+get_bin_device:
+{
+    ldy #0
+    mov r0,#bin_device
+    jsr bios.bios_ram_get_byte
+    cmp #0
+    beq no_bin_device
+    tax
+    rts
+    
+no_bin_device:    
+    ldx CURRDEVICE
+    bne device_ok
+    ldx #8
+device_ok:
+    rts
+}
+
+//---------------------------------------------------------------
 // prep_params : split and count parameters
 //---------------------------------------------------------------
 
@@ -604,28 +669,99 @@ var_int_sh_desc:
 
 do_help:
 {
+.label save_currdevice = vars+2
     lda nb_params
-    beq help_help
+    bne help_with_file
 
+help_help:
+    swi pprint_lines,internal_commands_help
+    sec
+    rts
+
+help_with_file:
+    lda CURRDEVICE
+    sta save_currdevice
     mov r0, #buffer
     swi str_next
 
+    jsr get_bin_name
+    
+    mov r1,#suffix_help
+    swi str_cat
+    
+    push r0
+    jsr get_bin_device
+    stx CURRDEVICE
+    pop r0
+    clc
+    ldx #4
+    swi file_open
+    bcs not_found
+
+    ldx #4
+    jsr CHKIN
+    lda CURSOR_COLOR
+    pha
+help_file:
+    jsr CHRIN
+    jsr change_color
+    swi file_readline, work_buffer
+    bcs help_end
+    swi pprint_nl, work_buffer
+    jmp help_file
+
+help_end:
+    pla
+    sta CURSOR_COLOR
+    ldx #4
+    swi file_close
+    lda save_currdevice
+    sta CURRDEVICE
+
+help_return:
+    sec
+    rts
+not_found:
+    sec
+    mov r1,#$fffe
+    swi error,error_help
+    rts
+    
 lookup:
     mov r1, r0
     mov r0, #internal_commands
     
     swi lines_find
-    bcc help_help
+    jcc help_help
     mov r0, #internal_commands_help
     swi lines_goto
     swi pprint_nl
     sec
     rts
-    
-help_help:    
-    swi pprint_lines,internal_commands_help
-    sec
+
+change_color:
+    ldx #4
+test_color:
+    cmp color_chars,x
+    beq color_ok
+    dex
+    bpl test_color
+    lda #1
     rts
+color_ok:
+    lda color_values,x
+    sta CURSOR_COLOR
+    rts
+
+    
+suffix_help:
+    pstring(".HLP")
+error_help:
+    pstring("Not found")
+color_chars:
+    .text "> *-="
+color_values:
+    .byte 5,1,14,3,15,1
 }
 
 //---------------------------------------------------------------

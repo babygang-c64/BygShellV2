@@ -1633,7 +1633,7 @@ do_pprint_nl:
 }
 
 //----------------------------------------------------
-// pprint : print PSTRING using basic ROM
+// pprint : print PSTRING
 // 
 // input : R0 = PSTRING
 // output : A = pstring length

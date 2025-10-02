@@ -27,6 +27,7 @@ build_command()
     uv run ppkick.py ${CMD}.asm ${CMD}_pp.asm
     kickass ${CMD}_pp.asm $2
     ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}_pp.prg ${CMD} -silent
+    [ -f ${CMD}.hlp ] && ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}.hlp ${CMD}.hlp -silent
 }
 
 VICE_PATH=/home/prod/c64/bin
