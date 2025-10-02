@@ -847,13 +847,15 @@ do_param_top:
 do_param_init:
 {
     stc avec_options
+
     ldy #0
     sty options_params
     sty nb_params
     sty append_mode
     sty ptr_values
     sty options_values
-    
+
+    mov r2,r0
     swi str_next
     jcs fin_params
 
@@ -1017,6 +1019,7 @@ update_output_name:
     rts
     
 do_update:
+
     ldx nb_params
     swi lines_goto, buffer
     

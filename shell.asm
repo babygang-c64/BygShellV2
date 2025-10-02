@@ -115,10 +115,6 @@ copy_command:
 
     jsr exec_command
     sec
-//    swi bank_basic
-//    lda #55
-//    sta $01
-//    cli
     jmp NEWSTT
 
 do_token:
@@ -270,6 +266,7 @@ no_bin_path:
     ldy #>buffer+1
 path_ok:
     jsr SETNAM
+
     lda #0
     jsr LOAD
     bcs load_error
@@ -290,32 +287,22 @@ already_loaded:
     jsr start_command
 
 no_run:
-    jmp exec_end
+    lda #MSG_ALL
+    jmp SETMSG
+
 load_error:
     lda save_currdevice
     sta CURRDEVICE
     ldx #4
     jmp ERRORX
 
-exec_end:
-    lda #MSG_ALL
-    jmp SETMSG
-
 start_command:
     cpx #$c0
-    bne under_basic
+    bne not_found
     jmp ($c000)
 
 suffix_prg:
     pstring(",P")
-
-under_basic:
-//    sei
-//    lda #54
-//    sta $01
-//    clc
-//    swi bank_basic
-    jmp ($c000)
 
 cache_check:
     ldx #$c0
@@ -324,31 +311,11 @@ cache_check:
     swi str_cmp
     bcs found
     ldx #$a0
-    clc
-    
-//    sei
-//    lda #54
-//    sta $01
-
-//    swi bank_basic 
-    mov r0,#buffer
-    mov r1,#$a002
-    swi str_cmp
-    bcs found
-//    sec 
-//    swi bank_basic
-//    lda #55
-//    sta $01
-//    cli
+not_found:
     clc
     rts
 
 found:
-//    sec
-//    lda #55
-//    sta $01
-//    cli
-//    swi bank_basic
     sec
     rts
 }

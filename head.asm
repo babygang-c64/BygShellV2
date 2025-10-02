@@ -35,6 +35,7 @@ head:
     sec
     swi param_init,buffer,options_head
     jcs error
+
     swi pipe_init
     jcs error
 
@@ -100,7 +101,7 @@ affiche_ligne:
 
 help:
     swi pprint_lines,help_msg
-    sec
+    clc
     rts
 
 ok_close:
