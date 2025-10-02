@@ -324,7 +324,6 @@ do_set_basic_string:
     pop r0
     
     pop TXTPTR
-    clc
     rts
 }
 
@@ -510,7 +509,6 @@ do_directory_close:
 {
     ldx #9
     swi file_close
-    clc
     rts
 }
 
@@ -642,7 +640,7 @@ no_pipe_option:
 }
 
 //---------------------------------------------------------------
-// pipe_output : make sure to prrint to output file
+// pipe_output : make sure to print to output file
 //---------------------------------------------------------------
 
 do_pipe_output:

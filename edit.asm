@@ -1391,6 +1391,8 @@ status_cursor:
     swi pprint_int
     lda #','
     jsr CHROUT
+    ldy #0
+    sty zr0h
     lda cursor_y
     sta zr0l
     swi pprint_int
@@ -1415,8 +1417,7 @@ status_cursor:
     lda #RVSOFF
     jsr CHROUT
     lda #WHITE
-    jsr CHROUT
-    rts
+    jmp CHROUT
 }
 
 print_name:
@@ -1428,9 +1429,7 @@ print_name:
     sbc #4
     tax
     mov r0,#filename
-    inc r0
-    inc r0
-    inc r0
+    add r0,#3
 print:
     mov a,(r0++)
     jsr CHROUT 
