@@ -1,0 +1,10 @@
+#chars [-options]
+
+:Displays screencode char map or a
+:color map (char map is default)
+
+*Options:
+- c : display color map 
+
+=Examples:
+ *chars -c
