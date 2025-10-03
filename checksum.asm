@@ -47,7 +47,7 @@ boucle_params:
 
 end:
     swi pipe_end
-    lda crc_value
+    mov r0,crc_value
     swi return_int
     clc
     rts

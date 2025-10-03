@@ -1,0 +1,36 @@
+#List of commands
+
+*Internal commands
+- *help : help for internal 
+-         external commands 
+- *m : memory hexdump and modify
+- *env : view and set environment
+-        variables
+
+*External commands
+- *checksum : calculate CRC16 on files
+- *join : join files
+- *mon : invoke Jiffymon if loaded
+- *touch : create new empty files
+- *diff : compare files
+- *search : search pattern in files
+- *koala : koala image viewer
+- *edit : small text editor
+- *wc : word and line count
+- *lsblk : list attached disk devices
+- *cat : print file content
+- *head : print start of file content
+- *xform : delimited file processing
+- *chars : char and colour maps
+- *hw : hello world sample command
+- *menu : user choice menu
+
+*Commands location
+-
+ If environment variables for BIN
+ device or path are set, those are
+ used to locate external commands 
+ and help files.
+ If not, lookup location defaults
+ to current drive or drive 8
+ 

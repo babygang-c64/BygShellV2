@@ -126,6 +126,7 @@
 .label convert_ascii_to_petscii=147
 .label str2int=149
 .label str_str=151
+.label screen_pause=153
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -204,6 +205,7 @@ bios_jmp:
     .word do_convert_ascii_to_petscii
     .word do_str2int
     .word do_str_str
+    .word do_screen_pause
 
 * = * "BIOS code"
 
@@ -1081,8 +1083,40 @@ msg_option_error:
 // ascii_to_screen
 // screen_write_line
 // screen_write_all
+// screen_pause
 //===============================================================
 
+//----------------------------------------------------
+// screen_pause : write "more" message and wait for
+// key, then delete message
+//
+// output : C=1 if break key, C=0 if not
+//----------------------------------------------------
+
+do_screen_pause:
+{
+    .label is_break = zr0l
+    lda CURSOR_COLOR
+    pha
+    lda #7
+    sta CURSOR_COLOR
+    swi pprint, msg_suite
+    pla
+    sta CURSOR_COLOR
+    swi key_wait
+    stc is_break
+    ldy #6
+    lda #20
+efface_msg:
+    jsr CHROUT
+    dey
+    bne efface_msg
+    ldc is_break
+    rts
+
+msg_suite:
+    pstring("[More]")
+}
 
 //----------------------------------------------------
 // screen_write_all : write Y lines to screen
@@ -3288,7 +3322,7 @@ do_str_next:
     bne pas_fini
     sec
 pas_fini:
-    rts  
+    rts
 }
 
 //===============================================================

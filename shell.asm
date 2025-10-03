@@ -670,6 +670,8 @@ var_int_sh_desc:
 do_help:
 {
 .label save_currdevice = vars+2
+.label nb_lines = zr1l
+
     lda nb_params
     bne help_with_file
 
@@ -700,14 +702,31 @@ help_with_file:
 
     ldx #4
     jsr CHKIN
+    lda #23
+    sta nb_lines
     lda CURSOR_COLOR
     pha
 help_file:
     jsr CHRIN
+    cmp #$0a
+    bne do_color
+    lda #$0d
+    jsr CHROUT
+    jmp help_continue
+do_color:
     jsr change_color
     swi file_readline, work_buffer
     bcs help_end
     swi pprint_nl, work_buffer
+help_continue:
+    dec nb_lines
+    bne help_file
+    swi screen_pause
+    bcs help_end
+    ldx #4
+    jsr CHKIN
+    lda #23
+    sta nb_lines
     jmp help_file
 
 help_end:
@@ -746,22 +765,21 @@ test_color:
     beq color_ok
     dex
     bpl test_color
-    lda #1
-    rts
+    jmp CHROUT
 color_ok:
     lda color_values,x
     sta CURSOR_COLOR
     rts
 
-    
 suffix_help:
     pstring(".HLP")
 error_help:
     pstring("Not found")
+
 color_chars:
-    .text "> *-="
+    .text "#:-*="
 color_values:
-    .byte 5,1,14,3,15,1
+    .byte 5,1,14,3,15
 }
 
 //---------------------------------------------------------------

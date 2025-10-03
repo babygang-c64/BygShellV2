@@ -118,6 +118,7 @@ pas_hexdump:
 affiche_ligne:
     jsr option_numero
     swi pprint, work_buffer
+    
 
     // option E = affiche $ en fin de ligne
     lda options_params
@@ -131,6 +132,12 @@ pas_option_e:
     jsr CHROUT
     jsr option_pagination
     bcs ok_close
+    lda work_buffer
+    cmp #39
+    bcc ok_length
+    jsr option_pagination
+    bcs ok_close
+ok_length:
     jmp boucle_cat
 
 help:
@@ -239,16 +246,14 @@ option_pagine:
 do_pagination:
     inc cpt_ligne
     lda cpt_ligne
-    cmp #13
+    cmp #23
     bne pas_opt_p
 
     lda #0
     sta cpt_ligne
     push r0
-    swi pprint, msg_suite
-    swi key_wait
+    swi screen_pause
     stc is_break
-    jsr efface_msg_suite
     pop r0
     ldc is_break
     rts
@@ -257,22 +262,10 @@ pas_opt_p:
     clc
     rts
 
-efface_msg_suite:
-    ldy #6
-    lda #20
-efface_msg:
-    jsr CHROUT
-    dey
-    bne efface_msg
-    // ici il faudrait vider le buffer clavier
-    rts
-
 cpt_ligne:
     .byte 0
 is_break:
     .byte 0
-msg_suite:
-    pstring("<More>")
 }
 
 } // CAT namespace

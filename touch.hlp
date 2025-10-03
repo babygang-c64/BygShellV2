@@ -1,0 +1,15 @@
+#touch <files> [-options]
+:
+ Create new file, empty or not
+ By default creates empty SEQ files
+
+*Options:
+- p : Create PRG file
+- s : Size in bytes of file to create
+- b : filler byte value to use
+- p : paginate
+- t : Text file, contains a LF
+
+=Examples:
+ *touch newfile1 newfile2
+ *touch -s=4096 -b=255 -p 4kfile

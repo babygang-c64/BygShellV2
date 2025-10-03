@@ -1,7 +1,7 @@
->cat <files> [-options] [> >> redir]
-. 
- Print file(s) on screen.
-. 
+#cat <files> [-options]
+
+:Print file(s) on screen.
+
 *Options:
 - n : # all lines
 - b : # non-empty lines
@@ -9,8 +9,8 @@
 - p : paginate
 - h : hexdump
 - a : PRG start addr for hex
-. 
+
 =Examples:
-= cat -hp edit.prg
-= cat -n *.asm > dump.lst
-= cat error >> log
+ *cat -hp edit.prg
+ *cat -n *.asm > dump.lst
+ *cat error >> log

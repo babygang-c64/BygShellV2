@@ -1,0 +1,14 @@
+#search <string> <files> [-options]
+
+:Search string pattern into files (text)
+
+*Options:
+- n : Print line number with matching 
+      line
+- l : Only print matching line number
+- v : Select lines not matching
+- c : Count matching lines
+
+=Examples:
+ *search *error* *.log -n
+ *search -c *.sid listing

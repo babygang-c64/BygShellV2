@@ -1,0 +1,11 @@
+#checksum <files> [-options]
+
+:Calculates CRC16 for files.
+
+*Options:
+- q : quiet mode, return single CRC16
+-     value into SH%
+
+=Examples:
+ *checksum *.asm
+ 10 *checksum image.koa -q:? sh%

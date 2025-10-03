@@ -90,6 +90,7 @@
     .label convert_ascii_to_petscii=147
     .label str2int=149
     .label str_str=151
+    .label screen_pause=153
 }
 
 //===============================================================
