@@ -66,7 +66,7 @@ All external commands can :
 
 ### Commands ###
 
-- HELP : lists the internal commands and retrieves help for internal commands
+- HELP : lists the internal commands and retrieves help for external commands
 - M : memory dump / write, takes one start address or start / end address and
 when a single address is given you can write bytes just after it
 - ENV : view some environment info, change device and path location of external commands
@@ -83,6 +83,18 @@ to /bin on device 11 :
 ```
 
 ![Help and M commands](images/help_mem.png)
+
+Help files are looked up on the same device / directory as external command files.
+Help files name format is : <command_name>.hlp
+Help files use line coloring according of special chars as first char of line :
+
+```
+# Title
+: Main info
+* Subtitle
+- Sub content
+= Notes
+```
 
 ### Keys ###
 
