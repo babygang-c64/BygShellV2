@@ -1,0 +1,23 @@
+#Key shortcuts
+:Most of shortcuts are a combination 
+ starting with CTRL-K 
+ The cursor changes its color for a
+ small time to indicate that a key
+ for a combination is waiting.
+
+*Key after CTRL-K:
+- A: go to the start of current 
+-    logical screen line
+- E: go to the end of the current
+-    logical screen line
+- C: copy to clipboard from curor
+-    position to start of logical line
+- DEL: delete from cursor position to 
+-      the end of line
+- D: copy whole current line to the
+-    clipboard
+- V: paste clipboard content
+
+=Notes:
+ You can view clipboard content with
+ the *env command.

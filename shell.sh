@@ -63,6 +63,7 @@ ${VICE_PATH}/c1541 -attach ${disk} -write image.koa "image.koa" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write commando.sid "commando.sid" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write "jiffymon v2" "jiffymonv2" -silent
 ${VICE_PATH}/c1541 -attach ${disk} -write commands.hlp commands.hlp -silent
+${VICE_PATH}/c1541 -attach ${disk} -write keys.hlp keys.hlp -silent
 
 build_command cat
 build_command wc
