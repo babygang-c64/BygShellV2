@@ -1,0 +1,17 @@
+#menu [item of file pattern] [-options]
+
+:Creates a menu combining items and
+:filenames, provides menu to user 
+:and return user choice in SH% and SH$
+:SH% contains item position, 0 if none
+:SH$ contains item content
+:Items in quotes are a single item
+
+*Options:
+- l : show menu on left of screen instead
+-     of right
+
+=Examples:
+ *menu *.asm
+ *menu Cancel OK:? sh%
+ 

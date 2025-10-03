@@ -49,8 +49,8 @@ no_sid_test:
     // swi pipe_init
     // jcs error
 
-    ldy #0
     clc
+    ldy #0
     mov r0,#buffer1
     jsr do_lsblk
     mov r0,a

@@ -1,0 +1,14 @@
+#head <files> [-options]
+
+:Print first lines of file(s).
+:Defaults to 10 lines.
+
+*Options:
+- n=N : print only N lines
+- q : don't print filenames
+- v : always print filenames
+- p : paginate output
+
+=Examples:
+ *head test -v
+ *head -n=5 *.asm > dump.lst

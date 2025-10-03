@@ -1,0 +1,11 @@
+#join <source files> <target> [-options]
+
+:Concatenate file(s).
+
+*Options:
+- a : append and not replace target file
+- q : quiet mode
+
+=Examples:
+ *join *.log log_total -aq
+ *join text1 text2 new_text

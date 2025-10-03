@@ -1,0 +1,14 @@
+#diff <file A> <file B> [-options]
+
+:Compare two files contents.
+
+*Options:
+- n=N  : stop after N differences
+- f : stop after 1 difference
+- q : quiet mode, SH% contains number 
+-     of different lines found
+- p : paginate output
+
+=Examples:
+ *diff cat.asm cat2.asm -f
+ *diff test1 test2 -q:? sh%

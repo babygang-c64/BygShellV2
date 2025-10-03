@@ -1,0 +1,14 @@
+#wc <files> [-options]
+
+:Count lines and words of files.
+ All values are counted by default.
+
+*Options:
+- l : count number of lines
+- w : count number of words
+- c : count number of bytes
+- q : don't print filenames
+
+=Examples:
+ *wc -ql *.asm > lines.txt
+ *wc -w test2

@@ -1,0 +1,13 @@
+#lsblk [-options]
+
+:List and identifies connected devices.
+ Returns the list in SH$
+ 
+*Options:
+- h : print help
+- q : quiet mode
+- s : identifies SID type
+
+=Examples:
+ *lsblk
+ *lsblk -q:? sh$
