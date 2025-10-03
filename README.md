@@ -97,6 +97,8 @@ Help files use line coloring according of special chars as first char of line :
 = Notes
 ```
 
+![Help command](images/help.png)
+
 ### Keys ###
 
 CTRL-K is mapped as a master key for some internal shortcuts
