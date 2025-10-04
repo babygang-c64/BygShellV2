@@ -598,19 +598,19 @@ sh_string:
     .text "SH$"
     .byte 0
 msg_clipboard:
-    pstring("Clip: ")
+    pstring("Clip:")
 msg_sh_string:
-    pstring("SH$ : ")
+    pstring("SH$ :")
 msg_sh_int:
-    pstring("SH% : ")
+    pstring("SH% :")
 msg_bin:
     pstring("BIN ")
 msg_path:
-    pstring("Path: ")
+    pstring("Path:")
 msg_device:
-    pstring("Dev : ")
+    pstring("Dev :")
 msg_cmd:
-    pstring("Cmd : ")
+    pstring("Cmd :")
 msg_none:
     pstring("(None)")
 var_int_sh_desc:
@@ -665,8 +665,7 @@ help_file:
     jsr CHRIN
     cmp #$0a
     bne do_color
-    lda #$0d
-    jsr CHROUT
+    jsr do_env.carriage_return
     jmp help_continue
 do_color:
     jsr change_color
@@ -814,8 +813,7 @@ prep_buffer:
     bcc boucle_hex
 
 fin_hex:
-    lda #13
-    jsr CHROUT
+    jsr do_env.carriage_return
     sec
     rts
 
@@ -1000,10 +998,8 @@ go_back:
 
     //-----------------------------------
     // E = goto end of logical line
+    //     jmp goto_end_of_line
     //-----------------------------------
-
-do_key_e:
-    jmp goto_end_of_line
 
     //-----------------------------------
     // C = copy buffer to $a000
@@ -1027,13 +1023,9 @@ copie:
 
     //-----------------------------------
     // V = paste buffer from $a000
+    // jmp paste_buffer
     //-----------------------------------
     
-do_key_v:
-    mov r0,#clipboard
-    sec
-    jmp pprint_ram
-
     //-----------------------------------
     // BACKSPACE = delete to end of line
     //-----------------------------------
@@ -1136,11 +1128,11 @@ end:
 // paste_buffer : paste buffer content
 //------------------------------------------------------------
 
+do_key_v:
 paste_buffer:
 {
     mov r0,#clipboard
     sec
-    jsr pprint_ram
 }
 
 //------------------------------------------------------------
@@ -1184,6 +1176,7 @@ no_print:
 // X = end of line
 //------------------------------------------------------------
 
+do_key_e:
 goto_end_of_line:
 {
     swi cursor_unblink

@@ -39,6 +39,111 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+
+    // test int2bcd
+    
+    mov r0,#12345
+    mov r1,#work_buffer
+    jsr int2str
+    swi pprint_nl,work_buffer
+
+    mov r0,#0
+    jsr int2str
+    swi pprint_nl,work_buffer
+
+    mov r0,#42
+    jsr int2str
+    swi pprint_nl,work_buffer
+
+    mov r0,#64738
+    jsr int2str
+    swi pprint_nl,work_buffer
+    
+    ldx #%11000111
+    swi pprint_int,#12345
+
+    ldx #%11000111
+    swi pprint_int,#42
+
+    ldx #%11000111
+    swi pprint_int,#0
+
+    ldx #%11000111
+    swi pprint_int,#64738
+
+    rts
+        
+int2str:
+{
+.label skip = zsave
+.label res = zr7l
+    lda zr0l
+    ora zr0h
+    bne not_zero
+    ldy #1
+    lda #$30
+    sta (zr1l),y
+    bne end
+not_zero:
+    ldx #1
+    stx skip
+    dex
+    stx res
+    stx res+1
+    stx res+2
+    ldy #16
+    sed
+loop:
+    asl zr0l
+    rol zr0h
+    ldx #2
+add_loop:
+    lda res,x
+    adc res,x
+    sta res,x
+    dex
+    bpl add_loop
+    dey
+    bne loop
+    cld
+    
+    iny
+    inx
+loop_str:
+    lda res,x
+    pha
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr digit
+    pla
+    and #$0f
+    jsr digit
+    inx
+    cpx #3
+    bne loop_str
+    
+    dey
+end:
+    tya
+    ldy #0
+    sta (zr1l),y
+    rts
+
+digit:
+    bne out
+    lda skip
+    bne done
+out:
+    ora #$30
+    sta (zr1l),y
+    iny
+    lsr skip
+done:
+    rts
+}
+
     // test device status
     
     ldx #8
