@@ -209,20 +209,11 @@ exec_command:
     // check presence of value for BIN DEVICE
     // if not is there a currdevice ? if not try on device 8
     //-----------------------------------------------------------
-    ldy #0
-    mov r0,#bin_device
-    jsr bios.bios_ram_get_byte
-    beq no_bin_device
-    tax
-    bne device_ok
 
-no_bin_device:    
-    ldx CURRDEVICE
-    bne device_ok
-    ldx #8
-device_ok:
     lda CURRDEVICE
     sta save_currdevice
+    jsr get_bin_device
+    stx CURRDEVICE
     lda #1
     tay
     jsr SETLFS
@@ -232,39 +223,11 @@ device_ok:
     // BIN PATH
     //-----------------------------------------------------------
 
-    ldy #0
-    mov r0,#bin_path
-    jsr bios.bios_ram_get_byte
-    beq no_bin_path
-
-    // copy path prefix to work_buffer, add :
-    tax
-    mov r1,#work_buffer
-copy_path_prefix:
-    jsr bios.bios_ram_get_byte
-    mov (r1),a
-    iny
-    dex
-    bpl copy_path_prefix
-    lda #':'
-    mov (r1),a
-    inc work_buffer
-    
-    // and add filename from buffer
-    ldy #0
-    mov r1,#buffer
-    swi str_cat,work_buffer
-    
+    mov r0,#buffer
+    jsr get_bin_name
     lda work_buffer
     ldx #<work_buffer+1
     ldy #>work_buffer+1
-    jmp path_ok
-
-no_bin_path:
-    lda buffer
-    ldx #<buffer+1
-    ldy #>buffer+1
-path_ok:
     jsr SETNAM
 
     lda #0
@@ -345,17 +308,13 @@ copy_path_prefix:
     lda #':'
     mov (r1),a
     inc work_buffer
-    
+
+no_bin_path:
     // and add filename from buffer
     ldy #0
     pop r1
     swi str_cat,work_buffer
-    
     mov r0,#work_buffer
-    rts
-
-no_bin_path:
-    pop r0
     rts
 }
 
@@ -1179,9 +1138,6 @@ swap_char:
     bne swap_line
 end:
     rts
-
-nav_key_master:
-    .byte $36
 }
 
 //------------------------------------------------------------
