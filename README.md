@@ -116,6 +116,7 @@ CTRL-K-D   : copy whole current line to clipboard
 CTRL-K-V   : paste from clipboard
 CTRL-K-DEL : delete from cursor position to end of line
 CTRL-K-HOME: delete all lines except current physical one
+CTRL-K-^   : swap screens (up arrow)
 ```
 
 You can view the current clipboard content using the ENV command

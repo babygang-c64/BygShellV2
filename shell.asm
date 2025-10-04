@@ -1122,7 +1122,7 @@ not_d:
     //-----------------------------------
 
     cmp #$33
-    bne end
+    bne not_home
 
     swi cursor_unblink
 
@@ -1145,9 +1145,40 @@ no_clear:
 continue_clear:
     cpx #25
     bne loop_y
+    jmp end_irq
     
+not_home:
+
+    //-----------------------------------
+    // UP-ARROW = swap screens
+    //-----------------------------------
+
+    cmp #$36
+    bne end
+    
+    swi cursor_unblink
+
+    ldx #25
+    mov r0,#swap_screen
+    mov r1,#$0400
+swap_line:
+    ldy #39
+swap_char:
+    jsr bios.bios_ram_get_byte
+    sei
+    sta ztmp
+    mov a,(r1)
+    mov (r0),a
+    lda ztmp
+    mov (r1),a
+    dey
+    bpl swap_char
+    add r0,#40
+    add r1,#40
+    dex
+    bne swap_line
+    cli
 end:
-    //sta $0400
     jmp end_irq
 
 }

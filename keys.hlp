@@ -19,6 +19,7 @@
 -      the end of line
 - HOME : delete all lines except the
 -        current physical one
+- ^ : swap screens
 
 =Notes:
  You can view clipboard content with
