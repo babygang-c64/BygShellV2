@@ -79,6 +79,9 @@
 .label LGRNAM        = $B7
 .label CURRDEVICE    = $BA  // Current device number
 .label NDX           = $c6  // text buffer index
+.label INDX          = $c8  // end of logical line for input (0-79)
+.label LSXP          = $c9  // cursor Y input
+.label LSTP          = $ca  // cursor X input
 .label KEYPRESS      = $cb  // $3c, $3f, $01, $07 = space, r/s, enter, cursor down
 .label BLNSW         = $cc  // cursor blink control
 .label BLNON         = $cf  // cursor blink on flag
@@ -86,6 +89,7 @@
 .label PNT           = $d1  // address of current screen line (logical line)
 .label PNTR          = $d3  // logical X cursor position in line (0-79)
 .label LNMX          = $d5  // max logical line length : 39 or 79
+.label TBLX          = $d6  // cursor physical line number : 0-24
 .label GDCOL         = 647  // character under cursor color
 .label CURSOR_COLOR  = 646  // write color
 .label SHFLAG        = $28d // shift,ctrl,c= flag, ctrl=4

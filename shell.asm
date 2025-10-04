@@ -1115,7 +1115,39 @@ copy_line:
     bne copy_line
     
 not_d:
+
+    //-----------------------------------
+    // HOME = clear screen except current 
+    // line
+    //-----------------------------------
+
+    cmp #$33
+    bne end
+
+    swi cursor_unblink
+
+    ldx #0
+    mov r0,#$0400
+loop_y:
+    cpx TBLX
+    beq no_clear
+
+    ldy #39
+    lda #32
+clear_line:
+    mov (r0),a
+    dey
+    bpl clear_line
+
+no_clear:
+    add r0,#40
+    inx
+continue_clear:
+    cpx #25
+    bne loop_y
+    
 end:
+    //sta $0400
     jmp end_irq
 
 }
