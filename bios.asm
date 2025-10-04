@@ -26,6 +26,7 @@
 .label type=$cffe
 .label in_quotes=$cffd
 .label tmpC=$cffc
+.label conv_buffer=$cff6
 .label directory_root=$a800
 
 // Under BASIC ROM

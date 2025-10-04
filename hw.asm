@@ -39,25 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-
-    // test int2bcd
-    
-    mov r0,#12345
-    mov r1,#work_buffer
-    jsr int2str
-    swi pprint_nl,work_buffer
-
-    mov r0,#0
-    jsr int2str
-    swi pprint_nl,work_buffer
-
-    mov r0,#42
-    jsr int2str
-    swi pprint_nl,work_buffer
-
-    mov r0,#64738
-    jsr int2str
-    swi pprint_nl,work_buffer
     
     ldx #%11000111
     swi pprint_int,#12345
@@ -73,11 +54,16 @@ hw:
 
     lda #13
     jsr CHROUT
-    
+    lda #'-'
+    jsr CHROUT
+    jsr CHROUT
+    jsr CHROUT
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+        
     mov r0,#12345
     mov r1,#work_buffer
-    jsr int2str
-    mov r0,#work_buffer
     ldx #%10111111
     jsr print_int
     lda #13
@@ -85,26 +71,13 @@ hw:
     
     mov r0,#42
     mov r1,#work_buffer
-    jsr int2str
     ldx #%10111111
-    mov r0,#work_buffer
-    jsr print_int
-    lda #13
-    jsr CHROUT
-
-    mov r0,#0
-    mov r1,#work_buffer
-    jsr int2str
-    ldx #%10111111
-    mov r0,#work_buffer
     jsr print_int
     lda #13
     jsr CHROUT
 
     mov r0,#64738
     mov r1,#work_buffer
-    jsr int2str
-    mov r0,#work_buffer
     ldx #%10111111
     jsr print_int
     lda #13
@@ -112,8 +85,6 @@ hw:
 
     mov r0,#1234
     mov r1,#work_buffer
-    jsr int2str
-    mov r0,#work_buffer
     ldx #%10111111
     jsr print_int
     lda #13
@@ -121,38 +92,48 @@ hw:
 
     mov r0,#1234
     mov r1,#work_buffer
-    jsr int2str
-    mov r0,#work_buffer
     ldx #%00111111
     jsr print_int
     lda #13
     jsr CHROUT
 
+    mov r0,#0
+    mov r1,#work_buffer
+    ldx #%10111111
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
+
     rts
 
 //---------------------------------------------------------------
 // print_int : integer print
-// integer pascal string in r0
+// integer in r0, buffer in r1
 // X = format for printing , %PL123456
 // bit 7 = padding with spaces (if not set padding with 0)
 // bit 6 = suppress leading spaces
+//
+// uses X, r0, r1 is safe, r7, ztmp, zsave
 //---------------------------------------------------------------
 
 print_int:
 {
     txa
+    pha
+    jsr int2str
+    pla
     sta ztmp
     and #%01000000
     bne end_pad
     ldy #0
-    mov a,(r0)
+    mov a,(r1)
     tay
 loop_pad:
-    cpy #6
+    cpy #5
     beq end_pad
-    txa
-    and #$80
-    bne space_pad
+    lda ztmp
+    bmi space_pad
     lda #$30
 print_pad:
     jsr CHROUT
@@ -164,7 +145,7 @@ space_pad:
 
 end_pad:
     ldy #0
-    mov a,(r0)
+    mov a,(r1)
     tax
     dex
 print_digit:
@@ -172,7 +153,7 @@ print_digit:
     lda bit_mask,x
     and ztmp
     beq no_print
-    mov a,(r0)
+    mov a,(r1)
     jsr CHROUT
 no_print:
     dex
