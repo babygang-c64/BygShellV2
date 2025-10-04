@@ -33,8 +33,6 @@
 .label bin_device=$a000
 .label bin_path=$a001
 .label clipboard=$a080
-.label swap_screen_x=$a0fe
-.label swap_screen_y=$a0ff
 .label swap_screen=$a100
 
 // flags definitions
@@ -243,8 +241,6 @@ do_reset:
     sta $c002
     sta bin_device
     sta bin_path
-    sta swap_screen_x
-    sta swap_screen_y
     ldx #end_ref-bios_exec_ref
 copy_bios_exec:
     lda bios_exec_ref,x
@@ -253,19 +249,34 @@ copy_bios_exec:
     bpl copy_bios_exec
     
     // clear swap screen
-    ldx #25
     mov r0,#swap_screen
-clear_swap:
+    sec
+}
+
+clear_screen:
+{
+    stc ztmp
+    ldx #0
+loop_y:
+    lda ztmp
+    bne do_clear
+    cpx TBLX
+    beq no_clear
+
+do_clear:
     ldy #39
     lda #32
 clear_line:
     mov (r0),a
     dey
     bpl clear_line
+
+no_clear:
     add r0,#40
-    dex
-    bne clear_swap
-    clc
+    inx
+continue_clear:
+    cpx #25
+    bne loop_y
     rts
 }
 

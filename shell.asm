@@ -981,43 +981,84 @@ special_keys:
     and #K_FLAG_CLIPBOARD
     sta k_flag
     dec NDX
-    lda KEYPRESS
     
-    cmp #$0a
-    bne not_a
+    ldx #0
+lookup_kkey:
+    lda ctrl_keys,x
+    cmp #$ff
+    beq end_irq
+    cmp KEYPRESS
+    beq key_found
+    inx
+    inx
+    inx
+    bne lookup_kkey
+key_found:
+    jsr goto_key
+    jmp end_irq
+
+goto_key:
+    inx
+    lda ctrl_keys,x
+    pha
+    inx 
+    lda ctrl_keys,x
+    pha 
+    swi cursor_unblink
+    rts
+
+ctrl_keys:
+    .byte $0a
+    .byte >do_key_a-1
+    .byte <do_key_a-1
+    .byte $0e
+    .byte >do_key_e-1
+    .byte <do_key_e-1
+    .byte $14
+    .byte >do_key_c-1
+    .byte <do_key_c-1
+    .byte $1f
+    .byte >do_key_v-1
+    .byte <do_key_v-1
+    .byte $00
+    .byte >do_key_backspace-1
+    .byte <do_key_backspace-1
+    .byte $12
+    .byte >do_key_d-1
+    .byte <do_key_d-1
+    .byte $33
+    .byte >do_key_home-1
+    .byte <do_key_home-1
+    .byte $36
+    .byte >do_key_up_arrow-1
+    .byte <do_key_up_arrow-1
+    .byte $ff
 
     //-----------------------------------
     // A = goto start of logical line
     //-----------------------------------
 
-    swi cursor_unblink
+do_key_a:
     ldx PNTR
 go_back:
     lda #LEFT
     jsr CHROUT
     dex
     bne go_back
-    jmp end_irq
+    rts
 
-not_a:
     //-----------------------------------
     // E = goto end of logical line
     //-----------------------------------
 
-    cmp #$0e
-    bne not_e
-    
-    jsr goto_end_of_line
-    jmp end_irq
+do_key_e:
+    jmp goto_end_of_line
 
     //-----------------------------------
     // C = copy buffer to $a000
     //-----------------------------------
-    
-not_e:
-    cmp #$14
-    bne not_c
-    
+
+do_key_c:    
     lda k_flag
     ora #K_FLAG_CLIPBOARD
     sta k_flag
@@ -1029,34 +1070,24 @@ copie:
     lda (PNT),y
     iny
     sta clipboard,y
-    dey
-    iny
     dex
     bne copie
-    jmp end_irq
+    rts
 
     //-----------------------------------
     // V = paste buffer from $a000
     //-----------------------------------
     
-not_c:
-    cmp #$1f
-    bne not_v
-    
-    swi cursor_unblink
+do_key_v:
     mov r0,#clipboard
     sec
-    jsr pprint_ram
-    jmp end_irq
+    jmp pprint_ram
 
     //-----------------------------------
     // BACKSPACE = delete to end of line
     //-----------------------------------
     
-not_v:
-    cmp #0
-    bne not_delete
-
+do_key_backspace:
     lda PNTR
     pha
     jsr goto_end_of_line
@@ -1071,23 +1102,16 @@ supp_end:
     jsr CHROUT
     dey
     bne supp_end
-    
-    jmp end_irq
-
-not_delete:
+    rts
 
     //-----------------------------------
     // D = copy whole current line
     //-----------------------------------
-    
-    cmp #$12
-    bne not_d
-    
+
+do_key_d:    
     lda k_flag
     ora #K_FLAG_CLIPBOARD
     sta k_flag
-
-    swi cursor_unblink
 
     ldy LNMX
 find_end:
@@ -1098,7 +1122,7 @@ find_end:
     bpl find_end
     lda #0
     sta clipboard
-    jmp end_irq
+    rts
 
 found_end:
     iny
@@ -1113,54 +1137,27 @@ copy_line:
     iny
     cpy ztmp
     bne copy_line
+    rts
     
-not_d:
-
     //-----------------------------------
     // HOME = clear screen except current 
     // line
     //-----------------------------------
 
-    cmp #$33
-    bne not_home
-
-    swi cursor_unblink
-
-    ldx #0
+do_key_home:
     mov r0,#$0400
-loop_y:
-    cpx TBLX
-    beq no_clear
-
-    ldy #39
-    lda #32
-clear_line:
-    mov (r0),a
-    dey
-    bpl clear_line
-
-no_clear:
-    add r0,#40
-    inx
-continue_clear:
-    cpx #25
-    bne loop_y
-    jmp end_irq
-    
-not_home:
+    clc
+    jmp bios.clear_screen
 
     //-----------------------------------
     // UP-ARROW = swap screens
     //-----------------------------------
 
-    cmp #$36
-    bne end
-    
-    swi cursor_unblink
-
+do_key_up_arrow:
     ldx #25
     mov r0,#swap_screen
     mov r1,#$0400
+    mov r2,#$d800
 swap_line:
     ldy #39
 swap_char:
@@ -1171,16 +1168,20 @@ swap_char:
     mov (r0),a
     lda ztmp
     mov (r1),a
+    lda #1
+    mov (r2),a
     dey
     bpl swap_char
     add r0,#40
     add r1,#40
+    add r2,#40
     dex
     bne swap_line
-    cli
 end:
-    jmp end_irq
+    rts
 
+nav_key_master:
+    .byte $36
 }
 
 //------------------------------------------------------------
