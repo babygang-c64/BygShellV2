@@ -446,11 +446,7 @@ internal_commands_jump:
     .word do_env
 
 internal_commands_help:
-    pstring("*Help [Command] : Help on commands")
-    pstring("*M <start> [end]: Memory hexdump/write")
-    pstring("*ENV            : View env info")
-    pstring("*<Command>      : Run external command")
-    .byte 0
+    pstring("*Help <cmd>, try commands")
 
 //---------------------------------------------------------------
 // env : view env info :
@@ -635,7 +631,7 @@ do_help:
     bne help_with_file
 
 help_help:
-    swi pprint_lines,internal_commands_help
+    swi pprint_nl,internal_commands_help
     sec
     rts
 
@@ -941,57 +937,53 @@ special_keys:
     sta k_flag
     dec NDX
     
-    ldx #0
+    ldx #7
+    lda KEYPRESS
 lookup_kkey:
-    lda ctrl_keys,x
-    cmp #$ff
-    beq end_irq
-    cmp KEYPRESS
+    cmp ctrl_keys,x
     beq key_found
-    inx
-    inx
-    inx
-    bne lookup_kkey
+    dex
+    bpl lookup_kkey
+    bmi end_irq
 key_found:
     jsr goto_key
     jmp end_irq
 
 goto_key:
-    inx
-    lda ctrl_keys,x
+    lda ctrl_keys_hi,x
     pha
-    inx 
-    lda ctrl_keys,x
+    lda ctrl_keys_lo,x
     pha 
     swi cursor_unblink
     rts
 
 ctrl_keys:
     .byte $0a
-    .byte >do_key_a-1
-    .byte <do_key_a-1
     .byte $0e
-    .byte >do_key_e-1
-    .byte <do_key_e-1
     .byte $14
-    .byte >do_key_c-1
-    .byte <do_key_c-1
     .byte $1f
-    .byte >do_key_v-1
-    .byte <do_key_v-1
     .byte $00
-    .byte >do_key_backspace-1
-    .byte <do_key_backspace-1
     .byte $12
-    .byte >do_key_d-1
-    .byte <do_key_d-1
     .byte $33
-    .byte >do_key_home-1
-    .byte <do_key_home-1
     .byte $36
+ctrl_keys_hi:
+    .byte >do_key_a-1
+    .byte >do_key_e-1
+    .byte >do_key_c-1
+    .byte >do_key_v-1
+    .byte >do_key_backspace-1
+    .byte >do_key_d-1
+    .byte >do_key_home-1
     .byte >do_key_up_arrow-1
+ctrl_keys_lo:
+    .byte <do_key_a-1
+    .byte <do_key_e-1
+    .byte <do_key_c-1
+    .byte <do_key_v-1
+    .byte <do_key_backspace-1
+    .byte <do_key_d-1
+    .byte <do_key_home-1
     .byte <do_key_up_arrow-1
-    .byte $ff
 
     //-----------------------------------
     // A = goto start of logical line
