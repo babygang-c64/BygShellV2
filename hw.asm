@@ -62,17 +62,126 @@ hw:
     ldx #%11000111
     swi pprint_int,#12345
 
-    ldx #%11000111
+    ldx #%01111111
     swi pprint_int,#42
 
     ldx #%11000111
     swi pprint_int,#0
 
-    ldx #%11000111
+    ldx #%11111111
     swi pprint_int,#64738
 
+    lda #13
+    jsr CHROUT
+    
+    mov r0,#12345
+    mov r1,#work_buffer
+    jsr int2str
+    mov r0,#work_buffer
+    ldx #%10111111
+    jsr print_int
+    lda #13
+    jsr CHROUT
+    
+    mov r0,#42
+    mov r1,#work_buffer
+    jsr int2str
+    ldx #%10111111
+    mov r0,#work_buffer
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
+    mov r0,#0
+    mov r1,#work_buffer
+    jsr int2str
+    ldx #%10111111
+    mov r0,#work_buffer
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
+    mov r0,#64738
+    mov r1,#work_buffer
+    jsr int2str
+    mov r0,#work_buffer
+    ldx #%10111111
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
+    mov r0,#1234
+    mov r1,#work_buffer
+    jsr int2str
+    mov r0,#work_buffer
+    ldx #%10111111
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
+    mov r0,#1234
+    mov r1,#work_buffer
+    jsr int2str
+    mov r0,#work_buffer
+    ldx #%00111111
+    jsr print_int
+    lda #13
+    jsr CHROUT
+
     rts
-        
+
+//---------------------------------------------------------------
+// print_int : integer print
+// integer pascal string in r0
+// X = format for printing , %PL123456
+// bit 7 = padding with spaces (if not set padding with 0)
+// bit 6 = suppress leading spaces
+//---------------------------------------------------------------
+
+print_int:
+{
+    txa
+    sta ztmp
+    and #%01000000
+    bne end_pad
+    ldy #0
+    mov a,(r0)
+    tay
+loop_pad:
+    cpy #6
+    beq end_pad
+    txa
+    and #$80
+    bne space_pad
+    lda #$30
+print_pad:
+    jsr CHROUT
+    iny
+    bne loop_pad
+space_pad:
+    lda #32
+    bne print_pad
+
+end_pad:
+    ldy #0
+    mov a,(r0)
+    tax
+    dex
+print_digit:
+    iny
+    lda bit_mask,x
+    and ztmp
+    beq no_print
+    mov a,(r0)
+    jsr CHROUT
+no_print:
+    dex
+    bpl print_digit
+    rts
+bit_mask:
+    .byte 1,2,4,8,16,32
+}
+
 int2str:
 {
 .label skip = zsave
