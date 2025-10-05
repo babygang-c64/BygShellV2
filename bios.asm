@@ -1427,6 +1427,8 @@ blink_off:
 
 do_pprint_hex_buffer:
 {
+.label nb_total = zr7l
+
     swi str_len 
     sta nb_total
     inc r0
@@ -1499,8 +1501,6 @@ pas_plus:
     dex
     bne aff_txt
     rts
-
-.label nb_total = zr7l
 }
 
 //----------------------------------------------------
@@ -2006,6 +2006,9 @@ clear_bam:
 
 do_bam_next:
 {
+.label pos_bam = zr2l
+.label bit_bam = zr2h
+
     bcc not_first
     lda #0
     sta bit_bam
@@ -2052,9 +2055,6 @@ found:
     mov r0,r1
     clc
     rts
-
-.label pos_bam = zr2l
-.label bit_bam = zr2h
 }
 
 //----------------------------------------------------
@@ -3097,6 +3097,11 @@ not_found:
 
 do_str_split:
 {
+.label separateur = ztmp
+.label lgr_en_cours = zsave
+.label nb_items = vars
+.label quotes = vars+1
+
     stc quotes
     push r0
     push r1
@@ -3158,11 +3163,6 @@ process_sep:
     dec r1
     inc nb_items
     rts
-
-.label separateur = ztmp
-.label lgr_en_cours = zsave
-.label nb_items = vars
-.label quotes = vars+1
 }
 
 //---------------------------------------------------------------

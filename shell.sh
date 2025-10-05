@@ -30,6 +30,13 @@ build_command()
     [ -f ${CMD}.hlp ] && ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}.hlp ${CMD}.hlp -silent
 }
 
+copy_to_d64()
+{
+    FILEIN=$1
+    FILEOUT=$2
+    ${VICE_PATH}/c1541 -attach ${disk} -write "${FILEIN}" "${FILEOUT}" -silent
+}
+
 VICE_PATH=/home/prod/c64/bin
 KICK_PATH=/home/prod/c64/bin
 disk=byg_shell.d64
@@ -46,24 +53,24 @@ cat bygshell.bin >> bygshell.crt
 
 rm -f ${disk}
 ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
-${VICE_PATH}/c1541 -attach ${disk} -write shell_pp.prg "shell" -silent
 
-${VICE_PATH}/c1541 -attach ${disk} -write test2.asm "test2.asm" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write test.txt "test" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write file1.txt "file1" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write file2.txt "file2" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write test2.txt "test2" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write edit.hlp "edit.hlp" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write empty.txt "empty" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write cartridge_header.asm "crt.asm" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write cat.asm "cat.asm" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write wc.asm "wc.asm" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write samsara.koa "samsara.koa" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write image.koa "image.koa" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write commando.sid "commando.sid" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write "jiffymon v2" "jiffymonv2" -silent
-${VICE_PATH}/c1541 -attach ${disk} -write commands.hlp commands.hlp -silent
-${VICE_PATH}/c1541 -attach ${disk} -write keys.hlp keys.hlp -silent
+copy_to_d64 shell_pp.prg "shell"
+copy_to_d64 test2.asm "test2.asm"
+copy_to_d64 test.txt "test"
+copy_to_d64 file1.txt "file1"
+copy_to_d64 file2.txt "file2"
+copy_to_d64 test2.txt "test2"
+copy_to_d64 edit.hlp "edit.hlp"
+copy_to_d64 empty.txt "empty"
+copy_to_d64 cartridge_header.asm "crt.asm"
+copy_to_d64 cat.asm "cat.asm"
+copy_to_d64 wc.asm "wc.asm"
+copy_to_d64 samsara.koa "samsara.koa"
+copy_to_d64 image.koa "image.koa"
+copy_to_d64 commando.sid "commando.sid"
+copy_to_d64 "jiffymon v2" "jiffymonv2"
+copy_to_d64 commands.hlp commands.hlp
+copy_to_d64 keys.hlp keys.hlp
 
 build_command cat
 build_command wc
@@ -82,3 +89,5 @@ build_command join
 build_command checksum
 build_command xform -symbolfile
 build_command unit -symbolfile
+
+rm -f *_pp.asm
