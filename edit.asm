@@ -1407,7 +1407,7 @@ status_cursor:
     txa
     add r0,a
     mov cmp_line,r0
-    ldx #%11001111
+    ldx #%10001111
     swi pprint_int
     lda #'/'
     jsr CHROUT

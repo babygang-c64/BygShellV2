@@ -42,197 +42,47 @@ hw:
     
     ldx #%11000111
     swi pprint_int,#12345
+    lda #13
+    jsr CHROUT
 
     ldx #%01111111
     swi pprint_int,#42
+    lda #13
+    jsr CHROUT
 
     ldx #%11000111
     swi pprint_int,#0
+    lda #13
+    jsr CHROUT
 
     ldx #%11111111
     swi pprint_int,#64738
-
-    lda #13
-    jsr CHROUT
-    lda #'-'
-    jsr CHROUT
-    jsr CHROUT
-    jsr CHROUT
-    jsr CHROUT
-    lda #13
-    jsr CHROUT
-        
-    mov r0,#12345
-    mov r1,#work_buffer
-    ldx #%10111111
-    jsr print_int
-    lda #13
-    jsr CHROUT
-    
-    mov r0,#42
-    mov r1,#work_buffer
-    ldx #%10111111
-    jsr print_int
     lda #13
     jsr CHROUT
 
-    mov r0,#64738
-    mov r1,#work_buffer
-    ldx #%10111111
-    jsr print_int
+    ldx #%00000011
+    swi pprint_int,#4
     lda #13
     jsr CHROUT
 
-    mov r0,#1234
-    mov r1,#work_buffer
-    ldx #%10111111
-    jsr print_int
+    ldx #%10000011
+    swi pprint_int,#5
     lda #13
     jsr CHROUT
 
-    mov r0,#1234
-    mov r1,#work_buffer
-    ldx #%00111111
-    jsr print_int
+    ldx #%00000011
+    swi pprint_int,#6
     lda #13
     jsr CHROUT
 
-    mov r0,#0
-    mov r1,#work_buffer
-    ldx #%10111111
-    jsr print_int
+    ldx #%00000111
+    swi pprint_int,#47
     lda #13
     jsr CHROUT
-
 
     rts
 
-//---------------------------------------------------------------
-// print_int : integer print
-// integer in r0, buffer in r1
-// X = format for printing , %PL123456
-// bit 7 = padding with spaces (if not set padding with 0)
-// bit 6 = suppress leading spaces
-//
-// uses X, r0, r1 is safe, r7, ztmp, zsave
-//---------------------------------------------------------------
 
-print_int:
-{
-    txa
-    pha
-    jsr int2str
-    pla
-    sta ztmp
-    and #%01000000
-    bne end_pad
-    ldy #0
-    mov a,(r1)
-    tay
-loop_pad:
-    cpy #5
-    beq end_pad
-    lda ztmp
-    bmi space_pad
-    lda #$30
-print_pad:
-    jsr CHROUT
-    iny
-    bne loop_pad
-space_pad:
-    lda #32
-    bne print_pad
-
-end_pad:
-    ldy #0
-    mov a,(r1)
-    tax
-    dex
-print_digit:
-    iny
-    lda bit_mask,x
-    and ztmp
-    beq no_print
-    mov a,(r1)
-    jsr CHROUT
-no_print:
-    dex
-    bpl print_digit
-    rts
-bit_mask:
-    .byte 1,2,4,8,16,32
-}
-
-int2str:
-{
-.label skip = zsave
-.label res = zr7l
-    lda zr0l
-    ora zr0h
-    bne not_zero
-    ldy #1
-    lda #$30
-    sta (zr1l),y
-    bne end
-not_zero:
-    ldx #1
-    stx skip
-    dex
-    stx res
-    stx res+1
-    stx res+2
-    ldy #16
-    sed
-loop:
-    asl zr0l
-    rol zr0h
-    ldx #2
-add_loop:
-    lda res,x
-    adc res,x
-    sta res,x
-    dex
-    bpl add_loop
-    dey
-    bne loop
-    cld
-    
-    iny
-    inx
-loop_str:
-    lda res,x
-    pha
-    lsr
-    lsr
-    lsr
-    lsr
-    jsr digit
-    pla
-    and #$0f
-    jsr digit
-    inx
-    cpx #3
-    bne loop_str
-    
-    dey
-end:
-    tya
-    ldy #0
-    sta (zr1l),y
-    rts
-
-digit:
-    bne out
-    lda skip
-    bne done
-out:
-    ora #$30
-    sta (zr1l),y
-    iny
-    lsr skip
-done:
-    rts
-}
 
     // test device status
     

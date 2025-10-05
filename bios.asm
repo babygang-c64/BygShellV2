@@ -3388,88 +3388,101 @@ fini:
 // pprint_int : integer print
 // integer in r0
 // X = format for printing , %PL123456
-// bit 7 = padding with spaces (if not set padding with 0)
-// bit 6 = suppress leading spaces
+// bit 7 = 1, padding with spaces (if not set padding with 0)
+// bit 6 = 1, suppress leading spaces
+//
+// uses X, r0, r1 is safe, r7, ztmp, zsave
 //---------------------------------------------------------------
+
+do_pprint_int_old:
+{
+    txa
+    pha
+    jsr do_int2str
+    pla
+    sta ztmp
+    and #%01000000
+    bne end_pad
+    ldy conv_buffer
+loop_pad:
+    cpy #5
+    beq end_pad
+    lda ztmp
+    bmi space_pad
+    lda #$30
+print_pad:
+    jsr CHROUT
+    iny
+    bne loop_pad
+space_pad:
+    lda #32
+    bne print_pad
+
+end_pad:
+    ldy #0
+    ldx conv_buffer
+    dex
+print_digit:
+    iny
+    lda bit_mask,x
+    and ztmp
+    beq no_print
+    lda conv_buffer,y
+    jsr CHROUT
+no_print:
+    dex
+    bpl print_digit
+    ldx ztmp
+    rts
+bit_mask:
+    .byte 1,2,4,8,16,32
+}
 
 do_pprint_int:
 {
-    lda #6
-    sta int_conv
-    lda #$30
-    sta int_conv+1
-    sta int_conv+2
-    sta int_conv+3
-    sta int_conv+4
-    sta int_conv+5
-    sta int_conv+6
-
-    stx format
-    txa
-    and #%10000000
-    sta padding_space
-    lda format
-    and #%01000000
-    sta write_space
-    lda #%00100000
-    sta test_format
-    lda #1
-    sta do_padding
     txa
     pha
-    mov r1, #int_conv
-    jsr bios.do_int2str
-
-    ldx #0
-suite_affiche:
-    lda format
-    and test_format
-    beq pas_affiche
-    lda int_conv+1,x
-    cmp #$30
-    bne pas_test_padding
-
-    lda padding_space
-    bmi test_padding
-    lda int_conv+1,x
-    bne affiche
-
-test_padding:
-    lda do_padding
-    beq padding_fini
-
-    lda write_space
-    beq pas_affiche
-
-    lda #32
-    bne affiche
-padding_fini:
-    lda #$30
-affiche:
-    jsr CHROUT
-pas_affiche:
-    clc
-    lsr test_format
-    inx
-    cpx #6
-    bne suite_affiche
+    jsr do_int2str
     pla
-    tax
-    mov r0,#int_conv
-    rts
-
-pas_test_padding:
+    sta ztmp
+    
+    ldy #0
+    ldx #5              // start from leftmost position (100000s)
+print_digit:
+    lda bit_mask,x
+    and ztmp
+    beq no_print        // skip if this position not in format
+    
+    // This position should be printed
+    cpx conv_buffer     // compare position with actual digit count
+    bcc has_digit       // if X < conv_buffer, we have a real digit
+    
+    // No digit at this position - need padding
+    lda ztmp
+    and #%01000000      // check suppress bit
+    bne no_print        // suppress = skip this position
+    
+    lda ztmp
+    bmi space_pad
+    lda #$30
+    bne print_it
+space_pad:
+    lda #32
+    bne print_it
+    
+has_digit:
+    iny
+    lda conv_buffer,y
+print_it:
     jsr CHROUT
-    lda #0
-    sta do_padding
-    jmp pas_affiche
-
-.label format = vars
-.label test_format = vars+1
-.label padding_space = vars+2
-.label write_space = vars+3
-.label do_padding = vars+4
-.label int_conv = vars+8
+no_print:
+    dex
+    bpl print_digit
+    ldx ztmp
+    rts
+    
+bit_mask:
+    .byte 1,2,4,8,16,32
 }
 
 //---------------------------------------------------------------
@@ -3532,91 +3545,78 @@ end_number:
 }
 
 //---------------------------------------------------------------
-// int2str : convert int in r0 to pstring in r1
-// target buffer for pstring r1 should be 16 bytes at least
+// int2str : convert int in r0 to pstring in conv_buffer
+// uses r7 / ztmp / zsave
 //---------------------------------------------------------------
 
 do_int2str:
 {
-    jsr int2bcd
-    ldy #0
-    lda #6
-    sta (zr1),y
-    iny
-    lda bcd_buffer+2
-    jsr conv_bcd
-    lda bcd_buffer+1
-    jsr conv_bcd
-    lda bcd_buffer+0
-    jsr conv_bcd
-    ldy #0
-    rts
-
-conv_bcd:
-    tax
-    lsr
-    lsr
-    lsr
-    lsr
-    ora #$30
-    sta (zr1),y
-    iny
-    txa
-    and #$0f
-    ora #$30
-    sta (zr1),y
-    iny
-    rts
-
-int2bcd:
-    lda #0
-    sta bcd_buffer
-    sta bcd_buffer+1
-    sta bcd_buffer+2
+.label skip = zsave
+.label res = zr7l
+    lda zr0l
+    ora zr0h
+    bne not_zero
+    ldy #1
+    lda #$30
+    sta conv_buffer+1
+    bne end
+not_zero:
+    ldx #1
+    stx skip
+    dex
+    stx res
+    stx res+1
+    stx res+2
+    ldy #16
     sed
-    ldy #0
-    ldx #6
-calc1:
+loop:
     asl zr0l
     rol zr0h
-    adc bcd_buffer+0
-    sta bcd_buffer+0
+    ldx #2
+add_loop:
+    lda res,x
+    adc res,x
+    sta res,x
     dex
-    bne calc1
-
-    ldx #7
-cbit7:
-    asl zr0l
-    rol zr0h
-    lda bcd_buffer+0
-    adc bcd_buffer+0
-    sta bcd_buffer+0
-    lda bcd_buffer+1
-    adc bcd_buffer+1
-    sta bcd_buffer+1
-    dex
-    bne cbit7
-
-    ldx #3
-cbit13:
-    asl zr0l
-    rol zr0h
-    lda bcd_buffer+0
-    adc bcd_buffer+0
-    sta bcd_buffer+0
-    lda bcd_buffer+1
-    adc bcd_buffer+1
-    sta bcd_buffer+1
-    lda bcd_buffer+2
-    adc bcd_buffer+2
-    sta bcd_buffer+2
-    dex
-    bne cbit13
+    bpl add_loop
+    dey
+    bne loop
     cld
+    
+    iny
+    inx
+loop_str:
+    lda res,x
+    pha
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr digit
+    pla
+    and #$0f
+    jsr digit
+    inx
+    cpx #3
+    bne loop_str
+    
+    dey
+end:
+    sty conv_buffer
+    ldy #0
     rts
 
-// 3 bytes
-.label bcd_buffer = vars+5
+digit:
+    bne out
+    lda skip
+    bne done
+out:
+    ora #$30
+    sta conv_buffer,y
+    iny
+    lsr skip
+done:
+    rts
 }
 
 //---------------------------------------------------------------
