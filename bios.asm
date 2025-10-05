@@ -3394,49 +3394,6 @@ fini:
 // uses X, r0, r1 is safe, r7, ztmp, zsave
 //---------------------------------------------------------------
 
-do_pprint_int_old:
-{
-    txa
-    pha
-    jsr do_int2str
-    pla
-    sta ztmp
-    and #%01000000
-    bne end_pad
-    ldy conv_buffer
-loop_pad:
-    cpy #5
-    beq end_pad
-    lda ztmp
-    bmi space_pad
-    lda #$30
-print_pad:
-    jsr CHROUT
-    iny
-    bne loop_pad
-space_pad:
-    lda #32
-    bne print_pad
-
-end_pad:
-    ldy #0
-    ldx conv_buffer
-    dex
-print_digit:
-    iny
-    lda bit_mask,x
-    and ztmp
-    beq no_print
-    lda conv_buffer,y
-    jsr CHROUT
-no_print:
-    dex
-    bpl print_digit
-    ldx ztmp
-    rts
-bit_mask:
-    .byte 1,2,4,8,16,32
-}
 
 do_pprint_int:
 {
@@ -3449,7 +3406,7 @@ do_pprint_int:
     ldy #0
     ldx #5              // start from leftmost position (100000s)
 print_digit:
-    lda bit_mask,x
+    lda bit_list,x
     and ztmp
     beq no_print        // skip if this position not in format
     
@@ -3480,9 +3437,6 @@ no_print:
     bpl print_digit
     ldx ztmp
     rts
-    
-bit_mask:
-    .byte 1,2,4,8,16,32
 }
 
 //---------------------------------------------------------------
@@ -3620,8 +3574,8 @@ done:
 }
 
 //---------------------------------------------------------------
-// do_pprint_hex : affiche en hexa format $xxxx la valeur en r0
-// si C=1, n'affiche pas le préfixe
+// pprint_hex : prints r0 value in hex like $xxxx
+// if C=1, $ prefix is not printed
 //---------------------------------------------------------------
 
 do_pprint_hex:
@@ -3639,8 +3593,9 @@ no_prefix:
 }
 
 //---------------------------------------------------------------
-// hex2int : conversion pstring 16bits hexa en entier
-// entrée : pstring dans R0, sortie : R0 = valeur
+// hex2int : convert pstring with 16bits hexa value to integer
+// input : R0 pstring to convert
+// output : R0 = value, C=1 if error
 // do_hex2int.conv_hex_byte
 //---------------------------------------------------------------
 
@@ -3687,8 +3642,9 @@ pasAF:
 }
 
 //---------------------------------------------------------------
-// a2hex : conversion 8 bits en hexa
-// entrée : A, sortie hexl / hexh
+// a2hex : convert 8 bits to hex digits
+// input : A = value to convert
+// output : characters in hexl/hexh (R7)
 //---------------------------------------------------------------
 
 .label hexl = zr7l
@@ -3718,8 +3674,16 @@ pas_add:
 }
 
 //---------------------------------------------------------------
-// do_pprinthex8 : affiche en hexa la valeur dans r0l
+// do_pprinthex8 : prints 8 bit value in zr0l into hex
+// swi entry : value to print in Y
 //---------------------------------------------------------------
+
+do_pprinthex8a_swi:
+{
+    tya
+    ldy #0
+    beq do_pprinthex8a
+}
 
 do_pprinthex8:
     lda zr0l
@@ -3729,16 +3693,9 @@ do_pprinthex8a:
     lda hexl
     jsr CHROUT
     lda hexh
-    jsr CHROUT
-    clc
-    rts
+    jmp CHROUT
 }
-do_pprinthex8a_swi:
-{
-    tya
-    ldy #0
-    jmp do_pprinthex8a
-}
+
 
 
 //---------------------------------------------------------------
