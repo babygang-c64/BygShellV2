@@ -39,49 +39,87 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+
+    // test memory
+    swi bam_init, bam_root
+
+    // alloc test
+
+    ldx value1
+    swi malloc, bam_root
+    mov $1002,r0
+    mov r1,r0
+    swi str_cpy,value1
+
+    ldx value2
+    swi malloc, bam_root
+    mov $1004,r0
+    mov r1,r0
+    swi str_cpy,value2
+
+    ldx value3
+    swi malloc, bam_root
+    mov $1006,r0
+    mov r1,r0
+    swi str_cpy,value3
+
+    ldx value2
+    swi malloc, bam_root
+    mov $1008,r0
+    mov r1,r0
+    swi str_cpy,value2
     
-    ldx #%11000111
-    swi pprint_int,#12345
-    lda #13
-    jsr CHROUT
+    ldx value2
+    swi malloc, bam_root
+    mov $100a,r0
+    mov r1,r0
+    swi str_cpy,value2
+    
+    ldx value1
+    swi malloc, bam_root
+    mov $100c,r0
+    mov r1,r0
+    swi str_cpy,value1
 
-    ldx #%01111111
-    swi pprint_int,#42
-    lda #13
-    jsr CHROUT
+    ldx value4
+    swi malloc, bam_root
+    mov $100e,r0
+    mov r1,r0
+    swi str_cpy,value4
 
-    ldx #%11000111
-    swi pprint_int,#0
-    lda #13
-    jsr CHROUT
+    ldx value2
+    swi malloc, bam_root
+    mov $1010,r0
+    mov r1,r0
+    swi str_cpy,value2
 
-    ldx #%11111111
-    swi pprint_int,#64738
-    lda #13
-    jsr CHROUT
+    ldx value3
+    swi malloc, bam_root
+    mov $1012,r0
+    mov r1,r0
+    swi str_cpy,value3
 
-    ldx #%00000011
-    swi pprint_int,#4
-    lda #13
-    jsr CHROUT
+    ldx value4
+    swi malloc, bam_root
+    mov $1014,r0
+    mov r1,r0
+    swi str_cpy,value4
 
-    ldx #%10000011
-    swi pprint_int,#5
-    lda #13
-    jsr CHROUT
-
-    ldx #%00000011
-    swi pprint_int,#6
-    lda #13
-    jsr CHROUT
-
-    ldx #%00000111
-    swi pprint_int,#47
-    lda #13
-    jsr CHROUT
-
+    mov $1000, #bam_root
+    swi pprint_nl,value4
     rts
 
+value1:
+    pstring("test value 1 this is also a smaller value than next one")
+value2:
+    pstring("and test number 2 with different value which is way longer than the first one")
+value3:
+    pstring("ok and now third one should be even longer just to test the allocation process to see what's going on, you know we want to use a lot of space to need another block of data!")
+value4:
+    pstring("au debut c'etait le debut et plus vite c'etait la suite... c'est du bashung non ?")
+    
+bam_root:
+    bam($2000,8)
 
 
     // test device status

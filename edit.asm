@@ -182,9 +182,7 @@ init_loop:
     sta total_lines
     sta total_lines+1
 
-    ldx #nb_bam
-    mov r0,#bam_root
-    swi bam_init
+    swi bam_init, bam_root
     mov tmp_line,#lines_ptr
     jsr clear_screen
     jmp move_cursor
@@ -1548,17 +1546,9 @@ move_cursor:
 //====================================================
 
 .label memory_start=$0800
-.label nb_bam=14
 
 bam_root:
-        bam_length:
-            .byte nb_bam
-        bam_free:
-            .byte nb_bam*8
-        bam_allocated:
-            .byte 0
-        bam:
-            .fill nb_bam,0
+    bam(memory_start, 14)
 
 //----------------------------------------------------
 // string_add : add one pstring to memory

@@ -128,6 +128,7 @@
 .label str2int=149
 .label str_str=151
 .label screen_pause=153
+.label free=155
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -207,6 +208,7 @@ bios_jmp:
     .word do_str2int
     .word do_str_str
     .word do_screen_pause
+    .word do_free
 
 * = * "BIOS code"
 
@@ -1960,6 +1962,7 @@ fin_lecture:
 // 1 byte : bam length = n
 // 1 byte : bam free = n*8
 // 1 byte : bam allocated = 0
+// 1 word : memory start
 // n bytes : bam 
 //
 // bam_init : reset bam
@@ -1969,30 +1972,35 @@ fin_lecture:
 .label bam_length=0
 .label bam_free=1
 .label bam_allocated=2
-.label bam_start=3
+.label memory_start=3 
+.label bam_start=5
 
 //---------------------------------------------------------------
 // bam_init : reset bam
 //
-// input : R0 = bam root address, x = bam length
+// input : R0 = bam root address
 //---------------------------------------------------------------
 
 do_bam_init:
 {
+    // read bam_length
     ldy #0
-    txa
-    mov (r0++),a
+    mov a,(r0++)
+    tax
     asl
     rol
     rol
+    // bam free = length * 8
     mov (r0++),a
+    // bam allocated = 0
     tya
     mov (r0++),a
+    // skip 1 word for memory start
+    add r0,#2
 clear_bam:
     mov (r0++),a
     dex
     bne clear_bam
-    clc
     rts    
 }
 
@@ -2000,59 +2008,89 @@ clear_bam:
 // bam_next : get first / next allocated block
 //
 // input : C=1 start, C=0 continue, r0=bam root
-// r1=memory start, r2=used for storage
+// r7=used for storage
 // output : R0 = block, C=1 KO, C=0 OK
 //----------------------------------------------------
 
+get_bam_memory_start:
+{
+    ldy #memory_start
+    lda (zr0),y
+    sta zr1l
+    iny
+    lda (zr0),y
+    sta zr1h
+    rts
+}
+
 do_bam_next:
 {
-.label pos_bam = zr2l
-.label bit_bam = zr2h
+.label pos_bam = zr7l
+.label bit_bam = zr7h
 
     bcc not_first
-    lda #0
-    sta bit_bam
-    sta pos_bam
+    
+    // init, get R1 = memory start, R0 = bam start
+    // clear pos_bam byte position and bit_bam 
+    // bit position in bam
+    
+    jsr get_bam_memory_start
+    
+    ldy #0
+    sty bit_bam
+    ldy #bam_start
+    sty pos_bam
 
-    lda #bam_start
-    add r0,a
+    // look for next allocated block (bit is 1)
 
 not_first:
+    // get bam byte
     ldy pos_bam
+process_byte:
     mov a,(r0)
     
+    // test bit, if set it's found
     ldx bit_bam
+    // if past bit 7, we need to move to next bam byte first
     cpx #8
     beq not_found
-    
+
     and bit_list,x
     bne found
 
+    // if not, memory position is 256 bytes after,
+    // increment bit position and loop
     inc zr1h
     inx
     stx bit_bam
-    ldx bit_bam
     cpx #8
-    bne not_first
+    bne process_byte
+
+    // no allocated block found in the bam byte,
+    // move to next byte and reset bit position to
+    // zero 
 
 not_found:
     ldy #0
     sty bit_bam
     inc pos_bam
 
-    // r0 on bam_allocated, get value then restore r0
-    dec r0
+    // compare current pos_bam to total bam length,
     mov a,(r0)
-    inc r0
+    clc
+    adc #bam_start
     cmp pos_bam
     bne not_first
     
     sec
     rts
     
+    // found, return address of block in r0, increment
+    // bit position for next call
 found:
-    inc bit_bam
     mov r0,r1
+    inc bit_bam
+    
     clc
     rts
 }
@@ -2060,7 +2098,7 @@ found:
 //----------------------------------------------------
 // bam_get : allocate one block if possible
 //
-// input : R0 = bam root, R1 = memory start
+// input : R0 = bam root
 // output : R0 = allocated block, C=1 = KO, C=0 = OK
 //----------------------------------------------------
 
@@ -2072,6 +2110,8 @@ do_bam_get:
     dey
     cmp #0
     beq error
+    
+    jsr get_bam_memory_start
     
     // lookup for space in bam
     ldy #bam_start
@@ -2139,7 +2179,7 @@ error:
 //
 //
 // input : X = number of bytes to allocate,
-//         R0 = bam_root address, R1 = memory_start
+//         R0 = bam_root address
 // output : C=1 KO, C=0 OK
 //----------------------------------------------------
 
@@ -2149,8 +2189,9 @@ do_malloc:
    // lookup all allocated blocks first to see if one
    // has enough space left
 
+    jsr get_bam_memory_start
+
     mov save0,r0
-    mov save1,r1
    
    ldy #bam_start
 
@@ -2204,7 +2245,6 @@ test_bam:
 
 new_block:
     mov r0,save0
-    mov r1,save1
     swi bam_get
 
     lda #255
@@ -2218,7 +2258,64 @@ new_block:
 .label how_much = vars+2
 .label bam_available = vars+3
 .label save0 = vars+4
-.label save1 = vars+6
+}
+
+//----------------------------------------------------
+// free : get back allocated memory
+//
+// input : R0 = pointer to value to free
+//         R1 = BAM start
+//----------------------------------------------------
+
+do_free:
+{
+    .label alloc_size = ztmp
+
+    // extract length to free = length + 1
+    
+    ldy #0
+    mov a,(r0)
+    sta alloc_size
+    inc alloc_size
+    
+    // r0 = start of block, X = pointer position
+    ldx zr0l
+    sty zr0l
+    
+    // shift needed in block ?
+    clc
+    adc alloc_size
+    adc (zr0l),y
+    beq no_shift_needed
+
+    // shift remaining block data, read pos + 1,
+    // write to pos until end of block
+    
+    txa
+    tay
+    iny
+shift_block:
+    mov a,(r0)  // read pos +1
+    dey
+    mov (r0),a  // write pos
+    iny
+    iny
+    bne shift_block
+
+no_shift_needed:
+    // new free size in block
+    sec
+    mov a,(r0)
+    sbc alloc_size
+    mov (r0),a 
+    bne not_empty
+    
+    // block empty = free block in BAM
+    
+    
+    // todo
+not_empty:
+    rts
 }
 
 //----------------------------------------------------

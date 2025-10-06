@@ -91,6 +91,7 @@
     .label str2int=149
     .label str_str=151
     .label screen_pause=153
+    .label free=155
 }
 
 //===============================================================

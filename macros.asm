@@ -59,7 +59,7 @@
 .label zsave = $fc
 
 //===============================================================
-// macros for pstring, plist, ppath data structures
+// macros for pstring, plist, ppath data structures and BAM
 //===============================================================
 
 //---------------------------------------------------------------
@@ -89,6 +89,25 @@
     .word ptr_work+1
  ptr_last:    // dernier élément
     .word ptr_work+1
+}
+
+//---------------------------------------------------------------
+// bam : BAM definition, with memory_start address and number of
+//       BAM bytes
+//---------------------------------------------------------------
+
+.macro bam(memory_start, nb_bam)
+{
+        bam_length:
+            .byte nb_bam
+        bam_free:
+            .byte nb_bam*8
+        bam_allocated:
+            .byte 0
+        bam_memory_start:
+            .word memory_start
+        bam:
+            .fill nb_bam,0
 }
 
 //---------------------------------------------------------------
