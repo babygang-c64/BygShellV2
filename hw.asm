@@ -45,68 +45,26 @@ hw:
 
     // alloc test
 
-    ldx value1
+    ldx value5
+    inx
     swi malloc, bam_root
     mov $1002,r0
     mov r1,r0
-    swi str_cpy,value1
+    swi str_cpy,value5
 
     ldx value2
+    inx
     swi malloc, bam_root
     mov $1004,r0
     mov r1,r0
     swi str_cpy,value2
 
-    ldx value3
-    swi malloc, bam_root
-    mov $1006,r0
-    mov r1,r0
-    swi str_cpy,value3
 
-    ldx value2
-    swi malloc, bam_root
-    mov $1008,r0
-    mov r1,r0
-    swi str_cpy,value2
-    
-    ldx value2
-    swi malloc, bam_root
-    mov $100a,r0
-    mov r1,r0
-    swi str_cpy,value2
-    
-    ldx value1
-    swi malloc, bam_root
-    mov $100c,r0
-    mov r1,r0
-    swi str_cpy,value1
-
-    ldx value4
-    swi malloc, bam_root
-    mov $100e,r0
-    mov r1,r0
-    swi str_cpy,value4
-
-    ldx value2
-    swi malloc, bam_root
-    mov $1010,r0
-    mov r1,r0
-    swi str_cpy,value2
-
-    ldx value3
-    swi malloc, bam_root
-    mov $1012,r0
-    mov r1,r0
-    swi str_cpy,value3
-
-    ldx value4
-    swi malloc, bam_root
-    mov $1014,r0
-    mov r1,r0
-    swi str_cpy,value4
 
     mov $1000, #bam_root
-    swi pprint_nl,value4
+    mov r0, $1002
+    mov r1, #bam_root
+    swi free
     rts
 
 value1:
@@ -117,7 +75,9 @@ value3:
     pstring("ok and now third one should be even longer just to test the allocation process to see what's going on, you know we want to use a lot of space to need another block of data!")
 value4:
     pstring("au debut c'etait le debut et plus vite c'etait la suite... c'est du bashung non ?")
-    
+
+value5:
+    pstring("small")
 bam_root:
     bam($2000,8)
 

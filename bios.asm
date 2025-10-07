@@ -1997,6 +1997,7 @@ do_bam_init:
     mov (r0++),a
     // skip 1 word for memory start
     add r0,#2
+    tya
 clear_bam:
     mov (r0++),a
     dex
@@ -2283,31 +2284,38 @@ do_free:
     sty zr0l
     
     // shift needed in block ?
-    clc
-    adc alloc_size
+    // also update free size in block
+    sec
     adc (zr0l),y
+    sta (zr0l),y
+    cmp #$ff
     beq no_shift_needed
 
     // shift remaining block data, read pos + 1,
     // write to pos until end of block
     
+shift_block:
+    // read position = x (start of value to free) 
+    //  + alloc_size (size to free)
+    // if we reach next block, exit
+    txa
+    clc
+    adc alloc_size
+    beq no_shift_needed
+    tay
+    mov a,(r0)  // read pos : x+alloc_size
+    pha
     txa
     tay
-    iny
-shift_block:
-    mov a,(r0)  // read pos +1
-    dey
-    mov (r0),a  // write pos
-    iny
-    iny
+    pla
+    mov (r0),a  // write pos : x
+    inx
     bne shift_block
 
 no_shift_needed:
-    // new free size in block
-    sec
+    ldy #0
     mov a,(r0)
-    sbc alloc_size
-    mov (r0),a 
+    cmp #255
     bne not_empty
     
     // block empty = free block in BAM
