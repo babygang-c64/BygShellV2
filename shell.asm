@@ -479,6 +479,15 @@ do_env:
     
     sec
     swi param_process,work_buffer
+    ldy #0
+    mov a,(r0)
+    tay
+    mov a,(r0)
+    cmp #'$'
+    bne no_conv
+    lda #':'
+    mov (r0),a
+no_conv:
     mov r1,#bin_path
     swi str_cpy
     
