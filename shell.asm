@@ -225,6 +225,7 @@ exec_command:
 
     mov r0,#buffer
     jsr get_bin_name
+    
     lda work_buffer
     ldx #<work_buffer+1
     ldy #>work_buffer+1
@@ -305,9 +306,10 @@ copy_path_prefix:
     iny
     dex
     bpl copy_path_prefix
-    lda #':'
-    mov (r1),a
-    inc work_buffer
+    // test for vice soft device
+//    lda #':'
+//    mov (r1),a
+//    inc work_buffer
 
 no_bin_path:
     // and add filename from buffer
@@ -523,10 +525,9 @@ no_params:
     jmp not_sh_string
     
 is_sh_string:
-    dex
-    txa
-    ldy #0
-    ldx #0
+    txa // length in A, R0 is string start (no length byte)
+    ldy #$ff // is incremented
+    ldx #0 // no screen to petscii conv
     jsr pprint_ram.basic
     jsr carriage_return
 

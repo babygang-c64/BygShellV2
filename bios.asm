@@ -369,7 +369,7 @@ do_set_basic_string:
 // input : R0 = variable descriptor, R1 = pstring for storage
 //         C=0 = copy string to storage, C=1 return X=length
 //         and R0 = string location
-// output : R0 = variable address
+// output : R0 = variable address, X = length
 //---------------------------------------------------------------
 
 do_get_basic_string:
@@ -379,7 +379,6 @@ do_get_basic_string:
     
     mov TXTPTR,r0
     jsr PTRGET
-    
     
 is_ok:
     // length

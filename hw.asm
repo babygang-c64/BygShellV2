@@ -39,98 +39,6 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-
-    lda #'0'
-    jsr is_digit
-    bcc no0
-    lda #'O'
-    jsr CHROUT
-no0:
-    clc
-    rts
-    
-is_digit:
-{
-    cmp #'0'
-    bcc no+1
-    cmp #'9'+1
-    bcs no
-    sec
-    rts
-no:
-    clc
-    rts
-}
-
-    // test memory
-    swi bam_init, bam_root
-
-    // alloc test
-
-    ldx value5
-    inx
-    swi malloc, bam_root
-    mov $1002,r0
-    mov r1,r0
-    swi str_cpy,value5
-
-    ldx value2
-    inx
-    swi malloc, bam_root
-    mov $1004,r0
-    mov r1,r0
-    swi str_cpy,value2
-
-    mov links,#2
-    mov links+2,$1002
-    mov links+4,$1004
-
-    mov $1000, #bam_root
-    mov r0, $1002
-    mov r1, #bam_root
-    swi free
-    stx $0400
-    mov r0, $1002
-    mov r1,#links
-    swi update_links
-    rts
-
-value1:
-    pstring("test value 1 this is also a smaller value than next one")
-value2:
-    pstring("and test number 2 with different value which is way longer than the first one")
-value3:
-    pstring("ok and now third one should be even longer just to test the allocation process to see what's going on, you know we want to use a lot of space to need another block of data!")
-value4:
-    pstring("au debut c'etait le debut et plus vite c'etait la suite... c'est du bashung non ?")
-
-value5:
-    pstring("small")
-bam_root:
-    bam($2000,8)
-links:
-    .word 0
-    .word 0
-    .word 0
-    
-
-    // test device status
-    
-    ldx #8
-    mov r0,#work_buffer
-    sec
-    swi get_device_status
-    swi pprint_nl
-
-    ldx #9
-    mov r0,#work_buffer
-    sec
-    swi get_device_status
-    swi pprint_nl
-    
-    clc
-    rts
-
     //-- init options
     sec
     swi param_init,buffer,options_hw
@@ -167,9 +75,6 @@ no_option_d:
     clc
     swi success
     rts
-
-msg_test:
-    pstring("This is device 9")
 
 help:
     swi pprint_lines, help_hw

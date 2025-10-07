@@ -28,6 +28,9 @@ build_command()
     kickass ${CMD}_pp.asm $2
     ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}_pp.prg ${CMD} -silent
     [ -f ${CMD}.hlp ] && ${VICE_PATH}/c1541 -attach ${disk} -write ${CMD}.hlp ${CMD}.hlp -silent
+    cp ${CMD}_pp.prg bin/${CMD}
+    rm ${CMD}_pp.prg
+    [ -f ${CMD}.hlp ] && cp ${CMD}.hlp bin/
 }
 
 copy_to_d64()
@@ -40,6 +43,8 @@ copy_to_d64()
 VICE_PATH=/home/prod/c64/bin
 KICK_PATH=/home/prod/c64/bin
 disk=byg_shell.d64
+
+rm bin/* -f
 
 uv run ppkick.py shell.asm shell_pp.asm
 uv run ppkick.py bios.asm bios_pp.asm

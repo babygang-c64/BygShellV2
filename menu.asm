@@ -43,9 +43,11 @@ menu:
     beq quit_menu
         
     jsr get_item
-    mov r1, #string_storage
+    mov r1, #string_storage-1
     swi str_cpy
     sta string_len
+    mov string_adr_storage,#string_storage
+    dec string_len
     tay
     lda #0
     sta (zr1l),y
@@ -87,9 +89,10 @@ return_string:
     .text "SH$"
 string_len:
     .byte 0
+string_adr_storage:
     .word string_storage
 string_storage:
-    .fill 64,0
+    .fill 80,0
 
 
 // get_item : get item at selected_item position in R0
