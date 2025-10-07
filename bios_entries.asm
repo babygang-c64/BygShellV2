@@ -92,6 +92,7 @@
     .label str_str=151
     .label screen_pause=153
     .label free=155
+    .label update_links=157
 }
 
 //===============================================================

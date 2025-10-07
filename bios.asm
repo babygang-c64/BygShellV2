@@ -129,6 +129,7 @@
 .label str_str=151
 .label screen_pause=153
 .label free=155
+.label update_links=157
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -209,6 +210,7 @@ bios_jmp:
     .word do_str_str
     .word do_screen_pause
     .word do_free
+    .word do_update_links
 
 * = * "BIOS code"
 
@@ -2271,6 +2273,7 @@ new_block:
 do_free:
 {
     .label alloc_size = ztmp
+    .label save_zr0l = zsave
 
     // extract length to free = length + 1
     
@@ -2281,6 +2284,7 @@ do_free:
     
     // r0 = start of block, X = pointer position
     ldx zr0l
+    stx zsave
     sty zr0l
     
     // shift needed in block ?
@@ -2320,9 +2324,95 @@ no_shift_needed:
     
     // block empty = free block in BAM
     
-    
     // todo
+
+    // end, restore r0 and return alloc size
+    // in X
+
 not_empty:
+    lda save_zr0l
+    sta zr0l
+    ldx alloc_size
+    rts
+}
+
+//----------------------------------------------------
+// update_links : 
+// r1 = links table, starts with nb of links (word),
+// then links
+// r0 = link value to suppress,
+// X = offset to apply (data length) to links > r0
+// in same 256 bytes block
+//----------------------------------------------------
+
+do_update_links:
+{
+.label nb_links = zr7l
+
+    push r1
+
+    ldy #0
+    mov a,(r1++)
+    sta nb_links
+    mov a,(r1++)
+    sta nb_links+1
+    
+    // r2 is write
+    mov r2, r1
+check_link:
+    mov a,(r1)
+    sta zr3l
+    iny
+    mov a,(r1)
+    dey
+    sta zr3h
+    cmpw r0,r3
+    
+    // r0 = r3, don't keep value
+    beq next_link_r1_only
+    // r0 < r3, continue
+    bcs next_link
+    
+    // r3 > r0, same block ?
+    lda zr0h
+    cmp zr3h
+    bne next_link
+    
+    // update link value when r3>r0
+    // and in same block
+    
+    txa
+    sub r3, a
+
+next_link:
+    add r2,#2
+next_link_r1_only:
+    add r1,#2
+
+write_value:
+    // write r3 at r2 position
+    lda zr3l
+    mov (r2),a
+    iny
+    lda zr3h
+    mov (r2),a
+    dey
+    
+    decw nb_links
+    lda nb_links
+    ora nb_links+1
+    bne check_link
+
+    pop r1
+    sec
+    lda (zr1),y
+    sbc #1
+    sta (zr1),y
+    iny
+    lda (zr1),y
+    sbc #0
+    sta (zr1),y
+    dey
     rts
 }
 
@@ -3485,7 +3575,6 @@ print_lines:
     swi str_next
     bcc print_lines
 fini:
-    clc
     rts
 }
 
@@ -3905,15 +3994,13 @@ return_var_int:
 next_free_bit:
 {
     ldy #7
-    sta ztmp
-lookup:
-    and bit_list,y
-    beq is_free
-    lda ztmp
+loop:
+    asl                // shift bit into carry
+    bcc done           // if bit was clear, we're done
     dey
-    bpl lookup
-is_free:
-    rts
+    bpl loop
+done:
+    rts                // Y has position (7-0) or $ff
 }
 
 //---------------------------------------------------------------
@@ -3930,21 +4017,17 @@ bit_list:
     .byte 1,2,4,8,16,32,64,128
 
 //---------------------------------------------------------------
-// which bit ? returns bit number of A into Y
-// returns 1 to 7, 0 if not found
+// unset_bit : sets bit #Y to 0 into A
 //---------------------------------------------------------------
 
-which_bit:
+unset_bit:
 {
-    ldy #7
-lookup_bit:
-    and bit_list,y
-    bne found
-    bpl lookup_bit
-found:
-    iny
+    eor #$ff           // invert all bits
+    ora bit_list,y     // set the bit position
+    eor #$ff           // invert back
     rts
 }
+
 
 //---------------------------------------------------------------
 // is_digit : C=1 if A is a digit, else C=0
@@ -3959,4 +4042,3 @@ is_digit:
     pla
     rts
 }
-

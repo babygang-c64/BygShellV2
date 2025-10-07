@@ -40,6 +40,28 @@ hw:
     .label work_buffer = $ce00
 
 
+    lda #'0'
+    jsr is_digit
+    bcc no0
+    lda #'O'
+    jsr CHROUT
+no0:
+    clc
+    rts
+    
+is_digit:
+{
+    cmp #'0'
+    bcc no+1
+    cmp #'9'+1
+    bcs no
+    sec
+    rts
+no:
+    clc
+    rts
+}
+
     // test memory
     swi bam_init, bam_root
 
@@ -59,12 +81,18 @@ hw:
     mov r1,r0
     swi str_cpy,value2
 
-
+    mov links,#2
+    mov links+2,$1002
+    mov links+4,$1004
 
     mov $1000, #bam_root
     mov r0, $1002
     mov r1, #bam_root
     swi free
+    stx $0400
+    mov r0, $1002
+    mov r1,#links
+    swi update_links
     rts
 
 value1:
@@ -80,7 +108,11 @@ value5:
     pstring("small")
 bam_root:
     bam($2000,8)
-
+links:
+    .word 0
+    .word 0
+    .word 0
+    
 
     // test device status
     
