@@ -132,11 +132,6 @@ pas_option_e:
     jsr CHROUT
     jsr option_pagination
     bcs ok_close
-    lda work_buffer
-    cmp #39
-    bcc ok_length
-    jsr option_pagination
-    bcs ok_close
 ok_length:
     jmp boucle_cat
 
