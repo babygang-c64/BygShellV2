@@ -56,8 +56,9 @@ boucle_read:
     incw line
 
     swi param_top
-    mov r1, r0
-    swi str_pat, work_buffer
+
+    mov r1,r0
+    swi str_pat,#work_buffer
     jsr option_v
     bcc not_found
 

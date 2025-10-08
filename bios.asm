@@ -244,6 +244,7 @@ do_reset:
 {
     lda #0
     sta $c002
+    sta clipboard
     sta bin_device
     sta bin_path
     ldx #end_ref-bios_exec_ref
@@ -624,6 +625,7 @@ do_pipe_init:
 {
     jsr check_pipe_option
     beq do_pipe_end.no_pipe_option
+    bne params_ok
 
     ldx nb_params
     cpx #2
@@ -681,9 +683,9 @@ no_pipe_option:
 do_pipe_output:
 {
     jsr do_pipe_init.check_pipe_option
-    beq do_pipe_end.no_pipe_option
+    beq pas_option_pipe
 
-    // ldx #5 done by option check
+    //ldx #5  done by option_check
     jsr CHKOUT
 pas_option_pipe:
     clc
@@ -955,7 +957,7 @@ not_append_mode:
     ora options_params
     sta options_params
     dex
-    bne option_error
+//    bne option_error
     jmp process_params
 
 fin_params:

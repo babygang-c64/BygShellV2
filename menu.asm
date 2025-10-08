@@ -128,12 +128,7 @@ navigation:
 boucle:
     jsr paint_menu
     swi key_wait
-    cmp #RUNSTOP
-    beq stop
-    cmp #'Q'
-    beq stop
-    cmp #'X'
-    bne not_stop
+    bcc not_stop
     
 stop:
     lda #$ff
@@ -143,15 +138,20 @@ stop:
 not_stop:
     cmp #13
     beq fin
+    cmp #32
+    beq fin
     cmp #DOWN
     bne pas_down
     
+    lda nb_items
     inc selected_item
     lda selected_item
     cmp nb_items
     bne boucle
     lda #0
     sta selected_item
+    jmp boucle
+
 pas_down:
     cmp #UP
     bne boucle

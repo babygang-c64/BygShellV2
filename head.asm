@@ -35,7 +35,6 @@ head:
     sec
     swi param_init,buffer,options_head
     jcs error
-
     swi pipe_init
     jcs error
 
@@ -48,15 +47,15 @@ head:
     lda zr0l
     sta nb_lignes_max
     inc nb_lignes_max
-no_value:
 
+no_value:
     ldy #0
     sec
+
+
 boucle_params:
     swi param_process,params_buffer
     bcs fin_params
-
-    jsr option_name
 
     jsr do_head
     clc
@@ -76,7 +75,7 @@ do_head:
     ldx #4
     clc
     swi file_open
-    jcs error
+    jcs error_open
 
 boucle_head:
     jsr STOP
@@ -87,12 +86,12 @@ boucle_head:
     swi file_readline, work_buffer
     bcs ok_close
 
-    swi pipe_output
-    
+
     dec nb_lignes
     beq ok_close
 
 affiche_ligne:
+    swi pipe_output
     swi pprint_nl, work_buffer
 
     jsr option_pagination
@@ -112,6 +111,11 @@ fini:
     clc
     swi success
     rts
+
+msg_open:
+    pstring("error open")
+error_open:
+    swi pprint_nl,msg_open
 
 error:
     jsr ok_close

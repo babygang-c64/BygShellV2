@@ -39,6 +39,18 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+    // test str_split
+    sec
+    ldx #32
+    swi str_split, test_split
+    sta $0401
+    stc $0400
+    clc
+    rts
+
+test_split:
+    pstring("commande deux > trois")
+
     //-- init options
     sec
     swi param_init,buffer,options_hw

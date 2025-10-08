@@ -101,7 +101,27 @@ copy_command:
     inx   
     jsr nchrget
     bcc copy_command
+    cmp #$b1
+    bne not_supp
+    
+    ldy #1
+    lda ($7a),y
+    cmp #32
+    beq ok_space
+    cmp #$b1
+    beq ok_space
 
+    lda #'>'
+    sta buffer,x
+    inx
+    lda #32
+    bne copy_command
+    
+ok_space:
+    lda #'>'
+    bne copy_command
+
+not_supp:
     cmp #$00
     bmi do_token
 
@@ -144,14 +164,15 @@ nchrget:
     inc $7b
 nchrget2:
     lda ($7a),y
-    
     bmi nchrget_end
     
     beq nchrget_end
     cmp #$3a
     beq nchrget_end
+
+normal_char:
     clc
-    ldy #2
+    ldy #3
 test_char:
     cmp special_char,y
     beq modif_char
@@ -168,9 +189,9 @@ nchrget_end:
     rts
 
 special_char:
-    .byte 172,170,171
+    .byte 172,170,171,$b1
 new_char:
-    .text "*+-"
+    .text "*+->"
 }
 
 //---------------------------------------------------------------
