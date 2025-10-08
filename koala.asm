@@ -50,21 +50,30 @@ boucle:
     swi file_load
     bcs load_error
 
+    jsr koala_show
+    bcs koala_end
+    clc
+    jmp boucle
+
 opt_s:
+    jsr koala_show
+    jmp koala_end
+
+koala_show:
     sec
     ldx #1
     jsr picture_show
+    rts
+    
 
+text_mode:
     clc
     ldx #0
     jsr picture_show
-    
-    clc
-    jmp boucle
+    rts
         
 koala_end:
-    lda #$1b
-    sta $d011
+    jsr text_mode
     jsr clr
     lda save_color
     sta CURSOR_COLOR
@@ -105,7 +114,7 @@ load_error:
 msg_load_error:
     pstring("Load")
 help_msg:
-    pstring("*koala (<filename>) (-s)")
+    pstring("*koala [<files>] [-s]")
     pstring(" s = Show pic if already loaded")
     .byte 0
 options_koala:
@@ -196,12 +205,22 @@ fin_show:
     lda has_keypress
     beq no_keypress
     swi key_wait
+    bcs end_show
+
 no_keypress:
+    jsr restore_colors
+    clc
+    rts
+restore_colors:
     lda save_d021
     sta $d021
     lda save_d020
     sta $d020
-    clc
+    rts
+
+end_show:
+    jsr restore_colors
+    sec
     rts
 
 go_gfx:
