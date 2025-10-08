@@ -131,7 +131,7 @@ Ex: ? $e2+$fc*$0100
 
 The following commands are available : 
 
-- cat, wc, search, touch, diff, head, chars, koala, edit, menu
+- cat, chars, hw, checksum, join, menu, diff, mon, touch, edit, koala, search, head, lsblk, wc
 
 **CAT**
 
@@ -260,7 +260,7 @@ You can run DIFF in quiet mode with the Q option
 ![Diff on files](images/diff.png)
 
 ```
-*dif <file1> <file2>]
+*diff <file1> <file2>]
 
 compare files
     options :
