@@ -76,6 +76,7 @@ copy_to_d64 commando.sid "commando.sid"
 copy_to_d64 "jiffymon v2" "jiffymonv2"
 copy_to_d64 commands.hlp commands.hlp
 copy_to_d64 keys.hlp keys.hlp
+copy_to_d64 byg-shell.hlp byg-shell.hlp
 
 build_command cat
 build_command wc

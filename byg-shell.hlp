@@ -1,0 +1,23 @@
+#BYG Shell v2.0
+
+:Welcome Shell like commands to your C64!
+ Explore the commands with *help 
+ commands and *help <command> for each 
+ one, use *help keys for info on key 
+ shortcuts.
+ 
+*Features
+- Made to be used as a ROM alongside 
+ Jiffy/JaffyDOS Kernal replacements
+- Provides shell like external commands,
+ starting with "*"
+- Use BASIC for scripting
+- Internal memdump *m, *help and *env
+- Made for SD2IEC : move your bin and
+ help files to a subdirectory on 
+ another device
+- Supports parameters, output pipes
+
+=Credits
+ Made with love in France by 
+ the Babygang in 2025
