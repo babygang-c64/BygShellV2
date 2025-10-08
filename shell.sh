@@ -61,11 +61,8 @@ ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
 
 copy_to_d64 shell_pp.prg "shell"
 copy_to_d64 test2.asm "test2.asm"
-copy_to_d64 test.txt "test"
-copy_to_d64 file1.txt "file1"
-copy_to_d64 file2.txt "file2"
-copy_to_d64 test2.txt "test2"
-copy_to_d64 edit.hlp "edit.hlp"
+copy_to_d64 test "test"
+copy_to_d64 test2 "test2"
 copy_to_d64 empty.txt "empty"
 copy_to_d64 cartridge_header.asm "crt.asm"
 copy_to_d64 cat.asm "cat.asm"

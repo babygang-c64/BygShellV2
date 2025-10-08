@@ -1310,9 +1310,9 @@ not_lowercase:
 do_screen_to_ascii:
 {
     txa
-    cmp #65
+    cmp #$41
     bcc not_lowercase
-    cmp #65+26
+    cmp #$5b
     bcs not_lowercase
     clc
     adc #$20
@@ -1320,7 +1320,7 @@ do_screen_to_ascii:
     rts
 
 not_lowercase:
-    cmp #65+128
+    cmp #$c1
     bcc not_uppercase
     cmp #65+26+128
     bcs not_uppercase
@@ -1346,9 +1346,9 @@ screen_to_petscii:
     rts
 
 not_letter:
-    cmp #65
+    cmp #$41
     bcc not_uppercase
-    cmp #65+26
+    cmp #$5b
     bcs not_uppercase
     clc
     adc #$20
