@@ -1331,32 +1331,6 @@ not_uppercase:
     rts
 }
 
-//----------------------------------------------------
-// screen_to_petscii 
-//----------------------------------------------------
-
-screen_to_petscii:
-{
-    cmp #1
-    bcc not_letter
-    cmp #1+26
-    bcs not_letter
-    clc
-    adc #$40
-    rts
-
-not_letter:
-    cmp #$41
-    bcc not_uppercase
-    cmp #$5b
-    bcs not_uppercase
-    clc
-    adc #$20
-not_uppercase:
-    rts
-}
-
-
 //---------------------------------------------------------------
 // str_conv : transcode charsets for pstring
 // input : X = position in table using transcoding labels, 
@@ -1364,12 +1338,20 @@ not_uppercase:
 // output : R0 is updated, Y = 0
 //---------------------------------------------------------------
 
+screen_to_petscii:
+{
+    stx zsave
+    ldx #do_str_conv.SCREEN_TO_PETSCII
+    bne ascii_to_petscii.conv
+}
+
 ascii_to_petscii:
 {
-    stx ztmp
+    stx zsave
     ldx #do_str_conv.ASCII_TO_PETSCII
+conv:
     jsr do_str_conv.char
-    ldx ztmp
+    ldx zsave
     rts
 }
 
