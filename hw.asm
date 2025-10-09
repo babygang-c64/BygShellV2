@@ -51,7 +51,7 @@ hw:
     rts
     
 test_text:
-    pstring("a-z A-Z Un deux trois 123 = !")
+    pstring("a-z A-Z Un deux_trois 123 = !")
     
 
 

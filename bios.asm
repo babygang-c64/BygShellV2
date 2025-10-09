@@ -1418,6 +1418,7 @@ table_conv:
 conv_ascii_to_petscii:
     .byte $41, $5b, $20      // A-Z: add $20
     .byte $61, $7b, <(-$20)  // a-z: subtract $20
+    .byte $5f, $60, $45      // convert underscore
     .byte $00                // end
 .label ASCII_TO_PETSCII = conv_ascii_to_petscii - table_conv
 

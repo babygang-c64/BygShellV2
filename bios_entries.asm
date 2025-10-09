@@ -16,9 +16,9 @@
     .label bios_exec=$cf68
     
     .label ASCII_TO_PETSCII=$0
-    .label SCREEN_TO_ASCII=$7
-    .label SCREEN_TO_PETSCII=$14
-    .label ASCII_TO_SCREEN=$21
+    .label SCREEN_TO_ASCII=$10
+    .label SCREEN_TO_PETSCII=$17
+    .label ASCII_TO_SCREEN=$24
     
     .label reset=9
     .label str_split=11
