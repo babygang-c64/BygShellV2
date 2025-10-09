@@ -15,6 +15,11 @@
 {
     .label bios_exec=$cf68
     
+    .label ASCII_TO_PETSCII=$0
+    .label SCREEN_TO_ASCII=$7
+    .label SCREEN_TO_PETSCII=$14
+    .label ASCII_TO_SCREEN=$21
+    
     .label reset=9
     .label str_split=11
     .label str_len=13
@@ -87,7 +92,7 @@
     .label int2str=141
     .label get_basic_int=143
     .label buffer_write=145
-    .label convert_ascii_to_petscii=147
+    .label str_conv=147
     .label str2int=149
     .label str_str=151
     .label screen_pause=153

@@ -124,7 +124,7 @@
 .label int2str=141
 .label get_basic_int=143
 .label buffer_write=145
-.label convert_ascii_to_petscii=147
+.label str_conv=147
 .label str2int=149
 .label str_str=151
 .label screen_pause=153
@@ -205,7 +205,7 @@ bios_jmp:
     .word do_int2str
     .word do_get_basic_int
     .word do_buffer_write
-    .word do_convert_ascii_to_petscii
+    .word do_str_conv
     .word do_str2int
     .word do_str_str
     .word do_screen_pause
@@ -1356,52 +1356,92 @@ not_uppercase:
     rts
 }
 
-//----------------------------------------------------
-// ascii_to_petscii : convert character 
-//
-// input : A, output : A
-//----------------------------------------------------
+
+//---------------------------------------------------------------
+// str_conv : transcode charsets for pstring
+// input : X = position in table using transcoding labels, 
+//         R0 = pstring to process
+// output : R0 is updated, Y = 0
+//---------------------------------------------------------------
 
 ascii_to_petscii:
 {
-    cmp #$41
-    bcc not_lowercase
-    cmp #$5b
-    bcs not_lowercase
-    clc
-    adc #$20
-    rts
-
-not_lowercase:
-    cmp #$61
-    bcc not_uppercase
-    cmp #$7b
-    bcs not_uppercase
-    sec
-    sbc #$20
-not_uppercase:
+    stx ztmp
+    ldx #do_str_conv.ASCII_TO_PETSCII
+    jsr do_str_conv.char
+    ldx ztmp
     rts
 }
 
-//----------------------------------------------------
-// convert_ascii_to_petscii : convert buffer from
-// ascii to petscii
-//
-// input : R0 = pstring to convert
-//----------------------------------------------------
-
-do_convert_ascii_to_petscii:
+do_str_conv:
 {
+    stx ztmp
+
     ldy #0
     mov a,(r0)
     tay
-convert:
+
+    // do a reverse loop on pstring
+process:
     mov a,(r0)
-    jsr ascii_to_petscii
+    jsr char
     mov (r0),a
+    ldx ztmp
     dey
-    bne convert
+    bne process
     rts
+    
+char:
+    pha
+pconv:
+    lda table_conv,x
+    beq end_conv
+    pla
+    cmp table_conv,x
+    bcc go_next
+    cmp table_conv+1,x
+    bcs go_next
+    adc table_conv+2,x
+    rts
+end_conv:
+    pla
+    rts
+go_next:
+    pha
+    inx
+    inx
+    inx
+    bne pconv
+
+table_conv:
+
+conv_ascii_to_petscii:
+    .byte $41, $5b, $20      // A-Z: add $20
+    .byte $61, $7b, <(-$20)  // a-z: subtract $20
+    .byte $00                // end
+.label ASCII_TO_PETSCII = conv_ascii_to_petscii - table_conv
+
+conv_screen_to_ascii:
+    .byte $41, $5b, $20      // A-Z screen: add $20
+    .byte $c1, $db, <(-$80)  // lowercase screen: subtract $80
+    .byte $00
+.label SCREEN_TO_ASCII = conv_screen_to_ascii - table_conv
+
+conv_screen_to_petscii:
+    .byte $01, $1b, $40      // 1-26: add $40
+    .byte $41, $5b, $20      // A-Z: add $20
+    .byte $00
+.label SCREEN_TO_PETSCII = conv_screen_to_petscii - table_conv
+
+conv_ascii_to_screen:
+    .byte $61, $7b, <(-$60)  // a-z: subtract $60
+    .byte $00
+.label ASCII_TO_SCREEN = conv_ascii_to_screen - table_conv
+
+.print "ASCII_TO_PETSCII=$"+ASCII_TO_PETSCII
+.print "SCREEN_TO_ASCII=$"+SCREEN_TO_ASCII
+.print "SCREEN_TO_PETSCII=$"+SCREEN_TO_PETSCII
+.print "ASCII_TO_SCREEN=$"+ASCII_TO_SCREEN
 }
 
 //----------------------------------------------------
@@ -1685,7 +1725,7 @@ stop:
 }
 
 //----------------------------------------------------
-// pprint_nl : print PSTRING using basic ROM + CR
+// pprint_nl : print PSTRING
 // 
 // input : R0 = PSTRING
 // output : A = pstring length

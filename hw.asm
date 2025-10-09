@@ -39,17 +39,23 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
-    // test str_split
-    sec
-    ldx #32
-    swi str_split, test_split
-    sta $0401
-    stc $0400
+    // test transcode
+
+    mov r0,#test_text
+    ldx #bios.ASCII_TO_PETSCII
+    swi str_conv
+    swi pprint_nl
+    
+
     clc
     rts
+    
+test_text:
+    pstring("a-z A-Z Un deux trois 123 = !")
+    
 
-test_split:
-    pstring("commande deux > trois")
+
+
 
     //-- init options
     sec
