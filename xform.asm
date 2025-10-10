@@ -46,6 +46,7 @@ xform:
     sty is_head
     sty inc_param
     sty nb_lines
+    sty nb_lines+1
 
     // then commands
     ldx #2
@@ -185,7 +186,7 @@ no_skip:
     jsr process_line
 
 process_next_line:
-    inc nb_lines
+    incw nb_lines
     lda is_head
     beq not_head
     ldx pos_head
@@ -230,7 +231,7 @@ pos_head:
 inc_param:
     .byte 0
 nb_lines:
-    .byte 0
+    .word 0
 
 
 error_params:
@@ -289,6 +290,7 @@ actions:
     pstring("WRITEC")
     pstring("SKIP")
     pstring("NL")
+    pstring("LINEID")
     .byte 0
 
 .label id_skip = 7
@@ -304,7 +306,8 @@ actions_params:
     .byte act_no_param
     .byte act_int
     .byte act_no_param
-
+    .byte act_no_param
+    
 actions_jmp:
     .word do_end
     .word do_head
@@ -315,6 +318,7 @@ actions_jmp:
     .word do_writec
     .word do_skip
     .word do_nl
+    .word do_lineid
     
 do_end:
     clc
@@ -395,6 +399,19 @@ sel_columns:
 do_nl:
 {
     lda #13
+    jmp CHROUT
+}
+
+//----------------------------------------------------
+// lineid : write line number and sep
+//----------------------------------------------------
+
+do_lineid:
+{
+    mov r0,nb_lines
+    ldx #$ff
+    swi pprint_int
+    lda sep_value
     jmp CHROUT
 }
 
