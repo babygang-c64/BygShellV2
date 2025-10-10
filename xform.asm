@@ -43,7 +43,9 @@ xform:
     sty nb_columns
     sty sel_columns
     sty is_skip
+    sty is_head
     sty inc_param
+    sty nb_lines
 
     // then commands
     ldx #2
@@ -101,8 +103,22 @@ command_found:
     
     // case of presence of SKIP command
     cmp #id_skip
+    beq test_skip
+    cmp #id_head
+    beq test_head
     bne not_skip
 
+test_head:
+    lda inc_param
+    sta pos_head
+    inc pos_head
+    lda #1
+    sta is_head
+
+    lda #id_head
+    bne not_skip
+    
+test_skip:
     lda inc_param
     sta pos_skip
     inc pos_skip
@@ -148,7 +164,6 @@ end_params:
     sta skip_lines
     
 process_lines:
-    
     lda #0
     sta sep_done
     ldx #4
@@ -163,12 +178,22 @@ process_lines:
     beq no_skip
 
     dec skip_lines
-    jmp process_lines
+    jmp process_next_line
 
 no_skip:
     swi pipe_output
     jsr process_line
 
+process_next_line:
+    inc nb_lines
+    lda is_head
+    beq not_head
+    ldx pos_head
+    lda actions_list,x
+    cmp nb_lines
+    beq end
+
+not_head:
     jmp process_lines
     
 end:
@@ -196,9 +221,15 @@ action_to_process:
     .byte 0
 is_skip:
     .byte 0
+is_head:
+    .byte 0
 pos_skip:
     .byte 0
+pos_head:
+    .byte 0
 inc_param:
+    .byte 0
+nb_lines:
     .byte 0
 
 
@@ -257,9 +288,11 @@ actions:
     pstring("ECHO")
     pstring("WRITEC")
     pstring("SKIP")
+    pstring("NL")
     .byte 0
 
 .label id_skip = 7
+.label id_head = 1
 
 actions_params:
     .byte act_no_param
@@ -270,6 +303,7 @@ actions_params:
     .byte act_pstring
     .byte act_no_param
     .byte act_int
+    .byte act_no_param
 
 actions_jmp:
     .word do_end
@@ -280,11 +314,9 @@ actions_jmp:
     .word do_echo
     .word do_writec
     .word do_skip
+    .word do_nl
     
 do_end:
-    clc
-    rts
-do_head:
     clc
     rts
 
@@ -320,8 +352,10 @@ was_done:
 
 //----------------------------------------------------
 // skip : skip first lines
+// head : process only N lines
 //----------------------------------------------------
 
+do_head:
 do_skip:
 {
     inc process_line.pos_x  // pass SKIP and value
@@ -353,6 +387,16 @@ next_col:
 sel_columns:
     .fill 32,0
 
+
+//----------------------------------------------------
+// nl : write newline
+//----------------------------------------------------
+
+do_nl:
+{
+    lda #13
+    jmp CHROUT
+}
 
 //----------------------------------------------------
 // echo : write pstring
