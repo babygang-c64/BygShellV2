@@ -98,14 +98,18 @@ command_check:
     
 command_found:
     // if found, store action code in list
+    
+    // case of presence of SKIP command
     cmp #id_skip
     bne not_skip
-    ldx inc_param
-    inx
-    stx pos_skip
+
+    lda inc_param
+    sta pos_skip
+    inc pos_skip
     lda #1
     sta is_skip
     lda #id_skip
+
 not_skip:
     jsr action_list_add
 
@@ -138,11 +142,10 @@ end_params:
     lda is_skip
     beq process_lines
 
+    lda is_skip
     ldx pos_skip
-    stx $1001
     lda actions_list,x
     sta skip_lines
-    sta $1000
     
 process_lines:
     
