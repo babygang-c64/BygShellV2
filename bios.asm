@@ -1931,7 +1931,7 @@ option_pipe:
 //----------------------------------------------------
 // file_readline : reads one line from file
 //
-// r0 = input buffer
+// r0 = input buffer, X = channel
 // sortie : work_buffer, A = longueur
 // c=0 : ok, c=1 : fin de fichier
 // lecture de 255 octets max
