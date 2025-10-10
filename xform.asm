@@ -42,6 +42,8 @@ xform:
     sty sep_done
     sty nb_columns
     sty sel_columns
+    sty is_skip
+    sty inc_param
 
     // then commands
     ldx #2
@@ -96,6 +98,15 @@ command_check:
     
 command_found:
     // if found, store action code in list
+    cmp #id_skip
+    bne not_skip
+    ldx inc_param
+    inx
+    stx pos_skip
+    lda #1
+    sta is_skip
+    lda #id_skip
+not_skip:
     jsr action_list_add
 
     // store param type for next loop
@@ -124,6 +135,15 @@ end_params:
     swi file_open
     jcs error_file_not_found
     
+    lda is_skip
+    beq process_lines
+
+    ldx pos_skip
+    stx $1001
+    lda actions_list,x
+    sta skip_lines
+    sta $1000
+    
 process_lines:
     
     lda #0
@@ -133,6 +153,16 @@ process_lines:
     swi file_readline, buffer_line
     bcs end
     
+    lda is_skip
+    beq no_skip
+    
+    lda skip_lines
+    beq no_skip
+
+    dec skip_lines
+    jmp process_lines
+
+no_skip:
     swi pipe_output
     jsr process_line
 
@@ -161,7 +191,13 @@ pos_param:
     .byte 0
 action_to_process:
     .byte 0
-    
+is_skip:
+    .byte 0
+pos_skip:
+    .byte 0
+inc_param:
+    .byte 0
+
 
 error_params:
     mov r0,#msg_error_params
@@ -207,6 +243,7 @@ options_xform:
 .label act_col_list=1
 .label act_string=2
 .label act_int=3
+.label act_pstring=4
 
 actions:
     pstring("END")
@@ -214,7 +251,12 @@ actions:
     pstring("SEP")
     pstring("SEL")
     pstring("WRITE")
+    pstring("ECHO")
+    pstring("WRITEC")
+    pstring("SKIP")
     .byte 0
+
+.label id_skip = 7
 
 actions_params:
     .byte act_no_param
@@ -222,6 +264,9 @@ actions_params:
     .byte act_int
     .byte act_col_list
     .byte act_no_param
+    .byte act_pstring
+    .byte act_no_param
+    .byte act_int
 
 actions_jmp:
     .word do_end
@@ -229,6 +274,9 @@ actions_jmp:
     .word do_sep
     .word do_sel
     .word do_write
+    .word do_echo
+    .word do_writec
+    .word do_skip
     
 do_end:
     clc
@@ -268,6 +316,19 @@ was_done:
 }
 
 //----------------------------------------------------
+// skip : skip first lines
+//----------------------------------------------------
+
+do_skip:
+{
+    inc process_line.pos_x  // pass SKIP and value
+    rts
+}
+
+skip_lines:
+    .byte 0
+
+//----------------------------------------------------
 // sel : select columns for operation
 //----------------------------------------------------
 
@@ -289,12 +350,45 @@ next_col:
 sel_columns:
     .fill 32,0
 
+
+//----------------------------------------------------
+// echo : write pstring
+//----------------------------------------------------
+
+do_echo:
+{
+    inc process_line.pos_x
+    ldx process_line.pos_x
+    ldy actions_list,x
+write:
+    inc process_line.pos_x
+    ldx process_line.pos_x
+    lda actions_list,x
+    jsr CHROUT
+    dey
+    bne write
+    ldy #0
+    rts
+}
+
+
+//----------------------------------------------------
+// writec : write selected columns without newline
+//----------------------------------------------------
+
+do_writec:
+{
+    sec
+    jmp do_write
+}
+
 //----------------------------------------------------
 // write : write selected columns
 //----------------------------------------------------
 
 do_write:
 {
+    stc write_nl
     lda #1
     sta pos_col
     lda #0
@@ -335,14 +429,20 @@ not_selected:
     bne next_col
 
 list_end:
+    lda write_nl
+    bne no_nl
     lda #13
-    jmp CHROUT
+    jsr CHROUT
+no_nl:
+    rts
 
 pos_col:
     .byte 0
 was_write:
     .byte 0
 nb_col:
+    .byte 0
+write_nl:
     .byte 0
 }
 
@@ -369,6 +469,7 @@ next_action:
     sta action_addr+1
 
     ldy #0
+    clc
     jsr action_addr:$fce2
     
     inc pos_x
@@ -431,6 +532,45 @@ action_list_add:
     pla
     mov (r1),a
     incw update_actions
+    inc inc_param
+    rts
+}
+
+//----------------------------------------------------
+// action_list_copy_string : add pstring to 
+// action_list
+//----------------------------------------------------
+
+action_list_copy_string:
+{
+    push r0
+    mov r1,update_actions
+    ldy #0
+    mov a,(r0)
+    tax
+copy:
+    mov a,(r0++)
+    mov (r1++),a
+    incw update_actions
+
+    dex
+    bpl copy
+    
+    pop r0
+    rts
+}
+
+//----------------------------------------------------
+// is_digit : C=1 if A is a digit, else C=0
+//----------------------------------------------------
+
+is_digit:
+{
+    pha
+    clc
+    adc #$ff-'9'
+    adc #'9'-'0'+1
+    pla
     rts
 }
 
@@ -448,8 +588,14 @@ process_param:
     // integer : convert value to int
     //------------------------------------------------
 
+    ldy #1
+    mov a,(r0)
+    ldy #0
+    jsr is_digit
+    bcc not_digit
     swi str2int
     lda zr1l
+not_digit:
     jsr action_list_add
     jmp no_action
 
@@ -481,7 +627,16 @@ add_int:
     jsr action_list_add
     pop r0
 
+    //------------------------------------------------
+    // pstring
+    //------------------------------------------------
+
 not_act_list:
+    cmp #act_pstring
+    bne no_action
+    
+    jsr action_list_copy_string
+    
 no_action:
     ldy #0
     sty action_to_process
