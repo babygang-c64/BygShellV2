@@ -392,6 +392,7 @@ Commands available:
 - HEAD <n> : process only <n> lines
 - SKIP <n> : skip first <n> lines of file
 - LINEID : write line number
+- FILTER <col> <content> : filter, keep lines where content is in column
 
 ```
 *xform <file> <command>...| -f <config>
