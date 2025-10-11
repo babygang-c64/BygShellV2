@@ -8,9 +8,10 @@
 - e : add $ at line end
 - p : paginate
 - h : hexdump
-- a : PRG start addr for hex
+- s : PRG start addr for hex
+- a = Convert ASCII file
 
 =Examples:
- *cat -hp edit.prg
+ *cat -hpa edit.prg
  *cat -n *.asm > dump.lst
  *cat error >> log

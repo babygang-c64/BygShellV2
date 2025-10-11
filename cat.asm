@@ -30,7 +30,8 @@ cat:
     .label OPT_N=4
     .label OPT_P=8
     .label OPT_H=16
-    .label OPT_A=32
+    .label OPT_S=32
+    .label OPT_A=64
 
     sec
     swi param_init,buffer,options_cat
@@ -112,6 +113,15 @@ pas_hexdump:
     jsr CHKIN
     swi file_readline, work_buffer
     bcs ok_close
+    
+    lda options_params
+    and #OPT_A
+    beq pas_opt_a
+    
+    ldx #bios.ASCII_TO_PETSCII
+    swi str_conv
+    
+pas_opt_a:
 
     swi pipe_output
 
@@ -190,11 +200,12 @@ help_msg:
     pstring(" b = Numbers non empty lines")
     pstring(" p = Paginates output")
     pstring(" h = Hexdump")
-    pstring(" a = Start address for hexdump")
+    pstring(" s = Start address for hexdump")
+    pstring(" a = Do ASCII conversion")
     .byte 0
 
 options_cat:
-    pstring("benpha")
+    pstring("benphsa")
     
 num_lignes:
     .word 0
@@ -210,8 +221,8 @@ buffer_hexdump:
 option_start_address:
     mov r1, #0
     lda options_params
-    and #OPT_A
-    beq pas_opt_A
+    and #OPT_S
+    beq pas_opt_s
     ldx #4
     jsr CHKIN
     jsr CHRIN
@@ -219,7 +230,7 @@ option_start_address:
     jsr CHRIN
     sta zr1h
 
-pas_opt_A:
+pas_opt_s:
     rts
 
 //----------------------------------------------------
