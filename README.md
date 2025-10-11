@@ -374,6 +374,34 @@ Expansion still contains bugs
     L = menu on left side (right side by default)
 ```
 
+**XFORM**
+
+xForm processes delimited files line by line, using a small set of commands applied to each line.
+(config file not implemented yet)
+
+Commands available:
+
+- SEP <num> or <char> : define separator to split each line
+- SEL a,b,c... or * : select columns (or all with *) for processing / output
+- WRITE : write selected columns with separator and new line
+- WRITEC : same as write but without new line
+- NL : write new line
+- ECHO <val> : write <val>
+- UPPER : converts selected columns to uppercase
+- LOWER : converts selected columns to lowercase
+- HEAD <n> : process only <n> lines
+- SKIP <n> : skip first <n> lines of file
+- LINEID : write line number
+
+```
+*xform <file> <command>...| -f <config>
+    xform performs commands listed on each line of the input file
+
+    options:
+    F = take commands from config file
+```
+
+
 ## Data structures and provided "framework"
 
 Note : this is beeing reviewed as a lot has moved, not all functions are available in the BIOS,

@@ -292,6 +292,7 @@ actions:
     pstring("NL")
     pstring("LINEID")
     pstring("UPPER")
+    pstring("LOWER")
     .byte 0
 
 .label id_skip = 7
@@ -309,6 +310,7 @@ actions_params:
     .byte act_no_param
     .byte act_no_param
     .byte act_no_param
+    .byte act_no_param
     
 actions_jmp:
     .word do_end
@@ -322,6 +324,7 @@ actions_jmp:
     .word do_nl
     .word do_lineid
     .word do_upper
+    .word do_lower
     
 do_end:
     clc
@@ -386,10 +389,14 @@ next_col:
     ldx process_line.pos_x
     lda actions_list,x
     sta sel_columns,y
+    cmp #$ff
+    beq is_star
     iny
     cmp #0
     bne next_col
     tay
+
+is_star:
     rts
 }
 
@@ -442,7 +449,20 @@ write:
 
 //----------------------------------------------------
 // upper : upper on selected columns
+// lower : lower on selected columns
 //----------------------------------------------------
+
+do_lower:
+{
+    mov r1,#process_lower
+    jmp process_sel_cols
+    
+process_lower:
+    ldx #bios.ASCII_TO_LOWER
+    swi str_conv
+    rts
+
+}
 
 do_upper:
 {
@@ -468,6 +488,9 @@ process_sel_cols:
     mov r0,#buffer_line
     lda nb_columns
     sta nb_col
+    lda sel_columns
+    cmp #$ff
+    beq process_all_columns
 
 next_col:
     ldy #0
@@ -489,6 +512,15 @@ not_selected:
     inc pos_col
     dec nb_col
     bne next_col
+    rts
+
+process_all_columns:
+    mov adr_jsr_all, r1
+    jsr adr_jsr_all:$fce2
+    swi str_next
+    inc pos_col
+    dec nb_col
+    bne process_all_columns
     rts
 
 pos_col:
@@ -517,27 +549,21 @@ do_writec:
 do_write:
 {
     stc write_nl
-    lda #1
-    sta pos_col
     lda #0
     sta was_write
     incw nb_output
-    mov r0,#buffer_line
-    lda nb_columns
-    sta nb_col
 
-next_col:
-    ldy #0
-test_col:
-    lda sel_columns,y
-    beq not_selected
-    cmp pos_col
-    beq selected
-    iny
-    bne test_col
-    ldy #0
+    mov r1,#one_write
+    jsr process_sel_cols
+    
+    lda write_nl
+    bne no_nl
+    lda #13
+    jsr CHROUT
+no_nl:
+    rts
 
-selected:
+one_write:
     lda was_write
     beq write
     lda sep_value
@@ -549,26 +575,9 @@ write:
     swi pprint
     lda #1
     sta was_write
-
-not_selected:
-    swi str_next
-    inc pos_col
-    dec nb_col
-    bne next_col
-
-list_end:
-    lda write_nl
-    bne no_nl
-    lda #13
-    jsr CHROUT
-no_nl:
     rts
 
-pos_col:
-    .byte 0
 was_write:
-    .byte 0
-nb_col:
     .byte 0
 write_nl:
     .byte 0
@@ -733,8 +742,22 @@ not_act_int:
 
     //------------------------------------------------
     // list of integers : split and store, add 0
+    // if star, just put $ff
     //------------------------------------------------
 
+    ldy #1
+    mov a,(r0)
+    ldy #0
+    cmp #'*'
+
+    // star
+    bne not_star
+    lda #$ff
+    jsr action_list_add
+    jmp no_action
+    
+    // list of integers
+not_star:
     mov r1,#work_buffer
     swi str_cpy
     push r0
