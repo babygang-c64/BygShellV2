@@ -494,6 +494,51 @@ process_sel_cols:
 
 next_col:
     ldy #0
+    sty pos_col
+test_col:
+    ldy pos_col
+    ldx sel_columns,y
+    beq end
+    dex
+    mov r0,#buffer_line
+    swi lines_goto
+    ldy #0
+    mov adr_jsr, r1
+    jsr adr_jsr:$fce2
+    inc pos_col
+    jmp test_col
+
+process_all_columns:
+    mov adr_jsr_all, r1
+    jsr adr_jsr_all:$fce2
+    swi str_next
+    inc pos_col
+    dec nb_col
+    bne process_all_columns
+end:
+    rts
+
+pos_col:
+    .byte 0
+was_write:
+    .byte 0
+nb_col:
+    .byte 0
+}
+
+process_sel_cols_old:
+{
+    lda #1
+    sta pos_col
+    mov r0,#buffer_line
+    lda nb_columns
+    sta nb_col
+    lda sel_columns
+    cmp #$ff
+    beq process_all_columns
+
+next_col:
+    ldy #0
 test_col:
     lda sel_columns,y
     beq not_selected
@@ -530,7 +575,6 @@ was_write:
 nb_col:
     .byte 0
 }
-
 
 //----------------------------------------------------
 // writec : write selected columns without newline
