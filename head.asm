@@ -41,7 +41,7 @@ head:
     ldx nb_params
     jeq help
 
-    ldx #'n'
+    ldx #'N'
     swi param_get_value
     bcc no_value
     lda zr0l

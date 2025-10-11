@@ -705,6 +705,8 @@ do_color:
     jsr change_color
     swi file_readline, work_buffer
     bcs help_end
+    ldx #bios.do_str_conv.ASCII_TO_PETSCII
+    swi str_conv
     swi pprint_nl, work_buffer
 help_continue:
     dec nb_lines
