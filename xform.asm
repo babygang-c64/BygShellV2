@@ -48,6 +48,9 @@ xform:
     sty nb_lines
     sty nb_lines+1
 
+    lda #1
+    sta is_filter
+
     // then commands
     ldx #2
     stx pos_param
@@ -144,9 +147,13 @@ suite:
     jmp params
 
 end_params:
-
+    // add final 0 to action list
     lda #0
     jsr action_list_add
+
+    //------------------------------------------------
+    // process file
+    //------------------------------------------------
 
     ldx #1
     swi lines_goto, buffer
@@ -181,6 +188,7 @@ process_lines:
     dec skip_lines
     jmp process_next_line
 
+    // apply actions to line
 no_skip:
     swi pipe_output
     jsr process_line
@@ -196,7 +204,7 @@ process_next_line:
 
 not_head:
     jmp process_lines
-    
+
 end:
     ldx #4
     swi file_close
@@ -223,6 +231,8 @@ action_to_process:
 is_skip:
     .byte 0
 is_head:
+    .byte 0
+is_filter:
     .byte 0
 pos_skip:
     .byte 0
@@ -279,6 +289,7 @@ options_xform:
 .label act_string=2
 .label act_int=3
 .label act_pstring=4
+.label act_int_string=5
 
 actions:
     pstring("END")
@@ -293,6 +304,7 @@ actions:
     pstring("LINEID")
     pstring("UPPER")
     pstring("LOWER")
+    pstring("FILTER")
     .byte 0
 
 .label id_skip = 7
@@ -311,6 +323,7 @@ actions_params:
     .byte act_no_param
     .byte act_no_param
     .byte act_no_param
+    .byte act_int_string
     
 actions_jmp:
     .word do_end
@@ -325,7 +338,8 @@ actions_jmp:
     .word do_lineid
     .word do_upper
     .word do_lower
-    
+    .word do_filter
+
 do_end:
     clc
     rts
@@ -425,6 +439,47 @@ do_lineid:
     swi pprint_int
     lda sep_value
     jmp CHROUT
+}
+
+//----------------------------------------------------
+// filter : lookup for value in column
+// parameters = column (byte) and pstring
+//----------------------------------------------------
+
+do_filter:
+{
+    inc process_line.pos_x
+    ldx process_line.pos_x
+    lda actions_list,x
+    tax
+    dex
+    mov r0,#buffer_line
+    swi lines_goto
+    
+    mov r1,#work_buffer
+    ldy #0
+    inc process_line.pos_x
+    ldx process_line.pos_x
+    lda actions_list,x
+    mov (r1),a
+    sta nb_chars
+write:
+    inc process_line.pos_x
+    ldx process_line.pos_x
+    lda actions_list,x
+    iny
+    mov (r1),a
+    dec nb_chars
+    bne write
+
+    ldy #0
+    swi str_str
+    stc is_filter
+    lda is_filter
+    rts
+
+nb_chars:
+    .byte 0
 }
 
 //----------------------------------------------------
@@ -649,9 +704,15 @@ next_action:
     lda actions_jmp,y
     sta action_addr+1
 
+    lda #1
+    sta is_filter
+
     ldy #0
     clc
     jsr action_addr:$fce2
+    
+    lda is_filter
+    beq end_action
     
     inc pos_x
     jmp next_action
@@ -821,6 +882,7 @@ add_int:
     lda #0
     jsr action_list_add
     pop r0
+    jmp no_action
 
     //------------------------------------------------
     // pstring
@@ -828,10 +890,28 @@ add_int:
 
 not_act_list:
     cmp #act_pstring
-    bne no_action
-    
+    bne not_pstring
+
     jsr action_list_copy_string
-    
+    jmp no_action
+
+    //------------------------------------------------
+    // int and string
+    //------------------------------------------------
+
+not_pstring:
+    cmp #act_int_string
+    bne no_action
+
+    swi str2int
+    lda zr1l
+    jsr action_list_add
+
+    inc pos_param
+    ldx pos_param
+    swi lines_goto, buffer
+    jsr action_list_copy_string
+
 no_action:
     ldy #0
     sty action_to_process
