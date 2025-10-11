@@ -12,7 +12,7 @@
 * = $c000
 
 .word checksum
-pstring("CHECKSUM")
+pstring("checksum")
 
 checksum:
 {
@@ -81,7 +81,7 @@ msg_error_file_not_found:
     pstring("File not found")
 
 options_checksum:
-    pstring("Q")
+    pstring("q")
     
 do_checksum:
 {

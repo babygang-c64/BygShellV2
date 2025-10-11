@@ -12,7 +12,7 @@
 * = $c000
 
 .word xform
-pstring("XFORM")
+pstring("xform")
 
 xform:
 {
@@ -282,7 +282,7 @@ msg_error_file_not_found:
     pstring("File not found")
 
 options_xform:
-    pstring("F")
+    pstring("f")
     
 .label act_no_param=0
 .label act_col_list=1
@@ -292,19 +292,19 @@ options_xform:
 .label act_int_string=5
 
 actions:
-    pstring("END")
-    pstring("HEAD")
-    pstring("SEP")
-    pstring("SEL")
-    pstring("WRITE")
-    pstring("ECHO")
-    pstring("WRITEC")
-    pstring("SKIP")
-    pstring("NL")
-    pstring("LINEID")
-    pstring("UPPER")
-    pstring("LOWER")
-    pstring("FILTER")
+    pstring("end")
+    pstring("head")
+    pstring("sep")
+    pstring("sel")
+    pstring("write")
+    pstring("echo")
+    pstring("writec")
+    pstring("skip")
+    pstring("nl")
+    pstring("lineid")
+    pstring("upper")
+    pstring("lower")
+    pstring("filter")
     .byte 0
 
 .label id_skip = 7

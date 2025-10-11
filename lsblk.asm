@@ -15,7 +15,7 @@
 * = $c000
 
 .word lsblk
-pstring("LSBLK")
+pstring("lsblk")
 
 lsblk:
 {
@@ -85,7 +85,7 @@ help_msg:
     .byte 0
 
 options_lsblk:
-    pstring("QHS")
+    pstring("qhs")
 
 msg_sid_type:
     pstring("Sid type : ")

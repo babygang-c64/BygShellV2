@@ -11,7 +11,7 @@
 * = $c000
 
 .word edit
-pstring("EDIT")
+pstring("edit")
 
 edit:
 {
@@ -157,16 +157,16 @@ save_irq:
     .word 0
 
 options_edit:
-    pstring("H")
+    pstring("h")
 
 filename:
-    pstring("@S:----FILENAME----,S,W")
+    pstring("@s:----FILENAME----,s,w")
 file_prefix:
-    pstring("@S:")
+    pstring("@s:")
 file_suffix:
-    pstring(",W")
+    pstring(",w")
 default_filename:
-    pstring("@S:TMP,W")
+    pstring("@s:tmp,w")
 new_file:
     pstring("")
 

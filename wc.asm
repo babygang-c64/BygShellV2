@@ -15,7 +15,7 @@
 * = $c000
 
 .word wc
-pstring("WC")
+pstring("wc")
 
 wc:
 {
@@ -177,7 +177,7 @@ help_msg:
     .byte 0
 
 options_wc:
-    pstring("LWCQ")
+    pstring("lwcq")
     
 num_lines:
     .word 0

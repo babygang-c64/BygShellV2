@@ -28,7 +28,7 @@
 //-- command name for use with the command cache
 
 .word hw
-pstring("HW")
+pstring("hw")
 
 //-- Good practice : wrap your code in a namespace
 
@@ -38,24 +38,6 @@ hw:
 {
     .label OPT_D=1
     .label work_buffer = $ce00
-
-    // test transcode
-
-    mov r0,#test_text
-    ldx #bios.ASCII_TO_UPPER
-    swi str_conv
-    swi pprint_nl
-    
-
-    clc
-    rts
-    
-test_text:
-    pstring("a-z A-Z Un deux_trois 123 = !")
-    
-
-
-
 
     //-- init options
     sec
@@ -109,7 +91,7 @@ default_message:
     
     //-- options available
 options_hw:
-    pstring("DTNM")
+    pstring("dtnm")
 
 help_hw:
     pstring("*hw [message] [-d] : Prints message")

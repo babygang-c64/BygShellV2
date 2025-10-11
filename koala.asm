@@ -11,7 +11,7 @@
 * = $c000
 
 .word koala
-pstring("KOALA")
+pstring("koala")
 
 koala:
 {
@@ -118,7 +118,7 @@ help_msg:
     pstring(" s = Show pic if already loaded")
     .byte 0
 options_koala:
-    pstring("S")
+    pstring("s")
 
 } // koala namespace
  

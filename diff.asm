@@ -12,7 +12,7 @@
 * = $c000
 
 .word diff
-pstring("DIFF")
+pstring("diff")
 
 diff:
 {
@@ -41,7 +41,7 @@ ok_nb_params:
     swi pipe_init
     jcs error
 
-    ldx #'N'
+    ldx #'n'
     swi param_get_value
     bcc no_value
     mov nb_diff_max,r0
@@ -158,7 +158,7 @@ help_msg:
     .byte 0
 
 options_diff:
-    pstring("QFNP")
+    pstring("qfnp")
 }
 
 //---------------------------------------------------------------

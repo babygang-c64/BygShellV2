@@ -75,7 +75,9 @@ start_cartridge:
 start_message:
     .byte 16
     .byte $0d
+    .encoding "petscii_mixed"
     .text "*BYG-Shell v2.0"
+    .encoding "ascii"
 
 basic_hook:
     jsr CHRGET
@@ -134,6 +136,7 @@ not_supp:
     stx buffer
 
     jsr exec_command
+    
     sec
     jmp NEWSTT
 
@@ -287,7 +290,7 @@ start_command:
     jmp ($c000)
 
 suffix_prg:
-    pstring(",P")
+    pstring(",p")
 
 cache_check:
     ldx #$c0
@@ -458,9 +461,9 @@ not_found:
 //---------------------------------------------------------------
 
 internal_commands:
-    pstring("HELP")
-    pstring("M")
-    pstring("ENV")
+    pstring("help")
+    pstring("m")
+    pstring("env")
     .byte 0
 
 internal_commands_jump:
@@ -469,7 +472,7 @@ internal_commands_jump:
     .word do_env
 
 internal_commands_help:
-    pstring("*Help <cmd>, try commands")
+    pstring("*help <cmd>, try commands")
 
 //---------------------------------------------------------------
 // env : view env info :
@@ -624,7 +627,7 @@ print_int8:
     jmp carriage_return
 
 options_env:
-    pstring("DPQ")
+    pstring("dpq")
 sh_string:
     .text "SH$"
     .byte 0
@@ -757,7 +760,7 @@ color_ok:
     rts
 
 suffix_help:
-    pstring(".HLP")
+    pstring(".hlp")
 error_help:
     pstring("Not found")
 
@@ -813,7 +816,9 @@ juste_8:
 boucle_hex:
     lda #'*'
     jsr CHROUT
-    lda #'M'
+    .encoding "petscii_mixed"
+    lda #'m'
+    .encoding "ascii"
     jsr CHROUT
     lda #' '
     jsr CHROUT

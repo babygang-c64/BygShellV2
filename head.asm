@@ -15,7 +15,7 @@
 * = $c000
 
 .word head
-pstring("HEAD")
+pstring("head")
 
 head:
 {
@@ -41,7 +41,7 @@ head:
     ldx nb_params
     jeq help
 
-    ldx #'N'
+    ldx #'n'
     swi param_get_value
     bcc no_value
     lda zr0l
@@ -113,7 +113,7 @@ fini:
     rts
 
 msg_open:
-    pstring("error open")
+    pstring("Error open")
 error_open:
     swi pprint_nl,msg_open
 
@@ -138,7 +138,7 @@ help_msg:
     .byte 0
 
 options_head:
-    pstring("NQVP")
+    pstring("nqvp")
     
 cpt_ligne:
     .byte 0

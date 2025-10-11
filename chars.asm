@@ -15,7 +15,7 @@
 * = $c000
 
 .word chars
-pstring("CHARS")
+pstring("chars")
 
 chars:
 {
@@ -91,7 +91,7 @@ help_msg:
     .byte 0
 
 options_chars:
-    pstring("CH")
+    pstring("ch")
 
     // box draw structure :
     // start_x, start_y
@@ -373,22 +373,22 @@ color:
     .byte 0
 
 color_names:
-    pstring(" --- 00 -  0 - BLACK")
-    pstring(" --- 01 -  1 - WHITE")
-    pstring(" --- 02 -  2 - RED")
-    pstring(" --- 03 -  3 - CYAN")
-    pstring(" --- 04 -  4 - PURPLE")
-    pstring(" --- 05 -  5 - GREEN")
-    pstring(" --- 06 -  6 - BLUE")
-    pstring(" --- 07 -  7 - YELLOW")
-    pstring(" --- 08 -  8 - ORANGE")
-    pstring(" --- 09 -  9 - BROWN")
-    pstring(" --- 0A - 10 - PINK")
-    pstring(" --- 0B - 11 - DARK GREY")
-    pstring(" --- 0C - 12 - MIDDLE GREY")
-    pstring(" --- 0D - 13 - LIGHT GREEN")
-    pstring(" --- 0E - 14 - LIGHT BLUE")
-    pstring(" --- 0F - 15 - LIGHT GREY")
+    pstring(" --- 00 -  0 - Black")
+    pstring(" --- 01 -  1 - White")
+    pstring(" --- 02 -  2 - Red")
+    pstring(" --- 03 -  3 - Cyan")
+    pstring(" --- 04 -  4 - Purple")
+    pstring(" --- 05 -  5 - Green")
+    pstring(" --- 06 -  6 - Blue")
+    pstring(" --- 07 -  7 - Yellow")
+    pstring(" --- 08 -  8 - Orange")
+    pstring(" --- 09 -  9 - Brown")
+    pstring(" --- 0A - 10 - Pink")
+    pstring(" --- 0B - 11 - Dark Grey")
+    pstring(" --- 0C - 12 - Middle Grey")
+    pstring(" --- 0D - 13 - Light Green")
+    pstring(" --- 0E - 14 - Light Blue")
+    pstring(" --- 0F - 15 - Light Grey")
     .byte 0
 }
 

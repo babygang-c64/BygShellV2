@@ -10,7 +10,7 @@
 * = $c000
 
 .word touch
-pstring("TOUCH")
+pstring("touch")
 
 .label params_buffer=$cd80
 
@@ -82,7 +82,7 @@ ok_suffix:
     beq no_fill
     
     // fill size
-    ldx #'S'
+    ldx #'s'
     swi param_get_value
     mov fill_size,r0
 
@@ -94,7 +94,7 @@ ok_suffix:
     and #OPT_B
     beq no_fill_byte
     
-    ldx #'B'
+    ldx #'b'
     swi param_get_value
     lda zr0l
     sta fill_byte
@@ -131,11 +131,11 @@ error_exists:
 msg_error_exists:
     pstring("File exists")
 write_suffix:
-    pstring(",W")
+    pstring(",w")
 seq_suffix:
-    pstring(",S")
+    pstring(",s")
 prg_suffix:
-    pstring(",P")
+    pstring(",p")
 
 help:
     swi pprint_lines, help_hw
@@ -149,7 +149,7 @@ help:
     
     //-- options available
 options_touch:
-    pstring("PSBT")
+    pstring("psbt")
 
 help_hw:
     pstring("*touch <file> : Create empty file")

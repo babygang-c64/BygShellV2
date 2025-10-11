@@ -12,7 +12,7 @@
 * = $c000
 
 .word join
-pstring("JOIN")
+pstring("join")
 
 join:
 {
@@ -147,9 +147,9 @@ join_file_not_found:
 }
 
 suffix_write:
-    pstring(",W")
+    pstring(",w")
 suffix_append:
-    pstring(",A")
+    pstring(",a")
 
 help_msg:
     pstring("*join <source files> <target> [-qa]")
@@ -165,6 +165,6 @@ msg_error_file_not_found:
     pstring("File not found")
 
 options_diff:
-    pstring("QA")
+    pstring("qa")
 }
 

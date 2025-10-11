@@ -71,8 +71,10 @@
 
 .macro pstring(string_data)
 {
+ .encoding "petscii_mixed"
  .byte string_data.size()
  .text string_data
+ .encoding "ascii"
 }
 
 //---------------------------------------------------------------

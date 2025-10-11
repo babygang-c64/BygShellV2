@@ -11,7 +11,7 @@
 * = $c000
 
 .word search
-pstring("SEARCH")
+pstring("search")
 
 search:
 {
@@ -146,7 +146,7 @@ help_msg:
     .byte 0
 
 options_list:
-    pstring("NLVC")
+    pstring("nlvc")
 
 line:
     .word 0

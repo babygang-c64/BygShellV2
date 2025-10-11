@@ -1093,7 +1093,7 @@ prefix_pipe:
     .byte 64
     .byte ':'
 suffix_pipe:
-    pstring(",S,W")
+    pstring(",s,w")
 msg_option_error:
     pstring("Invalid option")
 }
@@ -1755,7 +1755,7 @@ do_pprint:
 boucle:
     iny
     lda (zr0),y
-    jsr ascii_to_petscii
+//    jsr ascii_to_petscii
     jsr CHROUT
     dex
     bne boucle

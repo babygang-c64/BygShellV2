@@ -9,7 +9,7 @@
 * = $c000
 
 .word mon
-pstring("MON")
+pstring("mon")
 
 mon:
 {
@@ -32,5 +32,5 @@ not_loaded:
     rts
     
 error:
-    pstring("MONITOR NOT LOADED")
+    pstring("Monitor not loaded")
 }

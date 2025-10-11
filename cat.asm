@@ -18,7 +18,7 @@
 * = $c000
 
 .word cat
-pstring("CAT")
+pstring("cat")
 
 cat:
 {
@@ -143,7 +143,6 @@ help:
 ok_close:
     ldx #4
     swi file_close
-fini:
     clc
     rts
 
@@ -195,7 +194,7 @@ help_msg:
     .byte 0
 
 options_cat:
-    pstring("BENPHA")
+    pstring("benpha")
     
 num_lignes:
     .word 0
