@@ -42,7 +42,7 @@ hw:
     // test transcode
 
     mov r0,#test_text
-    ldx #bios.ASCII_TO_PETSCII
+    ldx #bios.ASCII_TO_UPPER
     swi str_conv
     swi pprint_nl
     

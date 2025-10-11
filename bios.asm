@@ -1421,10 +1421,23 @@ conv_ascii_to_screen:
     .byte $00
 .label ASCII_TO_SCREEN = conv_ascii_to_screen - table_conv
 
+conv_ascii_to_upper:
+    .byte $61, $7b, <(-$20)  // A-Z: substract $20
+    .byte $00
+.label ASCII_TO_UPPER = conv_ascii_to_upper - table_conv
+
+conv_ascii_to_lower:
+    .byte $41, $5b, $20  // a-z: add $20
+    .byte $00
+.label ASCII_TO_LOWER = conv_ascii_to_lower - table_conv
+
+
 .print "ASCII_TO_PETSCII=$"+ASCII_TO_PETSCII
 .print "SCREEN_TO_ASCII=$"+SCREEN_TO_ASCII
 .print "SCREEN_TO_PETSCII=$"+SCREEN_TO_PETSCII
 .print "ASCII_TO_SCREEN=$"+ASCII_TO_SCREEN
+.print "ASCII_TO_UPPER=$"+ASCII_TO_UPPER
+.print "ASCII_TO_LOWER=$"+ASCII_TO_LOWER
 }
 
 //----------------------------------------------------

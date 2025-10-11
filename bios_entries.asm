@@ -15,10 +15,12 @@
 {
     .label bios_exec=$cf68
     
-    .label ASCII_TO_PETSCII=$0
-    .label SCREEN_TO_ASCII=$10
-    .label SCREEN_TO_PETSCII=$17
-    .label ASCII_TO_SCREEN=$24
+    .label ASCII_TO_PETSCII=0
+    .label SCREEN_TO_ASCII=10
+    .label SCREEN_TO_PETSCII=17
+    .label ASCII_TO_SCREEN=24
+    .label ASCII_TO_UPPER=28
+    .label ASCII_TO_LOWER=32
     
     .label reset=9
     .label str_split=11

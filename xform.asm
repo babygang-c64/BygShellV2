@@ -291,6 +291,7 @@ actions:
     pstring("SKIP")
     pstring("NL")
     pstring("LINEID")
+    pstring("UPPER")
     .byte 0
 
 .label id_skip = 7
@@ -307,6 +308,7 @@ actions_params:
     .byte act_int
     .byte act_no_param
     .byte act_no_param
+    .byte act_no_param
     
 actions_jmp:
     .word do_end
@@ -319,6 +321,7 @@ actions_jmp:
     .word do_skip
     .word do_nl
     .word do_lineid
+    .word do_upper
     
 do_end:
     clc
@@ -371,6 +374,8 @@ skip_lines:
 
 //----------------------------------------------------
 // sel : select columns for operation
+//
+// sel_columns = 1 byte per column and zero to end
 //----------------------------------------------------
 
 do_sel:
@@ -433,6 +438,65 @@ write:
     bne write
     ldy #0
     rts
+}
+
+//----------------------------------------------------
+// upper : upper on selected columns
+//----------------------------------------------------
+
+do_upper:
+{
+    mov r1,#process_upper
+    jmp process_sel_cols
+    
+process_upper:
+    ldx #bios.ASCII_TO_UPPER
+    swi str_conv
+    rts
+}
+
+//----------------------------------------------------
+// process_sel_cols : process on selected columns
+//
+// if column selected, R0 = content, jsr to R1
+//----------------------------------------------------
+
+process_sel_cols:
+{
+    lda #1
+    sta pos_col
+    mov r0,#buffer_line
+    lda nb_columns
+    sta nb_col
+
+next_col:
+    ldy #0
+test_col:
+    lda sel_columns,y
+    beq not_selected
+    cmp pos_col
+    beq selected
+    iny
+    bne test_col
+    ldy #0
+
+selected:
+    mov adr_jsr, r1
+    jsr adr_jsr:$fce2
+
+not_selected:
+    swi str_next
+    inc pos_col
+    dec nb_col
+    bne next_col
+    rts
+
+pos_col:
+    .byte 0
+was_write:
+    .byte 0
+nb_col:
+    .byte 0
 }
 
 
