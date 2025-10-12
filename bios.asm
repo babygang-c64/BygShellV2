@@ -941,6 +941,7 @@ process_option:
 no_value:
     jsr lookup_option
     bcs option_error
+    
     dex
     bne process_option
     dec r2
@@ -1371,7 +1372,7 @@ go_next:
 table_conv:
 
 conv_ascii_to_petscii:
-    .byte $41, $5b, $20      // A-Z: add $20
+    .byte $41, $5b, $80      // A-Z: add $80
     .byte $61, $7b, <(-$20)  // a-z: subtract $20
     .byte $5f, $60, $45      // convert underscore
     .byte $00                // end

@@ -1001,8 +1001,6 @@ not_backspace:
 
     inc work_buffer
     lda navigation.current_key
-//    ldx navigation.current_key
-//    swi screen_to_petscii
     ldx work_buffer
     sta work_buffer,x
 insert_end:
@@ -1013,8 +1011,6 @@ insert_end:
 
 insert_car_not_end:
     lda navigation.current_key
-//    ldx navigation.current_key
-//    swi screen_to_petscii
     sta insert_char+1
     mov r0, #work_buffer
     mov r1, #insert_char

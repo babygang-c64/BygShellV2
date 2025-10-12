@@ -92,6 +92,7 @@ build_command join
 build_command checksum
 build_command xform -symbolfile
 build_command unit -symbolfile
+build_command conv
 
 cp *.hlp bin/
 rm -f *_pp.asm
