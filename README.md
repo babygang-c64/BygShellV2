@@ -57,6 +57,7 @@ All external commands can :
 
 - Process multiple files if needed
 - Process files from a directory wildcard expression using * character
+- Use BASIC string variables as parameters
 - Have a combination of single letters options, starting with "-"
 - Have integer values associated to options with "-X=<value>" syntax
 - Return integer and string results to BASIC SH% and SH$ variables
@@ -402,6 +403,28 @@ Commands available:
     F = take commands from config file
 ```
 
+**CONV**
+
+Conv command provides file format conversion.
+Conversions are currently limited to what is available in the BIOS.
+
+
+```
+*conv <file>... -<input format> -<output format> [> <output file>]
+    conv converts file formats
+
+    options:
+    A = ASCII
+    P = PETSCII
+    S = Screen codes
+    U = Upper
+    L = Lower
+
+Example:
+
+*conv test.txt -a -p > test_petscii
+*conv test2.txt -a -u
+```
 
 ## Data structures and provided "framework"
 
