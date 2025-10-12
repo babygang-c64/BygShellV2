@@ -739,7 +739,37 @@ pas_init:
     //-- filter detected
 
     mov r2,r0
+    
+    //-- check if we're dealing with a variable
+    
+    ldy #0
+    mov a,(r0)
+    tay
+    mov a,(r0)
+    cmp #'$'
+    bne not_variable
+    
+    //-----------------------------------------------------------
+    // string variable, retrieve value, store to work buffer
+    //-----------------------------------------------------------
 
+    ldy #0
+    inc r0
+
+    mov r1,r4
+    clc
+    swi get_basic_string
+    mov r0,r4
+
+    clc
+    rts
+
+    //-----------------------------------------------------------
+    // directory
+    //-----------------------------------------------------------
+
+not_variable:
+    ldy #0
     // already in opened directory ? goto get entry
     lda scan_params
     and #$80
@@ -2967,7 +2997,9 @@ copie:
 }
 
 //---------------------------------------------------------------
-// is_filter : C=1 if string in R0 contains filter chars (? or *)
+// is_filter : C=1 if string in R0 contains filter chars 
+//
+// filter chars : * (for filenames), $ and % (for variables)
 //---------------------------------------------------------------
 
 do_is_filter:
@@ -2978,7 +3010,9 @@ test_str:
     lda (zr0),y
     cmp #'*'
     beq filtre_trouve    
-    cmp #'#'
+    cmp #'$'
+    beq filtre_trouve    
+    cmp #'%'
     beq filtre_trouve    
     dey
     bne test_str
