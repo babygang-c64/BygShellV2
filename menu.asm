@@ -11,7 +11,7 @@
 * = $c000
 
 .word menu
-pstring("MENU")
+pstring("menu")
 
 
 menu:
@@ -73,7 +73,7 @@ error:
     rts
 
 options_menu:
-    pstring("L")
+    pstring("l")
 selected_item:
     .byte 0
 max_length:
