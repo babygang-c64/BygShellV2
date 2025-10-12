@@ -1178,29 +1178,30 @@ paste_buffer:
 //
 // input : R0 = pstring, C=0 no conversion, 
 // C=1 screen to petscii conversion
+//
+// uses R7 and indirectly ztmp / zsave
 //------------------------------------------------------------
 
 pprint_ram:
 {
+    stc zr7l
     ldy #0
-    tya
-    rol
-    tax
     jsr bios.bios_ram_get_byte
 basic:
-    sta ztmp
+    sta zr7h
     cmp #0
     beq no_print
     iny
 print:
     jsr bios.bios_ram_get_byte
-    cpx #0
+    ldx zr7l
     beq no_conv
-    jsr bios.screen_to_petscii
+    tax
+    swi screen_to_petscii
 no_conv:
     jsr CHROUT
     iny
-    dec ztmp
+    dec zr7h
     bne print
     ldy #0
     jsr bios.bios_ram_get_byte

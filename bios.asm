@@ -130,6 +130,8 @@
 .label screen_pause=153
 .label free=155
 .label update_links=157
+.label petscii_to_screen=159
+.label screen_to_petscii=161
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -211,6 +213,8 @@ bios_jmp:
     .word do_screen_pause
     .word do_free
     .word do_update_links
+    .word do_petscii_to_screen
+    .word do_screen_to_petscii
 
 * = * "BIOS code"
 
@@ -1249,7 +1253,7 @@ write_line:
     pha
     mov a,(r0++)
     tax
-    swi ascii_to_screen
+    swi petscii_to_screen
     ldy #0
     mov (r1++),a
     pla
@@ -1280,57 +1284,6 @@ end_line:
 .label view_offset=vars+1
 }
 
-
-//----------------------------------------------------
-// ascii_to_screen : convert character in X for screen
-// 
-// input : X, output : A and X
-//----------------------------------------------------
-
-do_ascii_to_screen:
-{
-    txa
-    cmp #97
-    bcc not_lowercase
-    cmp #123
-    bcs not_lowercase
-    sec
-    sbc #$60
-not_lowercase:
-    tax
-    rts
-}
-
-//----------------------------------------------------
-// screen_to_ascii : convert character in X to ASCII
-//
-// input : X, output : A and X
-//----------------------------------------------------
-
-do_screen_to_ascii:
-{
-    txa
-    cmp #$41
-    bcc not_lowercase
-    cmp #$5b
-    bcs not_lowercase
-    clc
-    adc #$20
-    tax
-    rts
-
-not_lowercase:
-    cmp #$c1
-    bcc not_uppercase
-    cmp #65+26+128
-    bcs not_uppercase
-    sec
-    sbc #$80
-not_uppercase:
-    tax
-    rts
-}
-
 //---------------------------------------------------------------
 // str_conv : transcode charsets for pstring
 // input : X = position in table using transcoding labels, 
@@ -1338,21 +1291,41 @@ not_uppercase:
 // output : R0 is updated, Y = 0
 //---------------------------------------------------------------
 
-screen_to_petscii:
+
+do_screen_to_ascii:
 {
-    stx zsave
-    ldx #do_str_conv.SCREEN_TO_PETSCII
-    bne ascii_to_petscii.conv
+    txa
+    ldx #do_str_conv.SCREEN_TO_ASCII
+    bne do_ascii_to_petscii.conv
 }
 
-ascii_to_petscii:
+do_petscii_to_screen:
 {
-    stx zsave
+    txa
+    ldx #do_str_conv.PETSCII_TO_SCREEN
+    bne do_ascii_to_petscii.conv
+}
+
+do_ascii_to_screen:
+{
+    txa
+    ldx #do_str_conv.ASCII_TO_SCREEN
+    bne do_ascii_to_petscii.conv
+}
+
+do_screen_to_petscii:
+{
+    txa
+    ldx #do_str_conv.SCREEN_TO_PETSCII
+    bne do_ascii_to_petscii.conv
+}
+
+do_ascii_to_petscii:
+{
+    txa
     ldx #do_str_conv.ASCII_TO_PETSCII
 conv:
-    jsr do_str_conv.char
-    ldx zsave
-    rts
+    jmp do_str_conv.char
 }
 
 do_str_conv:
@@ -1411,8 +1384,8 @@ conv_screen_to_ascii:
 .label SCREEN_TO_ASCII = conv_screen_to_ascii - table_conv
 
 conv_screen_to_petscii:
-    .byte $01, $1b, $40      // 1-26: add $40
-    .byte $41, $5b, $20      // A-Z: add $20
+    .byte $01, $1b, $40      // a-z: add $40
+    .byte $41, $5b, $20      // A-Z: add $80
     .byte $00
 .label SCREEN_TO_PETSCII = conv_screen_to_petscii - table_conv
 
@@ -1431,6 +1404,13 @@ conv_ascii_to_lower:
     .byte $00
 .label ASCII_TO_LOWER = conv_ascii_to_lower - table_conv
 
+conv_petscii_to_screen:
+    .byte $41, $5b, <(-$40)  // a-z: substract $40
+    .byte $c1, $db, <(-$80)  // A-Z: substract $80
+    .byte $a4, $a5, <(-$40)  // underscore $a4 to $64
+    .byte $00
+.label PETSCII_TO_SCREEN = conv_petscii_to_screen - table_conv
+
 
 .print "ASCII_TO_PETSCII=$"+ASCII_TO_PETSCII
 .print "SCREEN_TO_ASCII=$"+SCREEN_TO_ASCII
@@ -1438,6 +1418,7 @@ conv_ascii_to_lower:
 .print "ASCII_TO_SCREEN=$"+ASCII_TO_SCREEN
 .print "ASCII_TO_UPPER=$"+ASCII_TO_UPPER
 .print "ASCII_TO_LOWER=$"+ASCII_TO_LOWER
+.print "PETSCII_TO_SCREEN=$"+PETSCII_TO_SCREEN
 }
 
 //----------------------------------------------------

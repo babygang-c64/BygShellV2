@@ -1000,8 +1000,9 @@ not_backspace:
     bne insert_car_not_end
 
     inc work_buffer
-    ldx navigation.current_key
-    swi screen_to_ascii
+    lda navigation.current_key
+//    ldx navigation.current_key
+//    swi screen_to_petscii
     ldx work_buffer
     sta work_buffer,x
 insert_end:
@@ -1011,9 +1012,10 @@ insert_end:
     jmp navigation.cursor_right
 
 insert_car_not_end:
-    ldx navigation.current_key
-    swi screen_to_ascii
-    stx insert_char+1
+    lda navigation.current_key
+//    ldx navigation.current_key
+//    swi screen_to_petscii
+    sta insert_char+1
     mov r0, #work_buffer
     mov r1, #insert_char
     ldx cursor_x
@@ -1277,7 +1279,7 @@ write_line:
     pha
     mov a,(r0++)
     tax
-    swi ascii_to_screen
+    swi petscii_to_screen
     sta screen_write:$0400
     pla
     tax

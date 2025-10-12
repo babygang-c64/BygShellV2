@@ -21,7 +21,8 @@
     .label ASCII_TO_SCREEN=24
     .label ASCII_TO_UPPER=28
     .label ASCII_TO_LOWER=32
-    
+    .label PETSCII_TO_SCREEN=36
+
     .label reset=9
     .label str_split=11
     .label str_len=13
@@ -100,6 +101,8 @@
     .label screen_pause=153
     .label free=155
     .label update_links=157
+    .label petscii_to_screen=159
+    .label screen_to_petscii=161
 }
 
 //===============================================================
