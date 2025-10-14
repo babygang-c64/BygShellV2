@@ -21,7 +21,8 @@ edit:
     .label total_lines = lines_root
     .label lines_ptr = lines_root+2
 
-    .label OPT_N=1
+    .label OPT_H=1
+    .label OPT_A=2
 
     .label error=navigation.error
 
@@ -85,6 +86,13 @@ get_lines:
     swi file_readline, work_buffer
     jcs ok_close
 
+//    lda options_params
+//    and #OPT_A
+//    beq not_ascii
+//    ldx #bios.ASCII_TO_PETSCII
+//    swi str_conv, work_buffer
+
+not_ascii:
     jsr string_add
 
     // store line ptr
@@ -124,6 +132,10 @@ blank_file:
 
     mov save_irq,$0314
     sei
+    lda #$00
+    sta $d01a
+    lda #$81
+    sta $dc0d
     mov $0314,#$ea31
     cli
 
@@ -140,6 +152,16 @@ main_loop:
 no_save:
     // reactivate IRQ
     sei
+    lda #%01111111
+    sta $dc0d
+    and $d011
+    sta $d011
+    sta $dc0d
+    sta $dd0d
+    lda #1
+    sta $d01a
+    lda #255
+    sta $d012
     mov $0314,save_irq
     lda #55
     sta $01
@@ -153,11 +175,12 @@ no_save:
     clc
     rts
 
+
 save_irq:
     .word 0
 
 options_edit:
-    pstring("h")
+    pstring("ha")
 
 filename:
     pstring("@s:----FILENAME----,s,w")
@@ -1587,3 +1610,4 @@ string_add:
 
 } // edit
 
+end_edit:
