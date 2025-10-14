@@ -235,6 +235,26 @@ Note:
     you should also use * on start / end when needed
 ```
 
+**SID**
+
+SID loads PSID file, show info and play songs.
+By default the first song is selected, you can change songs
+including while playing with -p=<songID> and stop play IRQ
+with -s
+You can use redirection to capture SID info.
+
+![Get SID info](images/sid.png)
+
+```
+*sid <file> [options]
+
+Play SID file or show info on file
+    options :
+    P = Play SID file, you can give song number
+    S = Stop playing
+    I = Show info on SID file
+```
+
 **TOUCH**
 
 TOUCH creates empty files, by default the filetype is SEQ

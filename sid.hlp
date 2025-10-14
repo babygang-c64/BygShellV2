@@ -1,0 +1,14 @@
+#sid <PSIDfile> [-options]
+
+:Show info or play SID file.
+ Plays song 1 by default
+
+*Options:
+- i : show SID info
+- s : stop playing
+- p : play SID, you can indicate init
+      value with p=<song>
+
+=Examples:
+ *sid -i commando.sid
+ *sid -p=2 commando.sid

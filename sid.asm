@@ -162,7 +162,7 @@ error_msg:
 help_msg:
     pstring("*sid <file> [-i]")
     pstring(" i = Show SID file info")
-    pstring(" p = Play SID")
+    pstring(" p = Play SID / select song")
     pstring(" s = Stop")
     .byte 0
 
@@ -237,6 +237,7 @@ not_zero:
 
 sid_print_info:
 {
+    swi pipe_output
     swi pprint, msg_name
     ldx #NAME
     jsr print_32max
