@@ -22,7 +22,7 @@ sid:
     
     .label OPT_I=1
     .label OPT_P=2
-    .label OPT_S=0
+    .label OPT_S=4
 
     sec
     swi param_init,buffer,options_sid
@@ -34,7 +34,7 @@ sid:
 
     sei
     lda #0
-    sta $d40f
+    sta $d418
     sta bios.irq_sub+1
     cli
     clc

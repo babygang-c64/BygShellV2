@@ -58,7 +58,7 @@ start_cartridge:
     sta $dd0d
     lda #1
     sta $d01a
-    lda #250
+    lda #255
     sta $d012
     cli
     
