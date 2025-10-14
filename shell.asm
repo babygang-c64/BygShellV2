@@ -505,7 +505,7 @@ do_env:
     swi param_init,buffer,options_env
 
     //-----------------------------------------------------------
-    // -P = read and store BIN PATH
+    // -P = read and store BIN PATH, convert ; to :
     //-----------------------------------------------------------
     lda options_params
     and #OPT_P
@@ -517,7 +517,7 @@ do_env:
     mov a,(r0)
     tay
     mov a,(r0)
-    cmp #'$'
+    cmp #';'
     bne no_conv
     lda #':'
     mov (r0),a

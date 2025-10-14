@@ -235,6 +235,7 @@ go_gfx:
     rts
 
 go_txt:
+    sei
     lda #$9b
     sta $d011
     lda #$c8
@@ -243,6 +244,17 @@ go_txt:
     sta $dd00
     lda #23
     sta $d018
+    lda #%01111111
+    sta $dc0d
+    and $d011
+    sta $d011
+    sta $dc0d
+    sta $dd0d
+    lda #1
+    sta $d01a
+    lda #255
+    sta $d012
+    cli
     rts
 
 has_keypress:

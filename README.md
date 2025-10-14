@@ -73,7 +73,7 @@ when a single address is given you can write bytes just after it. Also view RAM 
 - ENV : view some environment info, change device and path location of external commands
     -q = quiet mode
     -d <device> = define device for external commands lookup
-    -p <device> = define path for external commands lookup
+    -p <device> = define path for external commands lookup, ";" are changed to ":"
     
 Apart from -q option, env options have to be fed one at a time, for example to set the path
 to /bin on device 11 :
