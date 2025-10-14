@@ -28,6 +28,9 @@ sid:
     swi param_init,buffer,options_sid
     jcs error
 
+    ldx nb_params
+    bne with_params
+
     lda options_params
     and #OPT_S
     beq no_stop
@@ -41,12 +44,30 @@ sid:
     rts
     
 no_stop:
-    ldx nb_params
-    jeq help
+    lda options_params
+    and #OPT_P
+    beq not_p
 
+    lda load_address
+    ora load_address
+    beq not_p
+
+    ldx #'P'
+    swi param_get_value
+    bcc no_value
+    lda zr0l
+no_value:
+    jsr init_sid
+    clc
+    rts
+
+not_p:
+    jmp help
+
+
+with_params:
     swi pipe_init
     jcs error
-
 
     ldy #0
     sec
