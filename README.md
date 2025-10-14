@@ -69,7 +69,7 @@ All external commands can :
 
 - HELP : lists the internal commands and retrieves help for external commands with HELP <command_name>
 - M : memory dump / write, takes one start address or start / end address and
-when a single address is given you can write bytes just after it
+when a single address is given you can write bytes just after it. Also view RAM under BASIC
 - ENV : view some environment info, change device and path location of external commands
     -q = quiet mode
     -d <device> = define device for external commands lookup

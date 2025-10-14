@@ -787,6 +787,7 @@ color_values:
 // parameters : 1st = start address (hex)
 // 2nd if present = end address, else prints 8 bytes 
 // of memory max
+// View RAM under BASIC
 //---------------------------------------------------------------
 
 do_memory:
@@ -795,8 +796,9 @@ do_memory:
     sta bytes
     lda nb_params
     bne ok_params
-    mov r0, #buffer
-    jmp do_help.lookup
+
+    sec
+    rts
     
 ok_params:
     cmp #1
@@ -836,10 +838,11 @@ boucle_hex:
     jsr CHROUT
     mov r1, r0
     ldx #0
-
 prep_buffer:
-    mov a, (r0++)
+//    mov a, (r0++)
+    jsr bios.bios_ram_get_byte
     sta bytes+1,x
+    incw r0
     inx
     cpx #8
     bne prep_buffer
