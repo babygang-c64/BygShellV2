@@ -919,7 +919,7 @@ Warning : deprecated section, hasn't been fully moved from old version yet
 ```
 **is_filter**
 ```
-    Check if pString in R0 contains wildcards (* and ?)
+    Check if pString in R0 contains wildcards for parameter expansion (* and $)
     C=1 if wildcards were found
 ```
 

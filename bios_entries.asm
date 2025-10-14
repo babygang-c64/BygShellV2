@@ -13,7 +13,8 @@
 
 .namespace bios 
 {
-    .label bios_exec=$cf68
+    .label bios_exec=$cf68      // SWI entry point
+    .label irq_sub=$cff4        // IRQ sub call
     
     .label ASCII_TO_PETSCII=0
     .label SCREEN_TO_ASCII=10

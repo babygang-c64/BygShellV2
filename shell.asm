@@ -50,6 +50,16 @@ start_cartridge:
     sta IIRQ
     lda #>irq_hook+1
     sta IIRQ+1
+    lda #%01111111
+    sta $dc0d
+    and $d011
+    sta $d011
+    sta $dc0d
+    sta $dd0d
+    lda #1
+    sta $d01a
+    lda #250
+    sta $d012
     cli
     
     // change basic IEVAL to our routine for $
@@ -899,8 +909,19 @@ fini:
 // irq_hook : check for specific key presses
 //---------------------------------------------------------------
 
+do_irq_sub:
+    jmp (irq_sub)
+
 irq_hook:
 {
+    lda irq_sub+1
+    beq no_sub
+
+    inc $d020
+    jsr do_irq_sub
+    dec $d020
+
+no_sub:
     jsr $ffea
     lda $cc
     bne lbl_ea61
@@ -941,6 +962,7 @@ lbl_ea61:
     bne special_keys
 
 end_irq:
+    asl $d019
     jmp $ea7e
     
 ctrl_k:

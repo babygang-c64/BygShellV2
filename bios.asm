@@ -26,8 +26,9 @@
 .label type=$cffe
 .label in_quotes=$cffd
 .label tmpC=$cffc
-.label conv_buffer=$cff6
-.label directory_root=$a800
+.label conv_buffer=$cff6    // conversion buffer
+.label irq_sub=$cff4        // IRQ sub call
+.label directory_root=$a800 // directory data for params
 
 // Under BASIC ROM
 
@@ -248,6 +249,7 @@ do_reset:
 {
     lda #0
     sta $c002
+    sta irq_sub+1
     sta clipboard
     sta bin_device
     sta bin_path
