@@ -28,6 +28,7 @@
 .label tmpC=$cffc
 .label conv_buffer=$cff6    // conversion buffer
 .label irq_sub=$cff4        // IRQ sub call
+.label theme_colors=$cff0
 .label directory_root=$a800 // directory data for params
 
 // Under BASIC ROM
@@ -133,6 +134,9 @@
 .label update_links=157
 .label petscii_to_screen=159
 .label screen_to_petscii=161
+.label theme=163
+.label theme_accent=165
+.label theme_normal=167
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -216,6 +220,9 @@ bios_jmp:
     .word do_update_links
     .word do_petscii_to_screen
     .word do_screen_to_petscii
+    .word do_theme
+    .word do_theme.accent
+    .word do_theme.normal
 
 * = * "BIOS code"
 
@@ -253,6 +260,9 @@ do_reset:
     sta clipboard
     sta bin_device
     sta bin_path
+    mov r0,#theme_std
+    sec
+    jsr do_theme
     ldx #end_ref-bios_exec_ref
 copy_bios_exec:
     lda bios_exec_ref,x
@@ -307,14 +317,10 @@ do_error:
     mov r1,#$ffff
 not_default:
     push r1
-    lda CURSOR_COLOR
-    pha
-    lda #7
-    sta CURSOR_COLOR
+    jsr do_theme.accent_color
     swi pprint
     swi pprint_nl,error_msg
-    pla
-    sta CURSOR_COLOR
+    jsr do_theme.char_color
     jsr do_pipe_end
     pop r0
     jsr do_return_int
@@ -1149,6 +1155,7 @@ msg_option_error:
 // pprint_hex_buffer
 // cursor_unblink
 // line_to_screen
+// theme
 //
 // helpers :
 // 
@@ -1157,6 +1164,79 @@ msg_option_error:
 // screen_write_all
 // screen_pause
 //===============================================================
+
+//----------------------------------------------------
+// theme : read / write theme colors
+//
+// input : C=1, write colors from address R0
+//         C=0, read colors, write to location in R0
+//
+// theme colors bytes :
+// 0 : background / foreground
+// 1 : accent / normal
+// 2 : title / subtitle
+// 3 : sub content / notes
+//----------------------------------------------------
+
+theme_std:
+    .word $71e6
+    .word $3f5e
+
+do_theme:
+{
+    bcs write_theme
+    mov r0,theme_colors
+    jmp apply_colors
+write_theme:
+    ldy #3
+copy:
+    mov a,(r0)
+    sta theme_colors,y
+    dey
+    bpl copy
+
+apply_colors:
+    ldy #0
+    mov a,(r0)
+    sta $d021
+    jsr nibble
+    sta $d020
+normal:
+char_color:
+    lda theme_colors+1
+    sta CURSOR_COLOR
+    rts
+accent:
+accent_color:
+    lda theme_colors+1
+    jsr nibble
+    sta CURSOR_COLOR
+    rts
+nibble:
+    lsr
+    lsr
+    lsr
+    lsr
+    rts
+set_color:
+    txa
+    and #1
+    beq upper_nibble
+    txa
+    lsr
+    tax
+    lda theme_colors,x
+    jmp end
+upper_nibble:
+    txa
+    lsr
+    tax
+    lda theme_colors,x
+    jsr nibble
+end:
+    sta CURSOR_COLOR
+    rts
+}
 
 //----------------------------------------------------
 // screen_pause : write "more" message and wait for
@@ -1168,13 +1248,9 @@ msg_option_error:
 do_screen_pause:
 {
     .label is_break = zr0l
-    lda CURSOR_COLOR
-    pha
-    lda #7
-    sta CURSOR_COLOR
+    jsr do_theme.accent_color
     swi pprint, msg_suite
-    pla
-    sta CURSOR_COLOR
+    jsr do_theme.char_color
     swi key_wait
     stc is_break
     ldy #6

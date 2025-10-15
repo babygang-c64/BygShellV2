@@ -95,6 +95,7 @@ build_command unit -symbolfile
 build_command conv
 build_command sid 
 build_command scratch
+build_command theme
 
 cp *.hlp bin/
 rm -f *_pp.asm

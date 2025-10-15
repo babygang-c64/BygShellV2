@@ -106,6 +106,9 @@
     .label update_links=157
     .label petscii_to_screen=159
     .label screen_to_petscii=161
+    .label theme=163
+    .label theme_accent=165
+    .label theme_normal=167
 }
 
 //===============================================================

@@ -71,15 +71,12 @@ start_cartridge:
     
     // BIOS reset and start message
     
-    lda #7
-    sta CURSOR_COLOR
-
     jsr bios.do_reset
     lda #23
     sta $d018
+    swi theme_accent
     swi pprint_nl,start_message
-    lda #1
-    sta CURSOR_COLOR
+    swi theme_normal
     jmp READY
 
 start_message:
@@ -703,8 +700,6 @@ help_with_file:
     jsr CHKIN
     lda #23
     sta nb_lines
-    lda CURSOR_COLOR
-    pha
 help_file:
     jsr CHRIN
     cmp #$0a
@@ -730,8 +725,7 @@ help_continue:
     jmp help_file
 
 help_end:
-    pla
-    sta CURSOR_COLOR
+    swi theme_normal
     ldx #4
     swi file_close
     lda save_currdevice
@@ -759,7 +753,7 @@ lookup:
     rts
 
 change_color:
-    ldx #4
+    ldx #5
 test_color:
     cmp color_chars,x
     beq color_ok
@@ -767,9 +761,9 @@ test_color:
     bpl test_color
     jmp CHROUT
 color_ok:
-    lda color_values,x
-    sta CURSOR_COLOR
-    rts
+    inx
+    inx
+    jmp bios.do_theme.set_color
 
 suffix_help:
     pstring(".hlp")
@@ -777,9 +771,7 @@ error_help:
     pstring("Not found")
 
 color_chars:
-    .text "#:-*="
-color_values:
-    .byte 5,1,14,3,15
+    .text "_:#-*="
 }
 
 //---------------------------------------------------------------
