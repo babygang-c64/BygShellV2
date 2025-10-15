@@ -9,12 +9,12 @@
 
 * = $c000
 
-.word touch
+.word conv
 pstring("conv")
 
 .label params_buffer=$cd80
 
-touch:
+conv:
 {
     .label work_buffer = $ce00
     .label OPT_P = 1
