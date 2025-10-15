@@ -30,6 +30,10 @@
     .label COLOR_BACKGROUND=1
     .label COLOR_ACCENT=2
     .label COLOR_TEXT=3
+    .label COLOR_TITLE=4
+    .label COLOR_SUBTITLE=5
+    .label COLOR_CONTENT=6
+    .label COLOR_NOTES=7
 
     .label reset=9
     .label str_split=11

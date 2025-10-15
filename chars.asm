@@ -119,6 +119,10 @@ copy:
     dey
     bpl copy
 
+    ldx #bios.COLOR_TEXT
+    swi theme_get_color
+    sta box_draw.write_color
+
     mov r1,r0
 
     ldx write_lgr_x

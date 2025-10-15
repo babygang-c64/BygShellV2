@@ -1180,6 +1180,15 @@ msg_option_error:
 // 3 : sub content / notes
 //----------------------------------------------------
 
+    .label COLOR_BORDER=0
+    .label COLOR_BACKGROUND=1
+    .label COLOR_ACCENT=2
+    .label COLOR_TEXT=3
+    .label COLOR_TITLE=4
+    .label COLOR_SUBTITLE=5
+    .label COLOR_CONTENT=6
+    .label COLOR_NOTES=7
+
 theme_std:
     .word $71e6
     .word $3f5e
