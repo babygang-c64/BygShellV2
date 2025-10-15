@@ -255,6 +255,24 @@ Play SID file or show info on file
     I = Show info on SID file
 ```
 
+**SCRATCH**
+
+Scratch loads and save swap screens. Default file extension
+is .sws (for SWapScreen), it's added if no extension is given.
+Scratch works with the swapped screen (the non active one).
+Default option is load.
+
+```
+*scratch <file> [options]
+
+Load / Save / View swap screens
+    options :
+    S = Save swap screen to disk
+    N = Don't write over existing file
+    L = Load swap screen from disk
+    V = View swap screen from disk
+```
+
 **TOUCH**
 
 TOUCH creates empty files, by default the filetype is SEQ
