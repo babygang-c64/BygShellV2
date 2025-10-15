@@ -75,8 +75,7 @@ text_mode:
 koala_end:
     jsr text_mode
     jsr clr
-    lda save_color
-    sta CURSOR_COLOR
+    swi theme_normal
     lda #147
     jsr CHROUT
     clc
@@ -148,8 +147,6 @@ pas_txt:
     sta save_d021
     lda $d020
     sta save_d020
-    lda CURSOR_COLOR
-    sta save_color
     
     cpx #1
     jne pas_koala

@@ -169,6 +169,7 @@ no_save:
     
     // quit editor
     swi cursor_unblink
+    swi theme_normal
     jsr clear_screen
     jsr CLRCHN
     swi success

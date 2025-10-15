@@ -82,7 +82,8 @@ hex_values:
 current_char:
     .byte 0
 current_color:
-    .byte 3,8,15,1
+    .byte 6,5,7,3
+//    .byte 3,8,15,1
 
 help_msg:
     pstring("*chars [-ch]")
@@ -255,6 +256,10 @@ screen_adr:
 
 char_map:
 {
+    ldx #bios.COLOR_TEXT
+    swi theme_get_color
+    sta box_draw.write_color
+
     mov r0,#box_chars
     jsr box_draw
     lda #0
@@ -274,7 +279,8 @@ boucle_chars:
     dex
     bne boucle_chars
 
-    lda #1
+    ldx #bios.COLOR_TEXT
+    swi theme_get_color
     sta box_draw.write_color
     lda #2
     sta box_draw.write_x
@@ -322,6 +328,8 @@ boucle_chars:
     and #3
     tay
     lda current_color,y
+    tax
+    swi theme_get_color
     pha
     sta box_draw.write_color
     lda #37

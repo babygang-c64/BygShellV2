@@ -25,6 +25,11 @@
     .label ASCII_TO_UPPER=28
     .label ASCII_TO_LOWER=32
     .label PETSCII_TO_SCREEN=36
+    
+    .label COLOR_BORDER=0
+    .label COLOR_BACKGROUND=1
+    .label COLOR_ACCENT=2
+    .label COLOR_TEXT=3
 
     .label reset=9
     .label str_split=11
