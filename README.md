@@ -200,6 +200,30 @@ Scan attached devices for disk drives
     
 ```
 
+**THEME**
+
+Theme selects a color scheme that will be used in all
+commands and for the help files.
+
+Colors used :
+
+- Border
+- Background
+- Accent
+- Text
+- Title
+- Subtitle
+- Content
+- Notes
+
+```
+*theme
+
+Selects a theme colorscheme
+    options :
+    L = list available themes
+```
+
 **JOIN**
 
 JOIN appends binary or text files to an output file.
