@@ -273,6 +273,7 @@ is_saved:
     sty cur_item
 boucle:
     ldx #0
+    stx save_x
     lda #118
     jsr write_char
     mov a,(r0++)
@@ -327,19 +328,25 @@ write_char:
     jsr save_screen_data
 already_saved:
     pla
+    ldx save_x
     sta screen_adr:$0400,x
     lda cur_item
     cmp selected_item
     bne not_selected
 selected:
-    lda #7
+    ldx #2
     bne do_color
 not_selected:
-    lda #3
+    ldx #6
 do_color:
+    swi theme_get_color
+    ldx save_x
     sta color_adr:$d800,x
-    inx
+    inc save_x
     rts
+
+save_x:
+    .byte 0
 
 save_screen_data:
     lda screen_adr
@@ -350,6 +357,7 @@ save_screen_data:
     clc
     adc #$d4
     sta read_color+1
+    ldx save_x
     lda read_screen:$0400,x
     mov (r1++),a
     lda read_color:$d800,x

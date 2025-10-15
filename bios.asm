@@ -137,6 +137,7 @@
 .label theme=163
 .label theme_accent=165
 .label theme_normal=167
+.label theme_get_color=169
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -223,6 +224,7 @@ bios_jmp:
     .word do_theme
     .word do_theme.accent
     .word do_theme.normal
+    .word do_theme.get_color
 
 * = * "BIOS code"
 
@@ -1219,6 +1221,11 @@ nibble:
     lsr
     rts
 set_color:
+    jsr get_color
+end:
+    sta CURSOR_COLOR
+    rts
+get_color:
     txa
     and #1
     beq upper_nibble
@@ -1226,16 +1233,13 @@ set_color:
     lsr
     tax
     lda theme_colors,x
-    jmp end
+    rts
 upper_nibble:
     txa
     lsr
     tax
     lda theme_colors,x
-    jsr nibble
-end:
-    sta CURSOR_COLOR
-    rts
+    jmp nibble
 }
 
 //----------------------------------------------------

@@ -109,6 +109,7 @@
     .label theme=163
     .label theme_accent=165
     .label theme_normal=167
+    .label theme_get_color=169
 }
 
 //===============================================================
