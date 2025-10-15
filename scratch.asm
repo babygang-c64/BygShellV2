@@ -55,10 +55,13 @@ has_extension:
     swi str_cat,work_buffer
     lda options_params
     and #OPT_N
-    bne with_no_rewrite
+    beq with_rewrite
+    
+    swi file_exists
+    bcc write_error
+    
+with_rewrite:
     swi str_cat,work_buffer,msg_file_suffix
-
-with_no_rewrite:
     jsr do_save
     jmp end
     
@@ -94,15 +97,16 @@ msg_error_read:
 read_error:
     sec
     mov r0,#msg_error_read
-    bcs error
+    jmp error
 
 write_error:
     sec
     mov r0,#msg_error_write
+
 error:
+    swi error
     ldx #4
     swi file_close
-    swi error
     rts
 
 help:
@@ -134,26 +138,31 @@ do_view:
 
     lda #25
     sta lines
-    mov r0,#bios.swap_screen
 swap_line:
-    ldy #39
+    ldy #40
+    sty work_buffer
 swap_char:
     jsr CHRIN
-    swi pipe_output
-    tax
-    swi screen_to_petscii
-    jsr CHROUT
+    sta work_buffer,y
     dey
-    bpl swap_char
-    add r0,#40
+    bne swap_char
+
+    swi pipe_output
+    ldx #bios.SCREEN_TO_PETSCII
+    swi str_conv,work_buffer
+    swi pprint_nl,work_buffer
     dec lines
     bne swap_line
 
     ldx #4
     swi file_close
     rts
-    
+
+read:
+    .byte 0
 lines:
+    .byte 0
+columns:
     .byte 0
 }
 
