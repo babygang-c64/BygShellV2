@@ -210,11 +210,8 @@ new_char:
 
 history_add:
 {
-    swi str_cpy,buffer,history
-    tay
-    lda #0
-    mov (r0),a
-    rts
+    mov r0,#buffer
+    jmp history.insert
 }
 
 //---------------------------------------------------------------
@@ -481,7 +478,7 @@ internal_commands_jump:
     .word do_env
 
 internal_commands_help:
-    pstring("*help <cmd>, try commands")
+    pstring("*help <cmd>")
 
 //---------------------------------------------------------------
 // env : view env info :
@@ -655,7 +652,7 @@ msg_device:
 msg_cmd:
     pstring("Cmd :")
 msg_none:
-    pstring("(None)")
+    pstring("-")
 var_int_sh_desc:
     .text "SH%"
     .byte 0
@@ -1110,6 +1107,15 @@ supp_end:
     rts
 
     //-----------------------------------
+    // delete to start of line
+    //-----------------------------------
+
+do_delete_to_start:
+    ldy PNTR
+    bne supp_end
+    rts
+
+    //-----------------------------------
     // D = copy whole current line
     //-----------------------------------
 
@@ -1190,14 +1196,7 @@ end:
 // paste_buffer : paste buffer content
 //------------------------------------------------------------
 
-do_key_r:
-{
-    lda #'*'
-    jsr CHROUT
-    mov r0,#history
-    clc
-    bcc pprint_ram
-}
+.label do_key_r = history.get
 
 do_key_v:
 paste_buffer:
@@ -1279,6 +1278,90 @@ goto_left:
     jsr CHROUT
     iny
     bne goto_left
+    rts
+}
+
+//------------------------------------------------------------
+// history : history of commands
+//------------------------------------------------------------
+
+history:
+{
+.label max_history=5
+
+goto:
+    ldy #0
+    mov r0,#history_buffer+2
+    cpx #0
+    beq found
+do_goto:
+    jsr bios.bios_ram_get_byte
+    inc r0
+    add r0,a
+    dex
+    bne do_goto
+found:
+    rts
+
+insert:
+    ldx history_buffer
+    cpx #max_history
+    beq max_hist
+    
+do_insert:
+    push r0
+    ldy #0
+    mov r0,#history_buffer
+    jsr bios.bios_ram_get_byte
+    tax
+    jsr history.goto
+    mov r1,r0
+    pop r0
+    swi str_cpy
+    mov r0,#history_buffer
+    jsr bios.bios_ram_get_byte
+    tax
+    inx
+    stx history_buffer
+    stx history_buffer+1
+    rts
+
+max_hist:
+    ldy #0
+    mov r0,#history_buffer
+    jsr bios.bios_ram_get_byte
+    tax
+    dex
+    stx history_buffer
+    ldy #2
+    jsr bios.bios_ram_get_byte
+    tay
+    iny
+    iny
+    ldx #2
+copy:
+    jsr bios.bios_ram_get_byte
+    sta history_buffer,x
+    iny
+    inx
+    bne copy
+    jmp do_insert
+
+get:
+    jsr irq_hook.do_delete_to_start
+    // ldy #0 (already)
+    mov r0,#history_buffer+1
+    jsr bios.bios_ram_get_byte
+    tax
+    beq no_history
+    dex
+    stx history_buffer+1
+    jsr history.goto
+    lda #'*'
+    jsr CHROUT
+    clc
+    jsr pprint_ram
+no_history:
     rts
 }
 

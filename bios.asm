@@ -36,7 +36,7 @@
 .label bin_path=$a001       // path to binary files
 .label clipboard=$a080      // clipboard content
 .label swap_screen=$a100    // swap screen a100 to a4ff
-.label history=$a500        // history circular buffer
+.label history_buffer=$a500        // history buffer
 .label directory_root=$a800 // directory data for params
 
 // flags definitions
@@ -261,7 +261,9 @@ do_reset:
     sta $c002
     sta irq_sub+1
     sta clipboard
-    sta history
+    sta history_buffer
+    sta history_buffer+1
+    sta history_buffer+2
     sta bin_device
     sta bin_path
     mov r0,#theme_std
@@ -1554,12 +1556,12 @@ conv_petscii_to_screen:
 
 do_cursor_unblink:
 {
-    lda #1
-    sta BLNSW
+    ldy #1
+    sty BLNSW
     lda BLNON
     beq blink_off
     
-    ldy #0
+    dey
     sty BLNON
     lda GDBLN
     ldx GDCOL
