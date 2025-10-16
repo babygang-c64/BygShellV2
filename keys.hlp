@@ -17,9 +17,11 @@
 - V: paste clipboard content
 - DEL: delete from cursor position to 
 -      the end of line
+- B: delete to start of line
 - HOME : delete all lines except the
 -        current physical one
-- ^ : swap screens
+- ^: swap screens
+- R: walk through shell history 
 
 =Notes:
  You can view clipboard content with

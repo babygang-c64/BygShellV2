@@ -990,7 +990,7 @@ special_keys:
     sta k_flag
     dec NDX
     
-    ldx #8
+    ldx #ctrl_keys_hi-ctrl_keys
     lda KEYPRESS
 lookup_kkey:
     cmp ctrl_keys,x
@@ -1011,15 +1011,16 @@ goto_key:
     rts
 
 ctrl_keys:
-    .byte $0a
-    .byte $0e
-    .byte $14
-    .byte $1f
-    .byte $00
-    .byte $12
-    .byte $33
-    .byte $36
-    .byte $11
+    .byte $0a   // A
+    .byte $0e   // E
+    .byte $14   // C
+    .byte $1f   // V
+    .byte $00   // Backspace
+    .byte $12   // D
+    .byte $33   // Home
+    .byte $36   // Up arrow
+    .byte $11   // R
+    .byte $1c   // B
 ctrl_keys_hi:
     .byte >do_key_a-1
     .byte >do_key_e-1
@@ -1030,6 +1031,7 @@ ctrl_keys_hi:
     .byte >do_key_home-1
     .byte >do_key_up_arrow-1
     .byte >do_key_r-1
+    .byte >do_delete_to_start-1
 ctrl_keys_lo:
     .byte <do_key_a-1
     .byte <do_key_e-1
@@ -1040,6 +1042,7 @@ ctrl_keys_lo:
     .byte <do_key_home-1
     .byte <do_key_up_arrow-1
     .byte <do_key_r-1
+    .byte <do_delete_to_start-1
 
     //-----------------------------------
     // A = goto start of logical line
@@ -1349,8 +1352,8 @@ copy:
 
 get:
     jsr irq_hook.do_delete_to_start
-    // ldy #0 (already)
-    mov r0,#history_buffer+1
+    iny // y=1, was 0 with delete_to_start
+    mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
     tax
     beq no_history
@@ -1360,8 +1363,11 @@ get:
     lda #'*'
     jsr CHROUT
     clc
-    jsr pprint_ram
+    jmp pprint_ram
 no_history:
+    dey
+    jsr bios.bios_ram_get_byte
+    sta history_buffer+1
     rts
 }
 
