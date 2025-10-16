@@ -205,27 +205,29 @@ new_char:
 }
 
 //---------------------------------------------------------------
-// exec_command : load external command to $c000
+// history_add : add command to history list
 //---------------------------------------------------------------
 
-print_command:
+history_add:
 {
-    ldx #1
-do_print:
-    lda buffer,x
-    beq fini
-    jsr CHROUT
-    inx
-    bne do_print
-fini:
+    swi str_cpy,buffer,history
+    tay
+    lda #0
+    mov (r0),a
     rts
 }
+
+//---------------------------------------------------------------
+// exec_command : load external command to $c000
+//---------------------------------------------------------------
 
 exec_command:
 {
     .label save_currdevice=vars
     lda #MSG_NONE
     jsr SETMSG
+
+    jsr history_add
 
     jsr prep_params
     
@@ -696,10 +698,7 @@ help_with_file:
     swi file_open
     bcs not_found
 
-    ldx #4
-    jsr CHKIN
-    lda #23
-    sta nb_lines
+    jsr help_init
 help_file:
     jsr CHRIN
     cmp #$0a
@@ -718,12 +717,16 @@ help_continue:
     bne help_file
     swi screen_pause
     bcs help_end
+    jsr help_init
+    bne help_file
+
+help_init:
     ldx #4
     jsr CHKIN
     lda #23
     sta nb_lines
-    jmp help_file
-
+    rts
+    
 help_end:
     swi theme_normal
     ldx #4
@@ -990,7 +993,7 @@ special_keys:
     sta k_flag
     dec NDX
     
-    ldx #7
+    ldx #8
     lda KEYPRESS
 lookup_kkey:
     cmp ctrl_keys,x
@@ -1019,6 +1022,7 @@ ctrl_keys:
     .byte $12
     .byte $33
     .byte $36
+    .byte $11
 ctrl_keys_hi:
     .byte >do_key_a-1
     .byte >do_key_e-1
@@ -1028,6 +1032,7 @@ ctrl_keys_hi:
     .byte >do_key_d-1
     .byte >do_key_home-1
     .byte >do_key_up_arrow-1
+    .byte >do_key_r-1
 ctrl_keys_lo:
     .byte <do_key_a-1
     .byte <do_key_e-1
@@ -1037,6 +1042,7 @@ ctrl_keys_lo:
     .byte <do_key_d-1
     .byte <do_key_home-1
     .byte <do_key_up_arrow-1
+    .byte <do_key_r-1
 
     //-----------------------------------
     // A = goto start of logical line
@@ -1079,6 +1085,7 @@ copie:
     //-----------------------------------
     // V = paste buffer from $a000
     // jmp paste_buffer
+    // R = paste buffer from $a100
     //-----------------------------------
     
     //-----------------------------------
@@ -1182,6 +1189,15 @@ end:
 //------------------------------------------------------------
 // paste_buffer : paste buffer content
 //------------------------------------------------------------
+
+do_key_r:
+{
+    lda #'*'
+    jsr CHROUT
+    mov r0,#history
+    clc
+    bcc pprint_ram
+}
 
 do_key_v:
 paste_buffer:

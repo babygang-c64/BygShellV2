@@ -28,15 +28,16 @@
 .label tmpC=$cffc
 .label conv_buffer=$cff6    // conversion buffer
 .label irq_sub=$cff4        // IRQ sub call
-.label theme_colors=$cff0
-.label directory_root=$a800 // directory data for params
+.label theme_colors=$cff0   // color theme, 4 bytes
 
 // Under BASIC ROM
 
-.label bin_device=$a000
-.label bin_path=$a001
-.label clipboard=$a080
-.label swap_screen=$a100
+.label bin_device=$a000     // device for binary files
+.label bin_path=$a001       // path to binary files
+.label clipboard=$a080      // clipboard content
+.label swap_screen=$a100    // swap screen a100 to a4ff
+.label history=$a500        // history circular buffer
+.label directory_root=$a800 // directory data for params
 
 // flags definitions
 
@@ -260,6 +261,7 @@ do_reset:
     sta $c002
     sta irq_sub+1
     sta clipboard
+    sta history
     sta bin_device
     sta bin_path
     mov r0,#theme_std
@@ -1456,6 +1458,7 @@ do_str_conv:
 
     ldy #0
     mov a,(r0)
+    beq end
     tay
 
     // do a reverse loop on pstring
@@ -1466,6 +1469,7 @@ process:
     ldx ztmp
     dey
     bne process
+end:
     rts
     
 char:
