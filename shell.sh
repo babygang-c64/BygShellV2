@@ -96,6 +96,7 @@ build_command conv
 build_command sid 
 build_command scratch
 build_command theme
+build_command history
 
 cp *.hlp bin/
 rm -f *_pp.asm

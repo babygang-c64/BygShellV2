@@ -199,7 +199,17 @@ Scan attached devices for disk drives
     options :
     Q = quiet mode
     H = help
-    
+```
+
+**HISTORY**
+
+History lists the previous commands stored in history.
+History only contains shell commands, not all typed ones.
+
+```
+*history
+
+List previous shell commands in history buffer
 ```
 
 **THEME**

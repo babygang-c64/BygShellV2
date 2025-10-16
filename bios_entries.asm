@@ -11,6 +11,10 @@
 
 .label OPT_PIPE=128
 
+// under BASIC ROM
+
+.label history_buffer=$a500        // history buffer
+
 .namespace bios 
 {
     .label bios_exec=$cf68      // SWI entry point
