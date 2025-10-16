@@ -203,13 +203,16 @@ Scan attached devices for disk drives
 
 **HISTORY**
 
-History lists the previous commands stored in history.
+History lists or clears the previous commands stored in history.
 History only contains shell commands, not all typed ones.
 
 ```
 *history
 
-List previous shell commands in history buffer
+List/clear previous shell commands in history buffer
+    options:
+    C = clear history
+    L = list history
 ```
 
 **THEME**

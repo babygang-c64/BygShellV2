@@ -15,20 +15,37 @@ pstring("history")
 history:
 {
     .label params_buffer = $cd00
+    .label OPT_C=1
+    .label OPT_L=2
     
     //-- init options
     sec
     swi param_init,buffer,options_history
-    jcs help
+    bcs help
 
-    //-- no parameters = print help
-    //ldx nb_params
-    //jeq help
+    //-- no options = print help
+    lda options_params
+    beq help
+
+    lda options_params
+    and #OPT_C
+    beq not_clear
+
+    ldy #0
+    sty history_buffer
+    sty history_buffer+1
+    sty history_buffer+2
+
+not_clear:
+    lda options_params
+    and #OPT_L
+    beq not_list
 
     swi pipe_init
     swi pipe_output
     jsr history.list
 
+not_list:
 end:
     swi pipe_end
     clc
@@ -42,12 +59,14 @@ help:
     
     //-- options available
 options_history:
-    pstring("q")
+    pstring("cl")
 
 
 msg_help:
-    pstring("*history")
+    pstring("*history [options]")
     pstring(" show history of last commands")
+    pstring(" l = list history")
+    pstring(" c = clear history")
     .byte 0
 
 //------------------------------------------------------------

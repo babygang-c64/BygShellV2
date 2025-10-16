@@ -1316,16 +1316,14 @@ found:
     rts
 
 insert:
-    ldx history_buffer
-    cpx #max_history
-    beq max_hist
-    
-do_insert:
     push r0
     ldy #0
     mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
     tax
+    cpx #max_history
+    beq max_hist
+
     jsr history.goto
     mov r1,r0
     pop r0
@@ -1339,10 +1337,6 @@ do_insert:
     rts
 
 max_hist:
-    ldy #0
-    mov r0,#history_buffer
-    jsr bios.bios_ram_get_byte
-    tax
     dex
     stx history_buffer
     ldy #2
@@ -1352,12 +1346,13 @@ max_hist:
     iny
     ldx #2
 copy:
+    iny
     jsr bios.bios_ram_get_byte
     sta history_buffer,x
-    iny
     inx
     bne copy
-    jmp do_insert
+    pop r0
+    jmp insert
 
 get:
     jsr irq_hook.do_delete_to_start
