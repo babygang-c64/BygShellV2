@@ -220,7 +220,6 @@ history_add:
 
 exec_command:
 {
-    .label save_currdevice=vars
     lda #MSG_NONE
     jsr SETMSG
 
@@ -240,8 +239,7 @@ exec_command:
     // if not is there a currdevice ? if not try on device 8
     //-----------------------------------------------------------
 
-    lda CURRDEVICE
-    sta save_currdevice
+    jsr currdevice.save
     jsr get_bin_device
     stx CURRDEVICE
     lda #1
@@ -266,11 +264,7 @@ exec_command:
     bcs load_error
     
     // restore previous device or set to 8 if it was 0
-    lda save_currdevice
-    bne restore_device
-    lda #8
-restore_device:
-    sta CURRDEVICE
+    jsr currdevice.restore
     
     cpy #$a0
     bcc no_run
@@ -285,8 +279,7 @@ no_run:
     jmp SETMSG
 
 load_error:
-    lda save_currdevice
-    sta CURRDEVICE
+    jsr currdevice.restore
     ldx #4
     jmp ERRORX
 
@@ -311,6 +304,26 @@ not_found:
 
 found:
     sec
+    rts
+}
+
+//---------------------------------------------------------------
+// currdevice : save / restore
+//---------------------------------------------------------------
+
+currdevice:
+{
+save:
+    lda CURRDEVICE
+    sta save_currdevice
+    rts
+
+restore:
+    lda save_currdevice
+    bne not_zero_device
+    lda #8
+not_zero_device:
+    sta CURRDEVICE
     rts
 }
 
@@ -574,9 +587,7 @@ is_sh_string:
 not_sh_string:
     swi pprint,msg_sh_int
     swi get_basic_int,var_int_sh_desc
-    ldx #%10011111
-    swi pprint_int
-    jsr carriage_return
+    jsr print_int16
 
     //-- Current device
     swi pprint,msg_device
@@ -628,6 +639,7 @@ print_int8:
     ldy #0
     sty zr0h
     sta zr0l
+print_int16:
     ldx #%10011111
     swi pprint_int
     jmp carriage_return
@@ -664,7 +676,6 @@ var_int_sh_desc:
 
 do_help:
 {
-.label save_currdevice = vars+2
 .label nb_lines = zr1l
 
     lda nb_params
@@ -676,8 +687,7 @@ help_help:
     rts
 
 help_with_file:
-    lda CURRDEVICE
-    sta save_currdevice
+    jsr currdevice.save
     mov r0, #buffer
     swi str_next
 
@@ -728,8 +738,7 @@ help_end:
     swi theme_normal
     ldx #4
     swi file_close
-    lda save_currdevice
-    sta CURRDEVICE
+    jsr currdevice.restore
 
 help_return:
     sec

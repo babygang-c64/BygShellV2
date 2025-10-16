@@ -26,9 +26,10 @@
 .label type=$cffe
 .label in_quotes=$cffd
 .label tmpC=$cffc
-.label conv_buffer=$cff6    // conversion buffer
-.label irq_sub=$cff4        // IRQ sub call
-.label theme_colors=$cff0   // color theme, 4 bytes
+.label conv_buffer=$cff6     // conversion buffer
+.label irq_sub=$cff4         // IRQ sub call
+.label theme_colors=$cff0    // color theme, 4 bytes
+.label save_currdevice=in_quotes
 
 // Under BASIC ROM
 
