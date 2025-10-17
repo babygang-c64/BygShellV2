@@ -20,24 +20,29 @@ dump:
     .label OPT_I = 2
     .label OPT_F = 4
     .label OPT_H = 8
+    .label OPT_P = 16
     
     //-- init options
     sec
     swi param_init,buffer,options_dump
     jcs help
 
-    swi pipe_init
-    jcs error
-
     //-- parameter H = print help
     lda options_params
     and #OPT_H
     jne help
 
+    jsr define_type_filter
+    sec
+    jsr option_pagination
+
+    swi pipe_init
+    jcs error
 
     sec
     swi param_process,params_buffer
 
+    swi pipe_output
     jsr do_dump
 
 end:
@@ -58,22 +63,64 @@ help:
     
     //-- options available
 options_dump:
-    pstring("sifh")
+    pstring("sifhp")
 
 msg_help:
     pstring("*dump [prefix] [option]")
     pstring(" -s : string variables")
     pstring(" -i : integer variables")
     pstring(" -f : float variables")
+    pstring(" -p : paginate output")
     pstring(" -h : show help")
     .byte 0
+
+filter_int:
+    .byte 0
+filter_string:
+    .byte 0
+filter_float:
+    .byte 0
+
+option_pagination:
+{
+    lda options_params
+    and #OPT_P
+    jne no_paginate
+no_paginate:
+    rts
+}
+
+define_type_filter:
+{
+    lda options_params
+    and #OPT_I+OPT_S+OPT_F
+    bne is_something
+    lda #1
+    sta filter_int
+    sta filter_string
+    sta filter_float
+    rts
+is_something:
+    lda options_params
+    and #OPT_I
+    sta filter_int
+
+    lda options_params
+    and #OPT_S
+    sta filter_string
+
+    lda options_params
+    and #OPT_F
+    sta filter_float
+    rts
+}
 
 do_dump:
 {
     mov r1,VARTAB
 loop:
     cmpw r1,ARYTAB
-    bcs end
+    jcs end
 
     ldy #0
     sty INDEX1
@@ -94,6 +141,9 @@ get_name:
     bvc is_other
 
 is_int:
+    lda filter_int
+    beq next_var_no_cr
+    
     ldx #'%'
     jsr print_name
     ldy #2
@@ -103,24 +153,71 @@ is_int:
     mov a,(r1)
     sta zr0l
     jsr print_int
-    lda #13
+    jmp next_var
+
+is_string:
+    lda filter_string
+    beq next_var_no_cr
+    
+    ldx #'$'
+    jsr print_name
+    lda #34
     jsr CHROUT
+    
+    ldy #$04
+    mov a,(r1)
+    sta INDEX1+1
+    dey
+    mov a,(r1)
+    sta INDEX1
+    dey
+    mov a,(r1)
+    jsr STRPRT2    
+    lda #34
+    jsr CHROUT
+    jmp next_var
 
 is_float:
-is_string:
+    lda filter_float
+    beq next_var_no_cr
+
+    ldx #0
+    jsr print_name
+    mov $5f,r1
+    jsr $B185
+    jsr $BBA2
+    jsr $BDD7
+    jmp next_var
 is_other:
+    
+    // next variable = skip 7 bytes
+next_var:
+    lda #13
+    jsr CHROUT
+    clc
+    jsr option_pagination
+    bcs end
+
+next_var_no_cr:
+    // check run/stop
+    jsr STOP
+    beq end
+
     add r1,#7
     jmp loop
 
 end:
     rts
+
 print_name:
     lda VARNAM
     jsr CHROUT
     lda VARNAM+1
     jsr CHROUT
     cpx #0
-    beq end_print_name
+    bne not_zero
+    ldx #32
+not_zero:
     txa
     jsr CHROUT
 end_print_name:
@@ -145,6 +242,35 @@ is_negative:
     lda #'-'
     jsr CHROUT
     jmp non_negative
+}
+
+//----------------------------------------------------
+// option_pagine : pagination option processing for
+// printing in CAT / LS commands
+// input : if C=1 performs intialisation of number of
+// lines already printed. subsequent calls C=0
+//----------------------------------------------------
+
+option_pagine:
+{
+    bcc do_pagination
+reset_lines:
+    lda #23
+    sta cpt_ligne
+pas_opt_p:
+    clc
+    rts
+
+do_pagination:
+    dec cpt_ligne
+    bne pas_opt_p
+    
+    jsr reset_lines
+    swi screen_pause
+    rts
+
+cpt_ligne:
+    .byte 0
 }
 
 }

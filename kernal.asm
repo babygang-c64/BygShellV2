@@ -20,6 +20,7 @@
 .label READY   = $a474
 .label ERRORX  = $A43A
 .label STRPRT  = $ab21
+.label STRPRT2 = $ab24
 .label STRPRT4 = STRPRT+4
 .label RESLST  = $A09E
 .label CLR     = $A65E
