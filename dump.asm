@@ -21,6 +21,7 @@ dump:
     .label OPT_F = 4
     .label OPT_H = 8
     .label OPT_P = 16
+    .label OPT_N = 32
     
     //-- init options
     sec
@@ -63,13 +64,14 @@ help:
     
     //-- options available
 options_dump:
-    pstring("sifhp")
+    pstring("sifhpn")
 
 msg_help:
-    pstring("*dump [prefix] [option]")
+    pstring("*dump [options]")
     pstring(" -s : string variables")
     pstring(" -i : integer variables")
     pstring(" -f : float variables")
+    pstring(" -n : show names only")
     pstring(" -p : paginate output")
     pstring(" -h : show help")
     .byte 0
@@ -146,6 +148,7 @@ is_int:
     
     ldx #'%'
     jsr print_name
+    bcs next_var
     ldy #2
     mov a,(r1)
     sta zr0h
@@ -161,6 +164,8 @@ is_string:
     
     ldx #'$'
     jsr print_name
+    bcs next_var
+    
     lda #34
     jsr CHROUT
     
@@ -183,6 +188,8 @@ is_float:
 
     ldx #0
     jsr print_name
+    bcs next_var
+    
     mov $5f,r1
     jsr $B185
     jsr $BBA2
@@ -221,8 +228,16 @@ not_zero:
     txa
     jsr CHROUT
 end_print_name:
+    lda options_params
+    and #OPT_N
+    beq with_value
+    sec
+    rts
+with_value:
     lda #'='
-    jmp CHROUT
+    jsr CHROUT
+    clc
+    rts
     
 print_int:
     lda zr0h

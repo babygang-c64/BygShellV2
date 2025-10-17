@@ -215,6 +215,25 @@ List/clear previous shell commands in history buffer
     L = list history
 ```
 
+**DUMP**
+
+Dump lists standard BASIC variables with values.
+(not array variables)
+If variable type options are not selected, all types are shown.
+
+```
+*dump
+
+List BASIC variables
+    options:
+    I = show integer variables
+    S = show string variables
+    F = show float variables
+    N = don't show values, only names
+    H = show help
+    P = paginate output
+```
+
 **THEME**
 
 Theme selects a color scheme that will be used in all
