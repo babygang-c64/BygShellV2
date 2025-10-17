@@ -61,8 +61,8 @@ ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
 
 copy_to_d64 shell_pp.prg "shell"
 copy_to_d64 test2.asm "test2.asm"
-copy_to_d64 test "test"
-copy_to_d64 test2 "test2"
+copy_to_d64 test "test.txt"
+copy_to_d64 test2 "test2.txt"
 copy_to_d64 list.csv "disks.csv"
 copy_to_d64 cartridge_header.asm "crt.asm"
 copy_to_d64 cat.asm "cat.asm"
@@ -98,6 +98,7 @@ build_command scratch
 build_command theme
 build_command history
 build_command dump
+build_command test
 
 cp *.hlp bin/
 rm -f *_pp.asm

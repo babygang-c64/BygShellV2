@@ -8,22 +8,28 @@
 -        variables
 
 *External commands
-- *checksum : calculate CRC16 on files
-- *join : join files
-- *mon : invoke Jiffymon if loaded
-- *touch : create new empty files
-- *diff : compare files
-- *search : search pattern in files
-- *koala : koala image viewer
-- *edit : small text editor
-- *wc : word and line count
-- *lsblk : list attached disk devices
 - *cat : print file content
-- *head : print start of file content
-- *xform : delimited file processing
 - *chars : char and colour maps
-- *hw : hello world sample command
+- *checksum : calculate CRC16 on files
+- *conv : convert text files
+- *diff : compare files
+- *dump : show basic variables
+- *edit : small text editor
+- *head : print start of file content
+- *history : list previous commands
+- *join : join files
+- *koala : koala image viewer
+- *lsblk : list attached disk devices
 - *menu : user choice menu
+- *mon : invoke Jiffymon if loaded
+- *scratch : save / load swap screen
+- *search : search pattern in files
+- *sid : play and show info of SIDs
+- *theme : change colour scheme
+- *touch : create new empty files
+- *hw : hello world sample command
+- *wc : word and line count
+- *xform : delimited file processing
 
 *Commands location
 -
