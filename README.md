@@ -222,7 +222,7 @@ Dump lists standard BASIC variables with values.
 If variable type options are not selected, all types are shown.
 
 ```
-*dump
+*dump [options]
 
 List BASIC variables
     options:
@@ -234,6 +234,21 @@ List BASIC variables
     P = paginate output
 ```
 
+**TEST**
+
+Test checks if file exists.
+sh% variable is set to 1 if file exists, 0 if not.
+If multiple files are tested, 0 is returned if one is not found,
+1 is returned only if all are found.
+Check is performed on current device / directory.
+
+```
+*test <file(s)> [options]
+
+Check for file existence
+    options:
+    Q = quiet mode
+```
 **THEME**
 
 Theme selects a color scheme that will be used in all

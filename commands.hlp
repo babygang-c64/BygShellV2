@@ -26,6 +26,7 @@
 - *search : search pattern in files
 - *sid : play and show info of SIDs
 - *theme : change colour scheme
+- *test : check if file(s) exist
 - *touch : create new empty files
 - *hw : hello world sample command
 - *wc : word and line count
