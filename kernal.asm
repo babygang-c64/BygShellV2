@@ -65,13 +65,18 @@
 // Variables
 
 .label COUNT         = $0B   // buffer length
+.label INDEX1        = $22   // utility index 1
+.label INDEX2        = $24   // utility index 2
 .label STATUS        = $90   // IEC status
 .label ST            = $90
 .label DFLTI         = $99   // Default input device
 .label DFLTO         = $9A   // Default output device
+.label VARTAB        = $2D   // Start of BASIC variable area
+.label ARYTAB        = $2F   // Start of BASIC Array area
 .label MEMIO         = $35
 .label MEMSTD        = $37
 .label MEMIOKERNAL   = $36
+.label VARNAM        = $45   // Current basic variable name (2 bytes)
 .label FORPNT        = $49
 .label TXTPTR        = $7A
 .label CURSOR_ONOFF  = 204

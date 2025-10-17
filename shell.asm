@@ -840,7 +840,6 @@ boucle_hex:
     mov r1, r0
     ldx #0
 prep_buffer:
-//    mov a, (r0++)
     jsr bios.bios_ram_get_byte
     sta bytes+1,x
     incw r0
