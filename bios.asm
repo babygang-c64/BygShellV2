@@ -1266,9 +1266,12 @@ upper_nibble:
 do_screen_pause:
 {
     .label is_break = zr0l
+    lda CURSOR_COLOR
+    pha
     jsr do_theme.accent_color
     swi pprint, msg_suite
-    jsr do_theme.char_color
+    pla
+    sta CURSOR_COLOR
     swi key_wait
     stc is_break
     ldy #6

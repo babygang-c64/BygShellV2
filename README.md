@@ -249,6 +249,7 @@ Check for file existence
     options:
     Q = quiet mode
 ```
+
 **THEME**
 
 Theme selects a color scheme that will be used in all
