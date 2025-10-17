@@ -1272,16 +1272,22 @@ do_screen_pause:
     swi key_wait
     stc is_break
     ldy #6
-    lda #20
-efface_msg:
-    jsr CHROUT
-    dey
-    bne efface_msg
+    jsr backspace_y
     ldc is_break
     rts
 
 msg_suite:
     pstring("[More]")
+}
+
+backspace_y:
+{
+efface_msg:
+    lda #BACKSPACE
+    jsr CHROUT
+    dey
+    bne efface_msg
+    rts
 }
 
 //----------------------------------------------------

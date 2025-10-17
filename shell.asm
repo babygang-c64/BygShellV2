@@ -224,7 +224,6 @@ exec_command:
     jsr SETMSG
 
     jsr history_add
-
     jsr prep_params
     
     jsr cache_check
@@ -1110,12 +1109,8 @@ do_key_backspace:
     sec
     sbc ztmp
     tay
-supp_end:
-    lda #BACKSPACE
-    jsr CHROUT
-    dey
-    bne supp_end
-    rts
+del_y:
+    jmp bios.backspace_y
 
     //-----------------------------------
     // delete to start of line
@@ -1123,7 +1118,7 @@ supp_end:
 
 do_delete_to_start:
     ldy PNTR
-    bne supp_end
+    bne del_y
     rts
 
     //-----------------------------------
@@ -1349,6 +1344,7 @@ copy:
     jsr bios.bios_ram_get_byte
     sta history_buffer,x
     inx
+    cpx #200
     bne copy
     pop r0
     jmp insert
