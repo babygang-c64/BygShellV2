@@ -16,6 +16,8 @@ theme:
 {
     .label params_buffer = $cd00
     .label OPT_L=1
+    .label OPT_T=2
+    .label OPT_S=4
     
     //-- init options
     sec
@@ -31,24 +33,89 @@ theme:
     
 not_list:
 
+    lda options_params
+    and #OPT_S
+    beq not_opt_s
+
+    ldx nb_params
+    bne not_opt_s
+    
+    jmp restart
+
+not_opt_s:
     //-- no parameters = print help
     ldx nb_params
     jeq help
+
+    jsr save_colors
 
     sec
     swi param_process,params_buffer
     mov r1,r0
     mov r0,#themes
     swi lines_find
-    bcc not_found
+    jcc not_found
 
+view_theme:
     mov r0,#themes_colors
     txa
+    stx theme_id
     asl
     asl
     add r0,a
     sec
     swi theme
+    
+    // T = test theme, S = select theme
+    
+    
+    lda options_params
+    and #OPT_S+OPT_T
+    beq end
+    
+    jsr test_theme
+
+    swi key_wait
+    bcs selected
+    sta last_key
+    cmp #RETURN
+    beq selected
+    
+    lda options_params
+    and #OPT_S
+    beq not_s
+
+    lda last_key
+    cmp #UP
+    bne not_up
+    
+    ldx theme_id
+    beq restart
+    dec theme_id
+    jmp up 
+    
+not_up:
+    inc theme_id
+up:
+    ldx theme_id
+restart:
+    swi lines_goto,#themes
+    bcs next_ok
+    ldx #0
+    stx theme_id
+    jmp restart
+next_ok:
+    mov r1,r0
+    ldx theme_id
+    jmp view_theme
+    
+not_s:
+    jsr restore_colors
+    
+selected:
+    lda #147
+    jsr CHROUT
+    jsr CLRCHN
 
 end:
     clc
@@ -56,6 +123,7 @@ end:
     rts
 
 not_found:
+    jsr restore_colors
     sec
     swi error,msg_not_found
     rts
@@ -64,10 +132,31 @@ help:
     swi pprint_lines, msg_help
     clc
     rts
+
+save_colors:
+    mov r0,#saved
+    clc
+    swi theme
+    rts
     
+restore_colors:
+    mov r0,#themes_colors
+    sec
+    swi theme
+    rts 
+    
+saved:
+    .word 0
+    .word 0
+
+theme_id:
+    .byte 0
+last_key:
+    .byte 0
+
     //-- options available
 options_theme:
-    pstring("l")
+    pstring("lts")
 
 msg_not_found:
     pstring("Theme not found")
@@ -75,7 +164,99 @@ msg_not_found:
 msg_help:
     pstring("*theme <theme> [options]")
     pstring(" -l : list themes")
+    pstring(" -t : test themes")
+    pstring(" -s : select")
     .byte 0
+
+test_theme:
+{
+    lda #147
+    jsr CHROUT
+    jsr nl
+    jsr nl
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    swi pprint,msg_title
+    mov r0,r1
+    swi pprint_nl
+    jsr nl
+    ldx #bios.COLOR_SUBTITLE
+    swi theme_set_color
+    swi pprint_lines,msg_subtitle
+    jsr nl
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    swi pprint_lines,msg_text
+    jsr nl
+    ldx #bios.COLOR_NOTES
+    swi theme_set_color
+    swi pprint_lines,msg_notes
+    jsr nl
+    ldx #bios.COLOR_ACCENT
+    swi theme_set_color
+    swi pprint_nl,msg_accent
+
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    ldx #0
+    ldy #0
+status:
+    cpy msg_status
+    beq status_done
+    lda msg_status+1,y
+    ora #$80
+    sta $0400,x
+    lda CURSOR_COLOR
+    sta $d800,x
+    inx
+    iny
+    bne status
+status_done:
+    lda #32+128
+    sta $0400,x
+    lda CURSOR_COLOR
+    sta $d800,x
+    inx
+    cpx #39
+    bne status_done
+    ldx #bios.COLOR_ACCENT
+    swi theme_get_color
+    ldx #5
+do_accent:
+    sta $d800,x
+    inx
+    cpx #11
+    bne do_accent
+    rts
+
+nl:
+    lda #13
+    jmp CHROUT
+    
+msg_title:
+    pstring("### Title color for theme ")
+msg_subtitle:
+    pstring("Subtitle:")
+    pstring("What is the demoscene ?")
+    .byte 0
+msg_text:
+    pstring("Text:")
+    pstring("The scene started with the home")
+    pstring("computer revolution of the early")
+    pstring("1980s, and the subsequent advent")
+    pstring("of software cracking.")
+    .byte 0
+msg_notes:
+    pstring("Notes:")
+    pstring(@"  ldx #bios.COLOR\$a4NOTES")
+    pstring(@"  swi theme\$a4set\$a4color")
+    pstring(@"  swi pprint\$a4lines,msg\$a4notes")
+    .byte 0
+msg_accent:
+    pstring("[Press Any Key] (accent)")
+msg_status:
+    pstring("Theme File Edit View Text Window Help")
+}
 
 themes:
     pstring("classic")

@@ -337,7 +337,7 @@ selected:
     ldx #2
     bne do_color
 not_selected:
-    ldx #6
+    ldx #bios.COLOR_CONTENT
 do_color:
     swi theme_get_color
     ldx save_x

@@ -54,7 +54,6 @@ empty_file:
 
 load_file:
     // load file
-    
     ldy #0
     mov r1,#filename
     mov r0,#file_prefix
@@ -272,7 +271,9 @@ save_file:
 
     lda #211
     sta $0400+39+40*24
-    lda #7
+
+    ldx #bios.COLOR_ACCENT
+    swi theme_get_color
     sta $d800+39+40*24
 
 //    jsr check_edit_end
@@ -316,9 +317,10 @@ write_line:
     sta current_line+1
     lda #'-'+$80
     sta $0400+39+40*24
-    lda #15
-    sta $d800+39+40*24
 
+    ldx #bios.COLOR_CONTENT
+    swi theme_get_color
+    sta $d800+39+40*24
 
 not_changed:
     clc
@@ -1399,10 +1401,8 @@ status_cursor:
     ldy #21
     clc
     jsr PLOT
-    lda #LIGHT_GRAY
-    jsr CHROUT
-    lda #RVSON
-    jsr CHROUT
+    jsr status_rvson
+
     ldy #0
     sty zr0h
     jsr get_true_x
@@ -1434,10 +1434,7 @@ status_cursor:
     mov r0,total_lines
     swi pprint_int
 
-    lda #RVSOFF
-    jsr CHROUT
-    lda #WHITE
-    jmp CHROUT
+    jmp status_rvsoff
 }
 
 print_name:
@@ -1483,18 +1480,33 @@ ok_name:
 
 status_rvson:
 {
-    lda #LIGHT_GRAY
-    jsr CHROUT
+    stx zr7l
+    sty zr7h
+    ldx #bios.COLOR_CONTENT
+    swi theme_get_color
+    sta CURSOR_COLOR
+    
+    //lda #LIGHT_GRAY
+    //jsr CHROUT
     lda #RVSON
-    jmp CHROUT
+end:
+    jsr CHROUT
+    ldx zr7l
+    ldy zr7h
+    rts
 }
 
 status_rvsoff:
 {
-    lda #WHITE
-    jsr CHROUT
+    stx zr7l
+    sty zr7h
+
+    ldx #bios.COLOR_TEXT
+    swi theme_get_color
+    sta CURSOR_COLOR
+
     lda #RVSOFF
-    jmp CHROUT
+    jmp status_rvson.end
 }
 
 status_line:
@@ -1533,7 +1545,10 @@ not_editing:
 update:
     ora #$80
     sta $0400+39+40*24
-    lda #15
+
+    ldx #bios.COLOR_CONTENT
+    swi theme_get_color
+
     sta $d800+39+40*24
     clc
     rts

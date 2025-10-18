@@ -272,6 +272,8 @@ Colors used :
 Selects a theme colorscheme
     options :
     L = list available themes
+    T = test a theme
+    S = select a theme
 ```
 
 **JOIN**

@@ -140,6 +140,7 @@
 .label theme_accent=165
 .label theme_normal=167
 .label theme_get_color=169
+.label theme_set_color=171
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -227,6 +228,7 @@ bios_jmp:
     .word do_theme.accent
     .word do_theme.normal
     .word do_theme.get_color
+    .word do_theme.set_color
 
 * = * "BIOS code"
 
