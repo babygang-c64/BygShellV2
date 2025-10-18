@@ -40,6 +40,7 @@ not_list:
     ldx nb_params
     bne not_opt_s
     
+    stx theme_id
     jmp restart
 
 not_opt_s:
@@ -194,7 +195,7 @@ test_theme:
     jsr nl
     ldx #bios.COLOR_ACCENT
     swi theme_set_color
-    swi pprint_nl,msg_accent
+    swi pprint_lines,msg_accent
 
     ldx #bios.COLOR_CONTENT
     swi theme_set_color
@@ -227,6 +228,9 @@ do_accent:
     inx
     cpx #11
     bne do_accent
+
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
     rts
 
 nl:
@@ -253,7 +257,9 @@ msg_notes:
     pstring(@"  swi pprint\$a4lines,msg\$a4notes")
     .byte 0
 msg_accent:
-    pstring("[Press Any Key] (accent)")
+    pstring("[Return = select, up/down = move]")
+    pstring("(accent)")
+    .byte 0
 msg_status:
     pstring("Theme File Edit View Text Window Help")
 }

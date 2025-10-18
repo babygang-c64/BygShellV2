@@ -146,7 +146,7 @@ main_loop:
 
     cmp #RUNSTOP
     beq no_save
-    jsr save_file
+    jsr save_to_disk
 
 no_save:
     // reactivate IRQ
@@ -261,10 +261,10 @@ end_init:
 //.print "nb_init=$"+toHexString(nb_init)
 
 //----------------------------------------------------
-// save_file : save the file to disk
+// save_to_disk : save the file to disk
 //----------------------------------------------------
 
-save_file:
+save_to_disk:
 {
     lda is_edited
     jeq not_changed
@@ -464,7 +464,7 @@ save_and_quit:
     //--------------------------------
 
 save_file:
-    jsr save_file
+    jsr save_to_disk
     jmp nav_cursor
 
     //--------------------------------
@@ -1483,8 +1483,7 @@ status_rvson:
     stx zr7l
     sty zr7h
     ldx #bios.COLOR_CONTENT
-    swi theme_get_color
-    sta CURSOR_COLOR
+    swi theme_set_color
     
     //lda #LIGHT_GRAY
     //jsr CHROUT
@@ -1502,8 +1501,7 @@ status_rvsoff:
     sty zr7h
 
     ldx #bios.COLOR_TEXT
-    swi theme_get_color
-    sta CURSOR_COLOR
+    swi theme_set_color
 
     lda #RVSOFF
     jmp status_rvson.end
