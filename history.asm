@@ -91,6 +91,7 @@ found:
 
 list:
     ldy #0
+    sty pos_histo
     mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
     sta nb_histo
@@ -105,27 +106,19 @@ next:
 
 nb_histo:
     .byte 0
+pos_histo:
+    .byte 0
 
 get:
-    ldy #1
-    mov r0,#history_buffer
-    jsr bios.bios_ram_get_byte
-    tax
-    beq no_history
-    dex
-    stx history_buffer+1
+    ldx pos_histo
     jsr history.goto
+    inc pos_histo
     lda #'*'
     jsr CHROUT
     clc
     jsr pprint_ram
     lda #13
     jmp CHROUT
-no_history:
-    dey
-    jsr bios.bios_ram_get_byte
-    sta history_buffer+1
-    rts
 }
 
 //------------------------------------------------------------
