@@ -482,15 +482,36 @@ internal_commands:
     pstring("help")
     pstring("m")
     pstring("env")
+    pstring("kill")
     .byte 0
 
 internal_commands_jump:
     .word do_help
     .word do_memory
     .word do_env
+    .word do_kill
 
 internal_commands_help:
     pstring("*help <cmd>")
+
+//---------------------------------------------------------------
+// kill : kill cartridge, reset
+//---------------------------------------------------------------
+
+do_kill:
+{
+    ldx #8
+copy:
+    lda kill_routine,x
+    sta $c000,x
+    dex
+    bpl copy
+    jmp $c000
+kill_routine:
+    sei
+    stx $de00
+    jmp $fce2
+}
 
 //---------------------------------------------------------------
 // env : view env info :

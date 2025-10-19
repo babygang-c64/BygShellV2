@@ -2,7 +2,7 @@
 .text "C64 CARTRIDGE   "        // 16 bytes: signature + 3 spaces + null
 .byte $00,$00,$00,$40           // Header length: 64 bytes (big-endian)
 .byte $01,$00                   // Version: 1.0 (big-endian) 
-.byte $00,$00                   // Hardware type: 0 (big-endian)
+.byte $00,$13                   // Hardware type: 0 (big-endian) - $13 = Magic Desk
 .byte $00                       // EXROM line: 1 (active)
 .byte $01                       // GAME line: 0 (inactive)
 .byte $00,$00,$00,$00,$00,$00   // Reserved (6 bytes)

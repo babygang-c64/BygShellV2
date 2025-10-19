@@ -68,6 +68,8 @@
 .label COUNT         = $0B   // buffer length
 .label INDEX1        = $22   // utility index 1
 .label INDEX2        = $24   // utility index 2
+.label STREND        = $31   // end of BASIC storage area
+.label FRETOP        = $33   // top of BASIC array area
 .label STATUS        = $90   // IEC status
 .label ST            = $90
 .label DFLTI         = $99   // Default input device

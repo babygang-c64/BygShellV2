@@ -87,7 +87,7 @@ option_pagination:
 {
     lda options_params
     and #OPT_P
-    jne no_paginate
+    jne option_pagine
 no_paginate:
     rts
 }

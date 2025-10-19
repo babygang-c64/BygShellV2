@@ -193,12 +193,19 @@ test_theme:
     swi theme_set_color
     swi pprint_lines,msg_notes
     jsr nl
+
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    swi pprint_lines,msg_content
+    jsr nl
+
     ldx #bios.COLOR_ACCENT
     swi theme_set_color
     swi pprint_lines,msg_accent
 
     ldx #bios.COLOR_CONTENT
     swi theme_set_color
+    
     ldx #0
     ldy #0
 status:
@@ -218,7 +225,7 @@ status_done:
     lda CURSOR_COLOR
     sta $d800,x
     inx
-    cpx #39
+    cpx #40
     bne status_done
     ldx #bios.COLOR_ACCENT
     swi theme_get_color
@@ -256,6 +263,12 @@ msg_notes:
     pstring(@"  swi theme\$a4set\$a4color")
     pstring(@"  swi pprint\$a4lines,msg\$a4notes")
     .byte 0
+    
+msg_content:
+    pstring("Content:")
+    pstring("Used for menu items too")
+    .byte 0
+
 msg_accent:
     pstring("[Return = select, up/down = move]")
     pstring("(accent)")
@@ -266,50 +279,41 @@ msg_status:
 
 themes:
     pstring("classic")
+    pstring("solar-dark")
     pstring("solar")
     pstring("monokai")
     pstring("xterm")
     pstring("zenburn")
     pstring("paper")
-    pstring("green")
+    pstring("matrix")
     pstring("amber")
-    pstring("dracula")
-    pstring("gruvbox")
-    pstring("dark")
-    pstring("nord")
     pstring("one-dark")
-    pstring("tokyo")
-    pstring("cattppuccin")
-    pstring("everforest")
-    pstring("rosepine")
-    pstring("kanagawa")
+    pstring("tomorrow")
     pstring("c128")
-    pstring("c16")
-    pstring("plus4")
     pstring("sx64")
+    pstring("amiga")
+    pstring("sepia")
+    pstring("simon")
     .byte 0
 
+    // colors : accent - text - border - background
+    //          content - notes - title - subtitle
+
 themes_colors:
-    .word $71E6,$3F5E  // Classic        - blue bg, white text, light-blue accents
-    .word $E100,$3D5C  // Solarized      - dark-blue bg, light-grey text, cyan/yellow subs
-    .word $7A00,$2F4E  // Monokai        - black bg, light-orange text, green accent
-    .word $1500,$3C7E  // XTerm          - black bg, light-grey text, cyan accent
-    .word $9C00,$4D5E  // Zenburn        - olive bg, grey text, pale-green titles
-    .word $20F1,$044D  // Paper Light    - light-grey bg, black text, blue title, grey accents
-    .word $3500,$2D5E  // Retro Green    - black bg, green text, cyan titles
-    .word $A800,$4C7E  // Amber          - black bg, orange text, yellow accents
-    .word $E400,$2F5C  // Dracula        - black bg, magenta text, cyan/yellow subs
-    .word $9C00,$4A7E  // Gruvbox        - black bg, beige text, orange accent
-    .word $C100,$3D7E  // Dark           - black bg, white text, cyan accents
-    .word $B1E6,$4F5C  // Nord           - dark-blue bg, snow white, frost blue accents
-    .word $7100,$2F5E  // One Dark       - very dark blue bg, grey text, blue accents
-    .word $4100,$2F6E  // Tokyo Night    - deep blue bg, light-blue text, purple accents
-    .word $E1F6,$7F4C  // Catppuccin     - mauve bg, text white, peach accents
-    .word $5100,$3D5E  // Everforest     - dark-green bg, light-grey text, green accents
-    .word $E1B6,$7F4C  // Rose Pine      - purple bg, rose text, gold accents
-    .word $A100,$3F4E  // Kanagawa       - dark bg, peach text, dragon blue 
-    .word $D5B0,$3C7E  // Boot128: fond gris foncé, texte vert clair, accent vert, bord=fond
-    .word $15F0,$3C7E  // BootC16: fond gris clair, texte noir, accent blanc, bord=fond
-    .word $71F0,$3C7E  // Plus4: fond blanc, texte noir, accent jaune, bord=fond
-    .word $36F1,$3C7E  // SX64: fond blanc, texte bleu, accent cyan, bord=fond
+    .word $71E6,$3F5E  // Classic
+    .word $3F00,$C5E3  // Solarized dark
+    .word $3FBB,$1E7D  // Solarized
+    .word $4FBB,$FD38  // Monokai
+    .word $E100,$F573  // XTerm
+    .word $DFBB,$C573  // Zenburn
+    .word $6011,$B548  // Paper light
+    .word $D500,$5f17  // Matrix
+    .word $8799,$F87F  // Retro amber
+    .word $EF00,$CD84  // One dark
+    .word $2F00,$C57E  // Tomorrow night
+    .word $5D50,$D1FB  // C128
+    .word $E631,$FBE4  // SX64
+    .word $8166,$FE1C  // Amiga
+    .word $8719,$C573  // Sepia
+    .word $D0CB,$5F17  // Simons basic
 }

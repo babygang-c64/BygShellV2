@@ -99,6 +99,7 @@ build_command theme
 build_command history
 build_command dump
 build_command test
+build_command tail -symbolfile
 
 cp *.hlp bin/
 rm -f *_pp.asm
