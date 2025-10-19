@@ -202,18 +202,21 @@ Scan attached devices for disk drives
     H = help
 ```
 
-**HISTORY**
+**SYS**
 
-History lists or clears the previous commands stored in history.
+Sys can show environment info or history.
+Sys can list or clear the previous commands stored in history.
 History only contains shell commands, not all typed ones.
 
 ```
-*history
+*sys
 
+Show environment / history info
 List/clear previous shell commands in history buffer
     options:
     C = clear history
     L = list history
+    H = help
 ```
 
 **DUMP**

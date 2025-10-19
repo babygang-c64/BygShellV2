@@ -11,16 +11,25 @@
 
 .label OPT_PIPE=128
 
-// under BASIC ROM
-
-.label history_buffer=$a500        // history buffer
 
 .namespace bios 
 {
+    // Under BASIC ROM
+    
+    .label bin_device=$a000     // device for binary files
+    .label bin_path=$a001       // path to binary files
+    .label clipboard=$a080      // clipboard content
+    .label swap_screen=$a100    // swap screen a100 to a4ff
+    .label history_buffer=$a500        // history buffer
+    .label directory_root=$a800 // directory data for params
+
+    // 
+
     .label bios_exec=$cf68      // SWI entry point
     .label bios_ram_get_byte=bios_exec+5
     .label irq_sub=$cff4        // IRQ sub call
-    .label swap_screen=$a100
+
+    // Conversions
     
     .label ASCII_TO_PETSCII=0
     .label SCREEN_TO_ASCII=10
@@ -30,6 +39,8 @@
     .label ASCII_TO_LOWER=32
     .label PETSCII_TO_SCREEN=36
     
+    // Color theme
+    
     .label COLOR_BORDER=0
     .label COLOR_BACKGROUND=1
     .label COLOR_ACCENT=2
@@ -38,6 +49,8 @@
     .label COLOR_SUBTITLE=5
     .label COLOR_CONTENT=6
     .label COLOR_NOTES=7
+
+    // BIOS entries
 
     .label reset=9
     .label str_split=11

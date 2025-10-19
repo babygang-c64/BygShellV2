@@ -97,10 +97,10 @@ build_command conv
 build_command sid 
 build_command scratch
 build_command theme
-build_command history
 build_command dump
 build_command test
-build_command tail -symbolfile
+build_command tail
+build_command sys
 
 cp *.hlp bin/
 rm -f *_pp.asm

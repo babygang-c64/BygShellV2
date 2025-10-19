@@ -17,7 +17,7 @@
 - *dump : show basic variables
 - *edit : small text editor
 - *head : print start of file content
-- *history : list previous commands
+- *hw : hello world sample command
 - *join : join files
 - *koala : koala image viewer
 - *lsblk : list attached disk devices
@@ -26,10 +26,10 @@
 - *scratch : save / load swap screen
 - *search : search pattern in files
 - *sid : play and show info of SIDs
+- *sys : show env / history info
 - *theme : change colour scheme
 - *test : check if file(s) exist
 - *touch : create new empty files
-- *hw : hello world sample command
 - *wc : word and line count
 - *xform : delimited file processing
 
