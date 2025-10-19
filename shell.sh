@@ -45,6 +45,7 @@ KICK_PATH=/home/prod/c64/bin
 disk=byg_shell.d64
 
 rm bin/* -f
+rm ${disk} -f
 
 uv run ppkick.py shell.asm shell_pp.asm
 uv run ppkick.py bios.asm bios_pp.asm

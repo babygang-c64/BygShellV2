@@ -70,6 +70,7 @@ All external commands can :
 - HELP : lists the internal commands and retrieves help for external commands with HELP <command_name>
 - M : memory dump / write, takes one start address or start / end address and
 when a single address is given you can write bytes just after it. Also view RAM under BASIC
+- KILL : kill the cartridge, reclaim RAM under ROM between $8000-9FFF
 - ENV : view some environment info, change device and path location of external commands
     -q = quiet mode
     -d <device> = define device for external commands lookup
@@ -393,6 +394,21 @@ HEAD shows the first lines of files
 *head <file> [<file> ...]
 
 print first lines of files
+    options :
+    N = change max lines number
+    Q = no filename
+    V = always print filename
+    P = paginate output
+```
+
+**TAIL**
+
+TAIL shows the first lines of files
+
+```
+*tail <file> [<file> ...]
+
+print last lines of files (default = 10 lines)
     options :
     N = change max lines number
     Q = no filename

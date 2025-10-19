@@ -1,0 +1,17 @@
+#tail <files> [-options]
+
+:Print last lines of file(s).
+:Defaults to 10 lines.
+
+*Options:
+- n=N : print only N lines
+- q : don't print filenames
+- v : always print filenames
+- p : paginate output
+- a : do ASCII conversion
+
+=Examples:
+ *tail test.txt -v
+ *tail -n=5 *.asm > dump.lst
+ *tail cat.asm -a
+ 

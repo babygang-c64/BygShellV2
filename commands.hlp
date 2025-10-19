@@ -6,6 +6,7 @@
 - *m : memory hexdump and modify
 - *env : view and set environment
 -        variables
+- *kill : kill cartridge and reset
 
 *External commands
 - *cat : print file content
