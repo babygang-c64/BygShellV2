@@ -39,6 +39,68 @@ hw:
     .label OPT_D=1
     .label work_buffer = $ce00
 
+
+    jsr history.init
+
+    mov r0,#str1
+    jsr history.insert
+    mov r0,#str2
+    jsr history.insert
+    jsr view
+
+    mov r0,#str3
+    jsr history.insert
+    mov r0,#str4
+    jsr history.insert
+    jsr view
+
+    mov r0,#str1
+    jsr history.insert
+    jsr view
+
+    mov r0,#str3
+    jsr history.insert
+    jsr view
+    
+    mov r0,#str2
+    jsr history.insert
+    jsr view
+
+    clc
+    jmp CLRCHN
+
+view:
+{
+    swi pprint_nl,msg_line
+    lda $1000
+    ora #$30
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    ldx $1000
+    mov r0,#$1002
+next_view:
+    swi pprint_nl
+    swi str_next
+    dex
+    bne next_view
+    swi screen_pause
+    rts
+}
+
+msg_line:
+    pstring("--------------------")
+str1:
+    pstring("test value 1")
+str2:
+    pstring("what's up doc ?")
+str3:
+    pstring("this is the test value 2")
+str4:
+    pstring("last test value is number four")
+
+
+
     //-- init options
     sec
     swi param_init,buffer,options_hw
@@ -104,4 +166,77 @@ string_len:
 string_storage:
     .word 0
 
+}
+
+//------------------------------------------------------------
+// history : history of commands
+//------------------------------------------------------------
+
+
+history:
+{
+.label history_buffer=$1000
+.label max_history=4
+
+init:
+    lda #0
+    sta history_buffer
+    sta history_buffer+1
+    rts
+
+goto:
+    ldy #0
+    mov r0,#history_buffer+2
+    cpx #0
+    beq found
+do_goto:
+    jsr bios.bios_ram_get_byte
+    sec
+    adc zr0l
+    sta zr0l
+    bcc pas_inc
+    inc zr0h
+pas_inc:
+    dex
+    bne do_goto
+found:
+    rts
+
+insert:
+    ldy #0
+    push r0
+    mov r0,#history_buffer
+    jsr bios.bios_ram_get_byte
+    tax
+    stx ztmp
+    cmp #max_history
+    beq hist_max
+    jsr goto
+store_value:
+    ldx ztmp
+    inx
+    stx history_buffer
+    stx history_buffer+1
+only_store:
+    mov r1,r0
+    pop r0
+    swi str_cpy
+    rts
+    
+hist_max:
+    jsr goto
+    sub r0,#history_buffer+2
+    mov r2,r0
+    ldx #1
+    jsr goto
+    mov r1,#history_buffer+2
+move_data:
+    jsr bios.bios_ram_get_byte
+    mov (r1++),a
+    inc r0
+    dec r2
+    bne move_data
+    ldx #max_history-1
+    jsr goto
+    jmp only_store
 }

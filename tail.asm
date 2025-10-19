@@ -32,6 +32,9 @@ tail:
     sta nb_lignes_max
     ldy #0
     sty cpt_ligne
+    
+    sec
+    jsr option_pagine
 
     sec
     swi param_init,buffer,options_tail
@@ -75,6 +78,9 @@ do_tail:
     clc
     swi file_open
     jcs error_open
+
+    swi pipe_output
+    jsr option_name
 
 boucle_tail:
     jsr STOP
@@ -293,6 +299,11 @@ loop:
     swi pprint_nl
     add r0,a
     inc r0
+    txa
+    pha
+    jsr option_pagine
+    pla
+    tax
     dex
     bne loop
 end:

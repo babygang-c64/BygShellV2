@@ -1314,7 +1314,7 @@ goto_left:
 
 history:
 {
-.label max_history=5
+.label max_history=10
 
 goto:
     ldy #0
@@ -1331,44 +1331,42 @@ found:
     rts
 
 insert:
-    push r0
     ldy #0
+    push r0
     mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
     tax
-    cpx #max_history
-    beq max_hist
-
-    jsr history.goto
-    mov r1,r0
-    pop r0
-    swi str_cpy
-    mov r0,#history_buffer
-    jsr bios.bios_ram_get_byte
-    tax
+    stx ztmp
+    cmp #max_history
+    beq hist_max
+    jsr goto
+store_value:
+    ldx ztmp
     inx
     stx history_buffer
     stx history_buffer+1
-    rts
-
-max_hist:
-    dex
-    stx history_buffer
-    ldy #2
-    jsr bios.bios_ram_get_byte
-    tay
-    iny
-    iny
-    ldx #2
-copy:
-    iny
-    jsr bios.bios_ram_get_byte
-    sta history_buffer,x
-    inx
-    cpx #200
-    bne copy
+only_store:
+    mov r1,r0
     pop r0
-    jmp insert
+    swi str_cpy
+    rts
+    
+hist_max:
+    jsr goto
+    sub r0,#history_buffer+2
+    mov r2,r0
+    ldx #1
+    jsr goto
+    mov r1,#history_buffer+2
+move_data:
+    jsr bios.bios_ram_get_byte
+    mov (r1++),a
+    inc r0
+    dec r2
+    bne move_data
+    ldx #max_history-1
+    jsr goto
+    jmp only_store
 
 get:
     jsr irq_hook.do_delete_to_start

@@ -90,7 +90,7 @@ found:
     rts
 
 list:
-    ldy #1
+    ldy #0
     mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
     sta nb_histo
