@@ -562,9 +562,6 @@ no_path:
     lda zr1l
     sta bin_device
 
-options_env:
-    pstring("dp")
-    
 no_params:
     sec
     rts
@@ -572,6 +569,9 @@ no_params:
 carriage_return:
     lda #13
     jmp CHROUT
+
+options_env:
+    pstring("dp")
 }
 
 //---------------------------------------------------------------
