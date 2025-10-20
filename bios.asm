@@ -1587,68 +1587,32 @@ blink_off:
 // pprint_hex_buffer : hexdump buffer in r0, address r1
 //---------------------------------------------------------------
 
+
 do_pprint_hex_buffer:
 {
-.label nb_total = zr7l
-
-    swi str_len 
-    sta nb_total
-    inc r0
-
-aff_line:
+    // print address
     push r0
-    mov r0, r1
+    mov r0,r1
     sec
     swi pprint_hex
     pop r0
-    lda #32
-    jsr CHROUT
 
-    push r0
-    ldx #8
-aff_bytes:
-    lda nb_total
-    bne pas_fini_hex
+    // print bytes
+    ldy #1
+print_bytes:
+    jsr print_space
+    mov a,(r0)
+    jsr do_pprinthex8a
+    iny
+    cpy #9
+    bne print_bytes
 
-    lda #'.'
-    jsr CHROUT
-    jsr CHROUT
-    jmp suite_hex
+    jsr print_space
 
-pas_fini_hex:
-    dec nb_total
-    mov a, (r0++)
-    tay
-    swi pprinthex8a
-
-suite_hex:
-    lda #32
-    jsr CHROUT
-    dex
-    bne aff_bytes
-
-    pop r0
-    dec r0
-    ldx #8
-    jsr print_hex_text
-
-    add r1, #8
-    clc
-    rts
-
-print_hex_text:
-    swi str_len
-    sta nb_total
-    inc r0
-    
-    ldx #8
-aff_txt:
-    lda nb_total
-    beq aff_txt_fini
-    mov a, (r0++)
-    dec nb_total
-
-aff_txt_fini:
+    // print chars
+    ldy #1
+print_chars:
+    mov a,(r0)
     cmp #$20
     bpl pas_moins
     lda #'.'
@@ -1660,9 +1624,15 @@ pas_moins:
     lda #'.'
 pas_plus:
     jsr CHROUT
-    dex
-    bne aff_txt
+
+    iny
+    cpy #9
+    bne print_chars
     rts
+
+print_space:
+    lda #32
+    jmp CHROUT
 }
 
 //----------------------------------------------------

@@ -30,7 +30,8 @@
 
 // Kernal vectors
 
-.label IIRQ = $0314
+.label IIRQ  = $0314
+.label CBINV = $0316 // BRK
 
 .label DSPP   = $EA13   // print character at screen pos
 .label GETIN  = $FFE4

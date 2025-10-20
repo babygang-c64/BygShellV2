@@ -23,7 +23,7 @@
     .label history_buffer=$a500        // history buffer
     .label directory_root=$a800 // directory data for params
 
-    // 
+    // RAM entry points
 
     .label bios_exec=$cf68      // SWI entry point
     .label bios_ram_get_byte=bios_exec+5

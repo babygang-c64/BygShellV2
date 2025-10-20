@@ -54,7 +54,7 @@ uv run ppkick.py bios_entries.asm bios_entries_pp.asm
 kickass shell_pp.asm -symbolfile
 dd if=shell_pp.prg of=bygshell.bin bs=1 skip=2
 kickass cartridge_header.asm -binfile -o bygshell.crt
-
+cp shell_pp.prg bin/shell.prg
 cat bygshell.bin >> bygshell.crt
 
 rm -f ${disk}

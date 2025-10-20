@@ -11,8 +11,8 @@
 
 * = $8000
 
-.word start_cartridge
-.word start_cartridge   // later change to NMI
+.word start_cartridge   // cold start vector
+.word start_cartridge   // warm start vector
 .byte $c3,$c2,$cd
 .text "80"
 
@@ -23,17 +23,10 @@
 start_cartridge:
 
     stx $d016
-    jsr $fda3
-    jsr $fd50
-    jsr $fd15
-    jsr $ff5b
-    cli
-
-    jsr $e453
-    jsr $e3bf
-    jsr $e422
-
-
+    jsr reset_c64
+    jsr $e3bf // sys init ram
+    jsr $e422 // start message
+    
     // change basic IGONE hook to our routine
     
     lda #<basic_hook
@@ -41,8 +34,25 @@ start_cartridge:
     lda #>basic_hook
     sta IGONE+1
     
-    // change IRQ hook to our routine
+
+    // change basic IEVAL to our routine for $
+
+    lda #<basic_ieval
+    sta IEVAL
+    lda #>basic_ieval
+    sta IEVAL+1
     
+    // BIOS reset and start message
+    
+    jsr bios.do_reset
+    lda #23
+    sta $d018
+    swi theme_accent
+    swi pprint_nl,start_message
+    swi theme_normal
+    
+    // change IRQ hook to our routine
+
     sei
     lda #0
     sta k_flag
@@ -62,21 +72,34 @@ start_cartridge:
     sta $d012
     cli
     
-    // change basic IEVAL to our routine for $
+    lda #<brk_hook
+    sta CBINV
+    lda #>brk_hook
+    sta CBINV+1
+    
+    ldx #32
+copy_hook:
+    lda brk_hook,x
+    sta brk_hook,x
+    dex
+    bpl copy_hook
+    
+    jmp READY
 
-    lda #<basic_ieval
-    sta IEVAL
-    lda #>basic_ieval
-    sta IEVAL+1
-    
-    // BIOS reset and start message
-    
-    jsr bios.do_reset
-    lda #23
-    sta $d018
-    swi theme_accent
-    swi pprint_nl,start_message
-    swi theme_normal
+brk_hook:
+    tsx
+    lda $0105,x
+    sec
+    sbc #1
+    sta zr0l
+    lda $0106,x
+    sbc #0
+    sta zr0h
+    lda #$37
+    sta $01
+    clc
+    swi pprint_hex
+    swi screen_pause
     jmp READY
 
 start_message:
@@ -101,13 +124,12 @@ process_shell:
     jsr nchrget
 
     ldx #1
-    
     cmp #$00
     bmi do_token
     
 copy_command:
     sta buffer,x
-    inx   
+    inx
     jsr nchrget
     bcc copy_command
     cmp #$b1
@@ -222,15 +244,17 @@ exec_command:
 {
     lda #MSG_NONE
     jsr SETMSG
-
+    
     jsr history_add
     jsr prep_params
     
     jsr cache_check
     jcs already_loaded
-    
+
+
     jsr internal_command_check
     jcs no_run
+
     
     //-----------------------------------------------------------
     // Find device for command :
@@ -460,6 +484,7 @@ internal_command_check:
 
 found:
     dec nb_params
+    lda nb_params
     txa
     asl
     tax
@@ -467,6 +492,9 @@ found:
     sta zr0l
     lda internal_commands_jump+1,x
     sta zr0h
+    mov $1180,r0
+    lda $01
+    sta $1182
     jmp (zr0)
 
 not_found:
@@ -483,6 +511,7 @@ internal_commands:
     pstring("m")
     pstring("env")
     pstring("kill")
+    pstring("run")
     .byte 0
 
 internal_commands_jump:
@@ -490,27 +519,67 @@ internal_commands_jump:
     .word do_memory
     .word do_env
     .word do_kill
+    .word do_run
 
 internal_commands_help:
     pstring("*help <cmd>")
 
 //---------------------------------------------------------------
-// kill : kill cartridge, reset
+// kill/run : kill cartridge, reset
 //---------------------------------------------------------------
 
+reset_c64:
+{
+    jsr $fda3   // prepare IRQ
+    jsr $fd50   // init memory
+    jsr $fd15   // init I/O
+    jsr $ff5b   // init video
+    cli
+
+    jmp $e453 // sys init basic vectors
+}
+
+do_run:
+{
+    lda $0805
+    cmp #$9e
+    bne do_kill.not_sys
+    
+    mov $7a,#$0806
+    jsr $ad8a
+    jsr $b7f7
+
+    mov $0805,$14
+    mov $0807,$2d
+
+    sei
+    jsr $fda3
+    jsr $fd50
+    jsr $fd15
+    jsr $ff5b
+    jsr reset_c64
+    mov r0,$0805
+    mov $2d,$0807
+    sec
+}
 do_kill:
 {
-    ldx #8
+    bcs run
+not_sys:
+    mov r0,#$fce2
+run:
+    mov $02e5,r0
+    ldx #4
 copy:
     lda kill_routine,x
-    sta $c000,x
+    sta $02e0,x
     dex
     bpl copy
-    jmp $c000
+    jmp $02e0
 kill_routine:
     sei
     stx $de00
-    jmp $fce2
+    .byte $4c
 }
 
 //---------------------------------------------------------------
@@ -708,6 +777,7 @@ do_memory:
 ok_params:
     cmp #1
     beq juste_8
+    
     mov r0, #buffer
     swi str_next
     push r0
@@ -742,14 +812,14 @@ boucle_hex:
     lda #' '
     jsr CHROUT
     mov r1, r0
-    ldx #0
+    ldy #7
 prep_buffer:
     jsr bios.bios_ram_get_byte
-    sta bytes+1,x
-    incw r0
-    inx
-    cpx #8
-    bne prep_buffer
+    sta bytes+1,y
+    dey
+    bpl prep_buffer
+    iny
+    add r0,#8
     push r0
     mov r0, #bytes
     swi pprint_hex_buffer
@@ -824,6 +894,7 @@ irq_hook:
     lda irq_sub+1
     beq no_sub
 
+stop:
     inc $d020
     jsr do_irq_sub
     dec $d020
@@ -856,7 +927,6 @@ lbl_ea61:
     
     // scan keyboard
     jsr $ea87
-
 
     lda KEYPRESS
     cmp #64
@@ -1215,7 +1285,7 @@ found:
     rts
 
 insert:
-    ldy #0
+    ldy #0    
     push r0
     mov r0,#history_buffer
     jsr bios.bios_ram_get_byte
