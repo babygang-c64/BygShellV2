@@ -232,7 +232,6 @@ new_char:
 
 history_add:
 {
-    mov r0,#buffer
     jmp history.insert
 }
 
@@ -492,9 +491,6 @@ found:
     sta zr0l
     lda internal_commands_jump+1,x
     sta zr0h
-    mov $1180,r0
-    lda $01
-    sta $1182
     jmp (zr0)
 
 not_found:
@@ -891,6 +887,7 @@ do_irq_sub:
 
 irq_hook:
 {
+    nop
     lda irq_sub+1
     beq no_sub
 
@@ -900,6 +897,7 @@ stop:
     dec $d020
 
 no_sub:
+
     jsr $ffea
     lda $cc
     bne lbl_ea61
@@ -927,7 +925,7 @@ lbl_ea61:
     
     // scan keyboard
     jsr $ea87
-
+    
     lda KEYPRESS
     cmp #64
     beq end_irq
@@ -1139,7 +1137,7 @@ copy_line:
 do_key_home:
     mov r0,#$0400
     clc
-    jmp bios.clear_screen
+    jmp bios.do_screen_clear
 
     //-----------------------------------
     // UP-ARROW = swap screens
@@ -1264,11 +1262,23 @@ goto_left:
 
 //------------------------------------------------------------
 // history : history of commands
+//
+// history buffer : 
+//
+// Byte 0 : total number of commands in history
+// Byte 1 : value for history walk through (total to 
+//      0 and loop)
+// Byte 2 and + : last commands, 1 pstring for each
 //------------------------------------------------------------
 
 history:
 {
 .label max_history=10
+
+    //--------------------------------------------------------
+    // goto : goto pstring at position X, returns address in
+    // R0, moves using pstring lengths in 1st byte
+    //--------------------------------------------------------
 
 goto:
     ldy #0
@@ -1277,34 +1287,56 @@ goto:
     beq found
 do_goto:
     jsr bios.bios_ram_get_byte
-    inc r0
-    add r0,a
+    // add length + 1
+    sec
+    adc zr0l
+    sta zr0l
+    bcc no_inc
+    inc zr0h
+no_inc:
     dex
     bne do_goto
 found:
     rts
 
+    //--------------------------------------------------------
+    // insert : add command pstring at buffer to history, if
+    // max_history is reached then older record is removed
+    //--------------------------------------------------------
+
 insert:
-    ldy #0    
-    push r0
+    // read number of entries
     mov r0,#history_buffer
+    ldy #0
     jsr bios.bios_ram_get_byte
     tax
     stx ztmp
     cmp #max_history
     beq hist_max
-    jsr goto
+    
+    // if not max, increment and store
+    
 store_value:
+    // increment number of commands in history
+
     ldx ztmp
     inx
     stx history_buffer
     stx history_buffer+1
+
+    // copy value in buffer to history entry
+
 only_store:
+    dex
+    jsr goto
+    
     mov r1,r0
-    pop r0
-    swi str_cpy
+    swi str_cpy,#buffer
     rts
     
+    // max reached, move oldest entry out
+    // r0 = read, r1 = write, r2 = length
+
 hist_max:
     jsr goto
     sub r0,#history_buffer+2
@@ -1318,9 +1350,17 @@ move_data:
     inc r0
     dec r2
     bne move_data
-    ldx #max_history-1
-    jsr goto
+    
+    // store entry at last position = max - 1
+    // without incrementing number of entries
+
+    ldx #max_history
     jmp only_store
+
+
+    //--------------------------------------------------------
+    // get : retrieve and print one history entry
+    //--------------------------------------------------------
 
 get:
     jsr irq_hook.do_delete_to_start

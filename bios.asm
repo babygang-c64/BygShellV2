@@ -37,7 +37,8 @@
 .label bin_path=$a001       // path to binary files
 .label clipboard=$a080      // clipboard content
 .label swap_screen=$a100    // swap screen a100 to a4ff
-.label history_buffer=$a500        // history buffer
+.label history_buffer=$a500 // history buffer
+.label theme_name=$a7f0     // theme name
 .label directory_root=$a800 // directory data for params
 
 // flags definitions
@@ -141,6 +142,7 @@
 .label theme_normal=167
 .label theme_get_color=169
 .label theme_set_color=171
+.label screen_clear=173
 
 //===============================================================
 // bios_jmp : bios jump table
@@ -229,6 +231,7 @@ bios_jmp:
     .word do_theme.normal
     .word do_theme.get_color
     .word do_theme.set_color
+    .word do_screen_clear
 
 * = * "BIOS code"
 
@@ -261,17 +264,27 @@ end_ref:
 do_reset:
 {
     lda #0
-    sta $c002
-    sta irq_sub+1
-    sta clipboard
+    sta $c002       // command cache
+    sta irq_sub+1   // music IRQ
+    sta clipboard   // clipboard
+    sta bin_device  // BIN device
+    sta bin_path    // BIN path
+    
+    // history
     sta history_buffer
     sta history_buffer+1
     sta history_buffer+2
-    sta bin_device
-    sta bin_path
+
+    // theme
     mov r0,#theme_std
     sec
     jsr do_theme
+
+    mov r0,#theme_std_name
+    mov r1,#theme_name
+    jsr do_str_cpy
+    
+    // RAM hooks
     ldx #end_ref-bios_exec_ref
 copy_bios_exec:
     lda bios_exec_ref,x
@@ -282,9 +295,15 @@ copy_bios_exec:
     // clear swap screen
     mov r0,#swap_screen
     sec
+    // continues to screen_clear
 }
 
-clear_screen:
+//---------------------------------------------------------------
+// screen_clear : clear screen at R0, if C=1 clear whole screen
+// if C=0 clear screen but not cursor line
+//---------------------------------------------------------------
+
+do_screen_clear:
 {
     stc ztmp
     ldx #0
@@ -667,7 +686,7 @@ params_ok:
     sec
     swi file_open
     bcs error
-    jmp do_pipe_output
+    bcc do_pipe_output
 
 check_pipe_option:
     ldx #5
@@ -1200,6 +1219,9 @@ theme_std:
     .word $71e6
     .word $3f5e
 
+theme_std_name:
+    pstring("def")
+
 do_theme:
 {
     bcs write_theme
@@ -1586,7 +1608,6 @@ blink_off:
 //---------------------------------------------------------------
 // pprint_hex_buffer : hexdump buffer in r0, address r1
 //---------------------------------------------------------------
-
 
 do_pprint_hex_buffer:
 {

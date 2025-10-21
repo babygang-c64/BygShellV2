@@ -40,24 +40,6 @@ hw:
     .label work_buffer = $ce00
 
 
-    lda $0805
-    cmp #$9e
-    bne not_sys
-    
-    mov $7a,#$0806
-    jsr $ad8a
-    jsr $b7f7
-
-    mov r0,$14
-    jmp out
-    
-not_sys:
-    mov r0,#$fce2
-    jmp out
-
-out:
-    clc
-    swi pprint_hex
     rts
 
 view:

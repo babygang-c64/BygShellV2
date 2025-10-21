@@ -18,12 +18,34 @@ theme:
     .label OPT_L=1
     .label OPT_T=2
     .label OPT_S=4
+    .label OPT_C=8
     
     //-- init options
     sec
     swi param_init,buffer,options_theme
     jcs help
 
+    lda options_params
+    and #OPT_C
+    beq not_current
+    
+    swi pprint,#msg_current
+    ldy #0
+    mov r0,#bios.theme_name
+    jsr bios.bios_ram_get_byte
+    tax
+print_ram:
+    iny
+    jsr bios.bios_ram_get_byte
+    jsr CHROUT
+    dex
+    bne print_ram
+    lda #']'
+    jsr CHROUT
+    jsr test_theme.nl
+    jmp end
+    
+not_current:
     lda options_params
     and #OPT_L
     beq not_list
@@ -32,7 +54,6 @@ theme:
     jmp end
     
 not_list:
-
     lda options_params
     and #OPT_S
     beq not_opt_s
@@ -157,7 +178,7 @@ last_key:
 
     //-- options available
 options_theme:
-    pstring("lts")
+    pstring("ltsc")
 
 msg_not_found:
     pstring("Theme not found")
@@ -166,8 +187,12 @@ msg_help:
     pstring("*theme <theme> [options]")
     pstring(" -l : list themes")
     pstring(" -t : test themes")
-    pstring(" -s : select")
+    pstring(" -s : interactive select")
+    pstring(" -c : current theme")
     .byte 0
+
+msg_current:
+    pstring("Current theme is [")
 
 test_theme:
 {
@@ -180,6 +205,9 @@ test_theme:
     swi pprint,msg_title
     mov r0,r1
     swi pprint_nl
+
+    mov r1,#bios.theme_name
+    swi str_cpy
     jsr nl
     ldx #bios.COLOR_SUBTITLE
     swi theme_set_color

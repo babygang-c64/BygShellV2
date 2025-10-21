@@ -20,7 +20,8 @@
     .label bin_path=$a001       // path to binary files
     .label clipboard=$a080      // clipboard content
     .label swap_screen=$a100    // swap screen a100 to a4ff
-    .label history_buffer=$a500        // history buffer
+    .label history_buffer=$a500 // history buffer
+    .label theme_name=$a7f0     // theme name
     .label directory_root=$a800 // directory data for params
 
     // RAM entry points
@@ -137,6 +138,7 @@
     .label theme_normal=167
     .label theme_get_color=169
     .label theme_set_color=171
+    .label screen_clear=173
 }
 
 //===============================================================
