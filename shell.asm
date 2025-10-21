@@ -106,8 +106,11 @@ start_message:
     .byte 16
     .byte $0d
     .encoding "petscii_mixed"
-    .text "*BYG-Shell v2.0"
+    .text "*BYG-Shell v"
     .encoding "ascii"
+    .byte bios.VERSION_MAJ+$30
+    .byte '.'
+    .byte bios.VERSION_MIN+$30
 
 basic_hook:
     jsr CHRGET

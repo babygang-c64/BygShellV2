@@ -15,6 +15,7 @@ pstring("sys")
 sys:
 {
     .label params_buffer = $cd00
+    .label work_buffer = $ce00
     .label OPT_C=1
     .label OPT_L=2
     .label OPT_H=4
@@ -83,20 +84,184 @@ msg_help:
 
 env:
 {
+
+box_vert:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    lda #221
+    jmp CHROUT
+
+box_hor38:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    ldx #38
+hor38:
+    lda #192
+    jsr CHROUT
+    dex
+    bne hor38
+    rts
+
+box_hor_start:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    lda #176
+    jsr CHROUT
+    jsr box_hor38
+    lda #174
+    jmp CHROUT
+
+box_hor_middle:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    lda #171
+    jsr CHROUT
+    jsr box_hor38
+    lda #179
+    jmp CHROUT
+    
+box_hor_end:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    lda #171
+    jsr CHROUT
+    jsr box_hor38
+    lda #189
+    jmp CHROUT
+
+line_sep:
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    lda #171
+    jsr CHROUT
+    lda #13
+    jsr CHROUT
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    rts
+
+vert_sep:
+    txa
+    pha
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    jsr box_vert
+    pla
+    tax
+    swi theme_set_color
+    rts
+
 list:
-    //-- clipboard content
+    jsr carriage_return
+
+    ldx #bios.COLOR_ACCENT
+    jsr vert_sep
+
+    //-- Version
+    swi pprint,#msg_byg_shell
+    lda #$30+bios.VERSION_MAJ
+    jsr CHROUT
+    lda #'.'
+    jsr CHROUT
+    lda #$30+bios.VERSION_MIN
+    jsr CHROUT
+    jsr carriage_return
+
+    // kernal version
+    
+    lda $e49c
+    cmp #$4a
+    bne not_jiffy
+    lda #$46
+    cmp $e49e
+    bne not_jiffy
+    cmp $e49f
+    bne not_jiffy
+    
+    // jiffy / jaffydos
+    ldx #bios.COLOR_TEXT
+    jsr vert_sep
+    lda $e49c
+    clc
+    adc #$80
+    jsr CHROUT
+    ldx #1
+is_jiffy:
+    lda $e49c,x
+    jsr CHROUT
+    inx
+    cpx #12
+    bne is_jiffy
+    jsr carriage_return
+
+not_jiffy:
+
+    // SID type
+    
+    ldx #bios.COLOR_TEXT
+    jsr vert_sep
+    swi pprint,#msg_sid_type
+
+    jsr test_sid_model
+    mov r0,#msg_8580
+    bcc sid8580
+    mov r0,#msg_6581
+sid8580:
+    swi pprint_nl
+
+    jsr line_sep
+
+    // current device
+
+    ldx #bios.COLOR_CONTENT
+    jsr vert_sep
+    swi pprint,msg_device
+    lda CURRDEVICE
+    jsr print_int2_or_none
+    jsr carriage_return
+    
+    // Path and device for BIN
+    
+    ldx #bios.COLOR_CONTENT
+    jsr vert_sep
+    swi pprint,#msg_bin_device
+    mov r0,#bios.bin_device
+    jsr bios.bios_ram_get_byte
+    jsr print_int2_or_none
+    jsr carriage_return
+
+    ldx #bios.COLOR_CONTENT
+    jsr vert_sep
+    swi pprint,#msg_path
+    mov r0,#bios.bin_path
+    sec
+    jsr print_ram_or_none
+
+    jsr line_sep
+
+    // Clipboard content
+    
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
     swi pprint,msg_clipboard    
     mov r0,#bios.clipboard
     sec
     jsr print_ram_or_none
-    
-    //-- history
+
+    //-- History count
+
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
     swi pprint,msg_history
     mov r0,#bios.history_buffer
     jsr bios.bios_ram_get_byte
     jsr print_int8
+    jsr carriage_return
+    jsr line_sep
 
     //-- sh$ string
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
     swi pprint,msg_sh_string    
     sec
     swi get_basic_string, sh_string
@@ -114,41 +279,15 @@ is_sh_string:
 
     //-- sh% integer
 not_sh_string:
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
     swi pprint,msg_sh_int
     swi get_basic_int,var_int_sh_desc
     jsr print_int16
 
-    //-- Current device
-    swi pprint,msg_device
-    lda CURRDEVICE
-    bne is_value_device
-    swi pprint_nl,msg_none
-    jmp next_bin_device
-
-is_value_device:
-    jsr print_int8
-
-    //-- bin device
-next_bin_device:
-    swi pprint,msg_bin
-    swi pprint,msg_device
-    mov r0,#bios.bin_device
-    jsr bios.bios_ram_get_byte
-    cmp #0
-    bne is_value_bin_device
-    swi pprint_nl,msg_none
-    jmp next_bin_path
-    
-is_value_bin_device:
-    jsr print_int8
-
-    //-- bin path
-next_bin_path:
-    swi pprint,msg_bin
-    swi pprint,msg_path
-    mov r0,#bios.bin_path
-    clc
-    jsr print_ram_or_none
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    jsr carriage_return
 
 end_env:
     rts
@@ -163,6 +302,19 @@ carriage_return:
     lda #13
     jmp CHROUT
 
+print_int2_or_none:
+    cmp #0
+    bne print2
+    swi pprint,msg_none
+    rts
+print2:
+    ldy #0
+    sty zr0h
+    sta zr0l
+    ldx #%11000011
+    swi pprint_int
+    rts
+
 print_int8:
     ldy #0
     sty zr0h
@@ -170,27 +322,36 @@ print_int8:
 print_int16:
     ldx #%10011111
     swi pprint_int
-    jmp carriage_return
+    rts
 
 sh_string:
     .text "SH$"
     .byte 0
+msg_byg_shell:
+    pstring("BYG-Shell v")
 msg_clipboard:
-    pstring("Clip:")
+    pstring("Clipboard  : ")
 msg_sh_string:
-    pstring("SH$ :")
+    pstring("Status sh$ : ")
 msg_sh_int:
-    pstring("SH% :")
-msg_bin:
-    pstring("BIN ")
+    pstring("Status sh% : ")
+msg_bin_device:
+    pstring("BIN Device : ")
 msg_path:
-    pstring("Path:")
+    pstring("BIN Path   : ")
 msg_device:
-    pstring("Dev :")
+    pstring("Curr device: ")
 msg_history:
-    pstring("Hist:")
+    pstring("History #  : ")
 msg_none:
-    pstring("-")
+    pstring("(None)")
+msg_sid_type:
+    pstring("Sid type : ")
+msg_6581:
+    pstring("6581")
+msg_8580:
+    pstring("8580")
+
 var_int_sh_desc:
     .text "SH%"
     .byte 0
@@ -291,5 +452,28 @@ no_print:
     rts
 }
 
+//---------------------------------------------------------------
+// test_sid_model : check sid model, Soundemon / Daglem method
+//
+// return : C=0 8580, C=1 6581
+//---------------------------------------------------------------
+
+test_sid_model:
+{
+    sei
+	lda #$ff
+wait:
+	cmp $d012
+	bne wait
+	
+	sta $d412
+	sta $d40e
+	sta $d40f
+	lda #$20
+	sta $d412
+	lda $d41b
+	lsr
+	rts
+}
 
 }

@@ -14,6 +14,11 @@
 
 .namespace bios 
 {
+    // Version
+    
+    .label VERSION_MAJ=2
+    .label VERSION_MIN=0
+
     // Under BASIC ROM
     
     .label bin_device=$a000     // device for binary files

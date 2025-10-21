@@ -11,6 +11,7 @@
 
 * = * "bios vectors"
 
+
 .label vars=$02a7
 .label buffer=$cf80
 .label nb_params=$02ff
@@ -50,6 +51,11 @@
 
 .namespace bios 
 {
+// Version
+
+.label VERSION_MAJ=2
+.label VERSION_MIN=0
+
 //===============================================================
 // BIOS functions list
 //===============================================================
@@ -2843,18 +2849,21 @@ do_str_pad:
     ldy #0
     lda (zr0),y
     cmp ztmp
-    beq do_str_chr.end
+    bcs end
+    pha
+    txa
     sta (zr0),y
+    pla
     tay
+    inc ztmp
     lda #32
 pad:
-    cpy ztmp
-    bcs do_str_chr.end
     sta (zr0),y
+    cpy ztmp
+    beq end
     iny
     bne pad
-pb:
-    sec
+end:
     rts
 }
 

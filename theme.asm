@@ -342,6 +342,6 @@ themes_colors:
     .word $5D50,$D1FB  // C128
     .word $E631,$FBE4  // SX64
     .word $8166,$FE1C  // Amiga
-    .word $8719,$C573  // Sepia
+    .word $87B0,$C573  // Sepia
     .word $D0CB,$5F17  // Simons basic
 }
