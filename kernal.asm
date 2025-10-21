@@ -56,6 +56,7 @@
 .label CHROUT = $ffd2
 .label LOAD   = $ffd5
 .label SAVE   = $ffd8
+.label RDTIM  = $FFDE   // read time
 .label STOP   = $ffe1
 .label CLALL  = $ffe7
 .label IECIN  = $ffa5

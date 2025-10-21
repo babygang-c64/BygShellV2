@@ -281,6 +281,13 @@ do_reset:
     sta history_buffer+1
     sta history_buffer+2
 
+    // TOD : time of day
+    
+    sta $dc0b
+    sta $dc0a
+    sta $dc09
+    sta $dc08
+
     // theme
     mov r0,#theme_std
     sec

@@ -19,6 +19,7 @@ sys:
     .label OPT_C=1
     .label OPT_L=2
     .label OPT_H=4
+    .label OPT_T=8
     
     //-- init options
     sec
@@ -33,6 +34,15 @@ sys:
     jmp end
     
 with_options:
+
+    lda options_params
+    and #OPT_T
+    beq not_time
+    
+    jsr set_time
+    jmp end
+    
+not_time:
     //-- help option
     lda options_params
     and #OPT_H
@@ -67,7 +77,7 @@ help:
     
     //-- options available
 options_sys:
-    pstring("clh")
+    pstring("clht")
 
 msg_help:
     pstring("*sys [options]")
@@ -75,8 +85,58 @@ msg_help:
     pstring(" h = show help")
     pstring(" l = list history")
     pstring(" c = clear history")
+    pstring(" t = set time of day (HHMMSS)")
     .byte 0
 
+//------------------------------------------------------------
+// set_time : set time of day
+//------------------------------------------------------------
+
+set_time:
+{
+    sec
+    swi param_process,buffer
+    bcs end_param
+    
+    ldy #1
+    jsr read_value
+    cmp #$12
+    bcc is_am
+    sec
+    sbc #$12
+    ora #$80
+is_am:
+    sta $dc0b
+    jsr read_value
+    sta $dc0a
+    jsr read_value
+    sta $dc09
+    lda #0
+    sta $dc08
+    rts
+
+read_value:
+    lda (zr0l),y
+    sec
+    sbc #'0'
+    asl
+    asl
+    asl
+    asl
+    sta temp
+    iny
+    lda (zr0l),y
+    sec
+    sbc #'0'
+    ora temp
+    iny
+    rts
+    
+end_param:
+    rts
+temp:
+    .byte 0
+}
 
 //------------------------------------------------------------
 // env : environment
@@ -264,6 +324,7 @@ sid8580:
     jsr vert_sep
     swi pprint,msg_sh_string    
     sec
+    mov r1,#work_buffer
     swi get_basic_string, sh_string
     cpx #0
     bne is_sh_string
@@ -298,15 +359,52 @@ not_sh_string:
     lda #32
     jsr CHROUT
     jsr theme_colors
+    jsr carriage_return
 
+    // uptime, via ti$ for now
+
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
+    swi pprint,msg_uptime
+
+    lda $dc0b
+    bpl is_am
+    and #$7f
+    clc
+    adc #$12
+is_am:
+    jsr print_bcd
+    lda #':'
+    jsr CHROUT
+    lda $dc0a
+    jsr print_bcd
+    lda #':'
+    jsr CHROUT
+    lda $dc09
+    jsr print_bcd
+    lda $dc08
+
+end_env:
     ldx #bios.COLOR_TEXT
     swi theme_set_color
     jsr carriage_return
-
-end_env:
     rts
 
-
+print_bcd:
+    pha
+    lsr
+    lsr
+    lsr
+    lsr
+    clc
+    adc #$30
+    jsr CHROUT
+    pla
+    and #15
+    clc
+    adc #$30
+    jmp CHROUT
+    
 theme_colors:
     ldx #bios.COLOR_NOTES
     swi theme_set_color
@@ -349,6 +447,13 @@ print2:
     ldx #%11000011
     swi pprint_int
     rts
+print02:
+    ldy #0
+    sty zr0h
+    sta zr0l
+    ldx #%00000011
+    swi pprint_int
+    rts
 
 print_int8:
     ldy #0
@@ -359,9 +464,6 @@ print_int16:
     swi pprint_int
     rts
 
-sh_string:
-    .text "SH$"
-    .byte 0
 msg_byg_shell:
     pstring("BYG-Shell v")
 msg_clipboard:
@@ -378,6 +480,8 @@ msg_device:
     pstring("Curr device: ")
 msg_theme:
     pstring("Theme      : ")
+msg_uptime:
+    pstring("Time of day: ")
 msg_history:
     pstring("History #  : ")
 msg_none:
@@ -391,6 +495,9 @@ msg_8580:
 
 var_int_sh_desc:
     .text "SH%"
+    .byte 0
+sh_string:
+    .text "SH$"
     .byte 0
 }
 
