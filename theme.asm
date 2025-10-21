@@ -73,10 +73,14 @@ not_opt_s:
 
     sec
     swi param_process,params_buffer
+
     mov r1,r0
     mov r0,#themes
     swi lines_find
     jcc not_found
+
+    mov r1,#bios.theme_name
+    swi str_cpy
 
 view_theme:
     mov r0,#themes_colors
