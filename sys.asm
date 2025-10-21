@@ -294,7 +294,10 @@ not_sh_string:
     swi pprint,msg_theme
     mov r0,#bios.theme_name
     clc
-    jsr print_ram_or_none
+    jsr pprint_ram
+    lda #32
+    jsr CHROUT
+    jsr theme_colors
 
     ldx #bios.COLOR_TEXT
     swi theme_set_color
@@ -302,6 +305,27 @@ not_sh_string:
 
 end_env:
     rts
+
+
+theme_colors:
+    ldx #bios.COLOR_NOTES
+    swi theme_set_color
+    lda #179
+    jsr CHROUT
+    lda #RVSON
+    jsr CHROUT
+    theme_item('T',bios.COLOR_TEXT)
+    theme_item('A',bios.COLOR_ACCENT)
+    theme_item('t',bios.COLOR_TITLE)
+    theme_item('S',bios.COLOR_SUBTITLE)
+    theme_item('C',bios.COLOR_CONTENT)
+    theme_item('N',bios.COLOR_NOTES)
+    ldx #bios.COLOR_NOTES
+    swi theme_set_color
+    lda #RVSOFF
+    jsr CHROUT
+    lda #171
+    jmp CHROUT
 
 print_ram_or_none:
     jsr pprint_ram
@@ -489,4 +513,12 @@ wait:
 	rts
 }
 
+}
+
+.macro theme_item(char,color)
+{
+    ldx #color
+    swi theme_set_color
+    lda #char
+    jsr CHROUT
 }
