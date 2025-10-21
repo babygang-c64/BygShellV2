@@ -49,6 +49,26 @@
 
 .label OPT_PIPE=$80
 
+.namespace reu
+{
+    // REU registers
+    .label status   = $DF00
+    .label command  = $DF01
+    .label c64base  = $DF02
+    .label reubase  = $DF04
+    .label translen = $DF07
+    .label irqmask  = $DF09
+    .label control  = $DF0A
+    
+    // REU commands
+    .label c64_to_reu = %10010000
+    .label reu_to_c64 = %10010001
+    .label swap = %10010010
+    .label trigger_c64_to_reu = %10000000
+    .label trigger_reu_to_c64 = %10000001
+    .label trigger_swap = %10000010
+}
+
 .namespace bios 
 {
 // Version

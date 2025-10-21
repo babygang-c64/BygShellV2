@@ -88,6 +88,47 @@ msg_help:
     pstring(" t = set time of day (HHMMSS)")
     .byte 0
 
+check_reu:
+{
+    lda #0
+    sta reu.control
+    lda #<reu_test
+    sta reu.c64base
+    lda #>reu_test
+    sta reu.c64base + 1
+    lda #0
+    sta reu.reubase
+    sta reu.reubase + 1
+    sta reu.reubase + 2
+    lda #<$0008
+    sta reu.translen
+    lda #>$0008
+    sta reu.translen + 1
+    lda #%10010001 // REU -> c64
+    // lda #%10010000;  c64 -> REU with immediate execution
+    sta reu.command
+    
+    ldx #7
+test:
+    lda reu_test,x
+    cmp reu_test_ref,x
+    bne found
+    dex
+    bpl test
+    clc
+    rts
+found:
+    sec
+    rts
+
+reu_test:
+    .byte $55,$FF,$AA,$18
+    .byte $55,$FF,$AA,$81
+reu_test_ref:
+    .byte $55,$FF,$AA,$18
+    .byte $55,$FF,$AA,$81
+}
+
 //------------------------------------------------------------
 // set_time : set time of day
 //------------------------------------------------------------
@@ -269,6 +310,23 @@ not_jiffy:
 sid8580:
     swi pprint_nl
 
+    // REU check
+    
+    ldx #bios.COLOR_TEXT
+    jsr vert_sep
+    swi pprint,#msg_reu
+
+    mov r0,#msg_none
+    jsr check_reu
+    bcc no_reu
+    mov r0,#msg_reu_128k
+    lda reu.status
+    and #%00001000
+    beq no_reu
+    mov r0,#msg_reu_256k
+no_reu:
+    swi pprint_nl
+    
     jsr line_sep
 
     // current device
@@ -492,7 +550,12 @@ msg_6581:
     pstring("6581")
 msg_8580:
     pstring("8580")
-
+msg_reu:
+    pstring("REU : ")
+msg_reu_128k:
+    pstring("Found, 128Kb")
+msg_reu_256k:
+    pstring("Found, 256Kb+")
 var_int_sh_desc:
     .text "SH%"
     .byte 0
