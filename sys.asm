@@ -190,7 +190,7 @@ is_jiffy:
     lda $e49c,x
     jsr CHROUT
     inx
-    cpx #12
+    cpx #13
     bne is_jiffy
     jsr carriage_return
 
@@ -284,6 +284,17 @@ not_sh_string:
     swi pprint,msg_sh_int
     swi get_basic_int,var_int_sh_desc
     jsr print_int16
+    jsr carriage_return
+
+    // Theme
+
+    jsr line_sep
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
+    swi pprint,msg_theme
+    mov r0,#bios.theme_name
+    clc
+    jsr print_ram_or_none
 
     ldx #bios.COLOR_TEXT
     swi theme_set_color
@@ -320,7 +331,7 @@ print_int8:
     sty zr0h
     sta zr0l
 print_int16:
-    ldx #%10011111
+    ldx #%11011111
     swi pprint_int
     rts
 
@@ -341,12 +352,14 @@ msg_path:
     pstring("BIN Path   : ")
 msg_device:
     pstring("Curr device: ")
+msg_theme:
+    pstring("Theme      : ")
 msg_history:
     pstring("History #  : ")
 msg_none:
     pstring("(None)")
 msg_sid_type:
-    pstring("Sid type : ")
+    pstring("Sid : ")
 msg_6581:
     pstring("6581")
 msg_8580:
