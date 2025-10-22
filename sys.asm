@@ -253,6 +253,8 @@ vert_sep:
     rts
 
 list:
+    ldy #0
+    sty model
     jsr carriage_return
 
     ldx #bios.COLOR_ACCENT
@@ -297,6 +299,21 @@ is_jiffy:
 
 not_jiffy:
 
+    // VIC type
+    
+    ldx #bios.COLOR_TEXT
+    jsr vert_sep
+    swi pprint,#msg_vic_type
+
+    mov r0,#msg_6569
+    jsr vic_detect
+    bcc is_6569
+    mov r0,#msg_8565
+    lda #MODEL_C64C
+    sta model
+is_6569:
+    swi pprint_nl
+
     // SID type
     
     ldx #bios.COLOR_TEXT
@@ -304,10 +321,47 @@ not_jiffy:
     swi pprint,#msg_sid_type
 
     jsr test_sid_model
-    mov r0,#msg_8580
-    bcc sid8580
     mov r0,#msg_6581
-sid8580:
+    bcs sid6581
+    lda #MODEL_C64C
+    sta model
+    mov r0,#msg_6581
+sid6581:
+    swi pprint_nl
+
+    // Model check
+
+    ldx #bios.COLOR_TEXT
+    jsr vert_sep
+    swi pprint,#msg_model
+    
+    mov r0,#msg_c64
+    
+    jsr c128_detect
+    bcc not_c128
+    lda #MODEL_C128
+    sta model
+    mov r0,#msg_c128
+not_c128:
+    jsr mega65_detect
+    bcc not_mega
+    lda #MODEL_MEGA
+    sta model
+    mov r0,#msg_mega
+    jmp write_model
+not_mega:
+    lda model
+    and #MODEL_C64C
+    beq not_msg_c64c
+    mov r0,#msg_c64c
+not_msg_c64c:
+    lda model
+    and #MODEL_C128
+    beq not_msg_c128
+    mov r0,#msg_c128
+
+not_msg_c128:
+write_model:
     swi pprint_nl
 
     // REU check
@@ -321,7 +375,7 @@ sid8580:
     bcc no_reu
     mov r0,#msg_reu_128k
     lda reu.status
-    and #%00001000
+    and #%00010000
     beq no_reu
     mov r0,#msg_reu_256k
 no_reu:
@@ -375,7 +429,6 @@ no_reu:
     jsr bios.bios_ram_get_byte
     jsr print_int8
     jsr carriage_return
-    jsr line_sep
 
     //-- sh$ string
     ldx #bios.COLOR_NOTES
@@ -441,6 +494,17 @@ is_am:
     lda $dc09
     jsr print_bcd
     lda $dc08
+    jsr carriage_return
+
+    // free basic memory
+
+    ldx #bios.COLOR_NOTES
+    jsr vert_sep
+    swi pprint,msg_free
+    mov r0,FRETOP
+    mov r1,STREND
+    sub r0,r1
+    jsr print_int16
 
 end_env:
     ldx #bios.COLOR_TEXT
@@ -522,6 +586,14 @@ print_int16:
     swi pprint_int
     rts
 
+.label MODEL_C64C=1
+.label MODEL_C128=2
+.label MODEL_SX64=4
+.label MODEL_MEGA=8
+
+model:
+    .byte 0
+
 msg_byg_shell:
     pstring("BYG-Shell v")
 msg_clipboard:
@@ -540,28 +612,123 @@ msg_theme:
     pstring("Theme      : ")
 msg_uptime:
     pstring("Time of day: ")
+msg_free:
+    pstring("Free memory: ")
 msg_history:
     pstring("History #  : ")
 msg_none:
     pstring("(None)")
 msg_sid_type:
-    pstring("Sid : ")
+    pstring("SID  : ")
+msg_vic_type:
+    pstring("VIC  : ")
 msg_6581:
     pstring("6581")
 msg_8580:
     pstring("8580")
+msg_8565:
+    pstring("8565")
+msg_6569:
+    pstring("6569")
 msg_reu:
     pstring("REU : ")
 msg_reu_128k:
     pstring("Found, 128Kb")
 msg_reu_256k:
     pstring("Found, 256Kb+")
+msg_c64:
+    pstring("C64")
+msg_c64c:
+    pstring("C64C")
+msg_sx64:
+    pstring("SX64")
+msg_c128:
+    pstring("C128")
+msg_mega:
+    pstring("Mega65")
+msg_model:
+    pstring("Model: ")
+
 var_int_sh_desc:
     .text "SH%"
     .byte 0
 sh_string:
     .text "SH$"
     .byte 0
+}
+
+//------------------------------------------------------------
+// C128 detect, using test bit
+// C=1 : C128
+//------------------------------------------------------------
+
+c128_detect:
+{
+    lda $d030
+    and #$02
+    bne not_c128
+    sec
+not_c128:
+    rts
+}
+
+//------------------------------------------------------------
+// SX64 detect, lookup for "SX" in kernal ROM
+// C=1 : sx64
+//------------------------------------------------------------
+
+sx64_detect:
+{
+    clc
+    lda $f6e0
+    cmp #'S'
+    bne notSX
+    lda $f6e1
+    cmp #'X'
+    bne notSX
+    sec
+notSX:
+    rts
+}
+
+//------------------------------------------------------------
+// Mega65 detect, using $d02f
+// C=1 : mega65 (or ultimate ?)
+//------------------------------------------------------------
+
+mega65_detect:
+{
+    clc
+    rts
+    lda #$aa
+    sta $d600
+    lda $d600
+    cmp #$aa
+    bne not_mega
+    sec
+not_mega:
+    rts
+}
+
+//------------------------------------------------------------
+// VIC detect, using lightpen delay
+// C=1 : 8565, C=0 : 6569
+//------------------------------------------------------------
+
+vic_detect:
+{
+    sei
+    lda $d012
+raster:
+    cmp $d012
+    beq raster
+    dec $dc03   // lightpen
+    inc $dc03
+    lda $d013
+    and #1
+    ror
+    cli
+    rts
 }
 
 //------------------------------------------------------------
