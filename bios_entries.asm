@@ -46,6 +46,7 @@
     .label swap_screen=$a100    // swap screen a100 to a4ff
     .label history_buffer=$a500 // history buffer
     .label theme_name=$a7f0     // theme name
+    .label date_time=$a7e8      // date and time
     .label directory_root=$a800 // directory data for params
 
     // RAM entry points

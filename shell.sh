@@ -76,6 +76,13 @@ copy_to_d64 commands.hlp commands.hlp
 copy_to_d64 keys.hlp keys.hlp
 copy_to_d64 byg-shell.hlp byg-shell.hlp
 
+EPOCH=$(date +%s)
+printf '.byte $%02X,$%02X,$%02X,$%02X\n' \
+  $((EPOCH & 0xFF)) \
+  $(((EPOCH>>8) & 0xFF)) \
+  $(((EPOCH>>16) & 0xFF)) \
+  $(((EPOCH>>24) & 0xFF)) > build_pp.asm
+
 build_command cat
 build_command wc
 build_command search
@@ -101,6 +108,8 @@ build_command dump
 build_command test
 build_command tail
 build_command sys
+build_command date
 
 cp *.hlp bin/
+cat build_pp.asm
 rm -f *_pp.asm

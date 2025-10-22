@@ -20,11 +20,12 @@ sys:
     .label OPT_L=2
     .label OPT_H=4
     .label OPT_T=8
+    .label OPT_B=16
     
     //-- init options
     sec
     swi param_init,buffer,options_sys
-    bcs help
+    jcs help
 
     // no option = show info
     lda options_params
@@ -35,6 +36,24 @@ sys:
     
 with_options:
 
+    lda options_params
+    and #OPT_B
+    beq not_b
+
+    swi pprint,msg_build
+    mov r0,build
+    clc
+    swi pprint_hex
+    lda #'-'
+    jsr CHROUT
+    mov r0,build+2
+    clc
+    swi pprint_hex
+    lda #13
+    jsr CHROUT
+    jmp end
+
+not_b:
     lda options_params
     and #OPT_T
     beq not_time
@@ -77,7 +96,7 @@ help:
     
     //-- options available
 options_sys:
-    pstring("clht")
+    pstring("clhtb")
 
 msg_help:
     pstring("*sys [options]")
@@ -87,6 +106,15 @@ msg_help:
     pstring(" c = clear history")
     pstring(" t = set time of day (HHMMSS)")
     .byte 0
+
+msg_build:
+    pstring("Build : ")
+
+//------------------------------------------------------------
+// check_reu : check if REU is available
+//
+// C=1 : found, C=0 : no REU found
+//------------------------------------------------------------
 
 check_reu:
 {
@@ -859,3 +887,5 @@ wait:
     lda #char
     jsr CHROUT
 }
+build:
+#import "build_pp.asm"

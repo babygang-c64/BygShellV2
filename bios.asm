@@ -40,6 +40,7 @@
 .label swap_screen=$a100    // swap screen a100 to a4ff
 .label history_buffer=$a500 // history buffer
 .label theme_name=$a7f0     // theme name
+.label date_time=$a7e8      // date and time
 .label directory_root=$a800 // directory data for params
 
 // flags definitions
@@ -302,6 +303,12 @@ do_reset:
     sta history_buffer+2
 
     // TOD : time of day
+
+    ldx #7
+raz_date:
+    sta date_time,x
+    dex
+    bpl raz_date
     
     sta $dc0b
     sta $dc0a
