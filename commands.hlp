@@ -26,7 +26,7 @@
 - *scratch : save / load swap screen
 - *search : search pattern in files
 - *sid : play and show info of SIDs
-- *sys : show env / history info
+- *sys : show system info
 - *theme : change colour scheme
 - *test : check if file(s) exist
 - *touch : create new empty files

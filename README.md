@@ -204,9 +204,11 @@ Scan attached devices for disk drives
 
 **SYS**
 
+Sys shows system information.
 Sys can show environment info or history.
 Sys can list or clear the previous commands stored in history.
 History only contains shell commands, not all typed ones.
+Sys can show and set time of day using one of the CIA.
 
 ```
 *sys
@@ -217,6 +219,7 @@ List/clear previous shell commands in history buffer
     C = clear history
     L = list history
     H = help
+    T = set time of day (HHMMSS)
 ```
 
 **DUMP**
