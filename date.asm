@@ -57,6 +57,7 @@ next_param:
     jmp boucle_params
 
 fin_params:
+    jsr view
     swi pipe_end
     clc
     swi success
@@ -73,7 +74,7 @@ error:
     rts
 
 help_msg:
-    pstring("*date [YYYYMMDD] [HHMMSS] [-h]")
+    pstring("*date [YYYYMMDD] [HHMMSS] [-options]")
     pstring(" q = Quiet mode")
     pstring(" h = Help")
     .byte 0
@@ -100,11 +101,25 @@ view:
 {
     jsr view_date
     lda #32
-    jsr CHROUT
+    jsr chrout_cond
     jsr view_time
     lda #13
-    jsr CHROUT
+    jsr chrout_cond
     swi set_basic_string,return_string
+    rts
+}
+
+chrout_cond:
+{
+    pha
+    lda options_params
+    and #OPT_Q
+    bne no_print
+    pla
+    jmp CHROUT
+
+no_print:
+    pla
     rts
 }
 
@@ -119,7 +134,7 @@ view_date:
     jmp print_slash
 print_slash:
     lda #'/'
-    jsr CHROUT
+    jsr chrout_cond
     inx
 print_segment:
     jsr bios.bios_ram_get_byte
@@ -138,14 +153,14 @@ print_bcd:
     adc #$30
     sta date_time_string,x
     inx
-    jsr CHROUT
+    jsr chrout_cond
     pla
     and #15
     clc
     adc #$30
     sta date_time_string,x
     inx
-    jmp CHROUT
+    jmp chrout_cond
 }
 
 view_time:
@@ -160,12 +175,12 @@ is_am:
     jsr print_bcd
     lda #':'
     inx
-    jsr CHROUT
+    jsr chrout_cond
     lda $dc0a
     jsr print_bcd
     lda #':'
     inx
-    jsr CHROUT
+    jsr chrout_cond
     lda $dc09
     jsr print_bcd
     lda $dc08

@@ -13,6 +13,7 @@
 - *chars : char and colour maps
 - *checksum : calculate CRC16 on files
 - *conv : convert text files
+- *date : read/write date/time
 - *diff : compare files
 - *dump : show basic variables
 - *edit : small text editor

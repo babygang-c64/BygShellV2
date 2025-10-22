@@ -222,6 +222,20 @@ List/clear previous shell commands in history buffer
     T = set time of day (HHMMSS)
 ```
 
+**DATE**
+
+Show or set date and time.
+You can set date, or time, or both.
+Returns date/time into SH$.
+
+```
+*date [YYYYMMDD] [HHMMSS] [options]
+
+Show / set date and time
+    options:
+    Q = quiet mode
+    H = help
+```
 **DUMP**
 
 Dump lists standard BASIC variables with values.
