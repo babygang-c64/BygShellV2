@@ -99,13 +99,21 @@ date_time_string:
 
 view:
 {
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
     jsr view_date
+
+    ldx #bios.COLOR_SUBTITLE
+    swi theme_set_color
     lda #32
     jsr chrout_cond
     jsr view_time
     lda #13
     jsr chrout_cond
     swi set_basic_string,return_string
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+
     rts
 }
 
