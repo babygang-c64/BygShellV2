@@ -236,6 +236,21 @@ Show / set date and time
     Q = quiet mode
     H = help
 ```
+
+**LOG**
+
+Show or add entry into .log file.
+If no parameter, show last entries.
+If parameters, add new entry.
+
+```
+*log [message] [options]
+
+Show / add entry to log
+    options:
+    Q = quiet mode
+    H = help
+```
 **DUMP**
 
 Dump lists standard BASIC variables with values.

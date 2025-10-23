@@ -21,6 +21,7 @@
 - *hw : hello world sample command
 - *join : join files
 - *koala : koala image viewer
+- *log : view log or add log entry
 - *lsblk : list attached disk devices
 - *menu : user choice menu
 - *mon : invoke Jiffymon if loaded

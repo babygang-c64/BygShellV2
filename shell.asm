@@ -365,7 +365,7 @@ get_bin_name:
     jsr bios.bios_ram_get_byte
     beq no_bin_path
 
-    // copy path prefix to work_buffer, add :
+    // copy path prefix to work_buffer
     tax
     mov r1,#work_buffer
 copy_path_prefix:
@@ -374,10 +374,6 @@ copy_path_prefix:
     iny
     dex
     bpl copy_path_prefix
-    // test for vice soft device
-//    lda #':'
-//    mov (r1),a
-//    inc work_buffer
 
 no_bin_path:
     // and add filename from buffer

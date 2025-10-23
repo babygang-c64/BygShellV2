@@ -109,6 +109,7 @@ build_command test
 build_command tail
 build_command sys
 build_command date
+build_command log
 
 cp *.hlp bin/
 cat build_pp.asm
