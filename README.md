@@ -248,9 +248,12 @@ If parameters, add new entry.
 
 Show / add entry to log
     options:
-    Q = quiet mode
     H = help
+    Q = quiet mode
+    A = list all log entries
+    N = view last N log entries
 ```
+
 **DUMP**
 
 Dump lists standard BASIC variables with values.

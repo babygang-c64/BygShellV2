@@ -21,6 +21,9 @@ log:
 
     .label OPT_H=1
     .label OPT_Q=2
+    .label OPT_A=4
+    .label OPT_C=8
+    .label OPT_N=16
 
     lda #10
     sta nb_lignes_max
@@ -72,6 +75,12 @@ no_value:
     jmp error_m
     
 file_ok:
+    clc
+    lda options_params
+    and #OPT_A
+    beq not_a
+    sec
+not_a:
     jsr tail_log
     jmp ok_close
 
@@ -142,40 +151,9 @@ nl_no_print:
     swi theme_set_color
     jmp ok_close
 
-    //------------------------------------------------
-    // tail_log : view last entries of logfile
-    //------------------------------------------------
-
-tail_log:
-    ldy #0
-
-    ldx #4
-    clc
-    swi file_open,log_name
-    jcs error_open
-
-    swi pipe_output
-
-boucle_tail:
-    ldx #4
-    jsr CHKIN
-    swi file_readline, work_buffer
-    bcs view_and_close
-
-    clc
-    mov r0,#work_buffer
-    jsr add_line
-    jmp boucle_tail
-
 help:
     swi pprint_lines,help_msg
     clc
-    rts
-
-view_and_close:
-    ldx #4
-    swi file_close
-    jsr view_lines
     rts
 
 ok_close:
@@ -214,12 +192,14 @@ error:
 
 help_msg:
     pstring("*log [<message>]")
+    pstring(" a = view all")
+    pstring(" n = last N lines")
     pstring(" q = quiet")
     pstring(" h = Help")
     .byte 0
 
 options_log:
-    pstring("hq")
+    pstring("hqan")
 
 log_name:
     pstring(".log,s")
@@ -231,6 +211,58 @@ nb_lignes:
 nb_lignes_max:
     .byte 0
 
+//----------------------------------------------------
+// tail_log : view last lines
+//
+// C=0 : last lines, C=1 : all lines
+//----------------------------------------------------
+
+tail_log:
+{
+    stc is_all_lines
+
+    ldy #0
+    ldx #4
+    clc
+    swi file_open,log_name
+    jcs error_open
+
+    swi pipe_output
+
+boucle_tail:
+    ldx #4
+    jsr CHKIN
+    swi file_readline, work_buffer
+    bcs view_and_close
+
+    lda is_all_lines
+    beq no_print
+    
+    jsr view_lines.print_single_line
+    
+    jmp boucle_tail
+
+no_print:
+    clc
+    mov r0,#work_buffer
+    jsr add_line
+    jmp boucle_tail
+
+view_and_close:
+    ldx #4
+    swi file_close
+    lda is_all_lines
+    bne not_all_lines
+    jsr view_lines
+
+not_all_lines:
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    rts
+
+is_all_lines:
+    .byte 0
+}
 
 //----------------------------------------------------
 // add_line : add line in r0 to work buffer, if
@@ -291,6 +323,10 @@ cpt_copy:
     .word 0
 }
 
+//----------------------------------------------------
+// view_lines : print all stored lines
+//----------------------------------------------------
+
 view_lines:
 {
     mov r0,STREND
@@ -304,6 +340,21 @@ loop:
     mov r1,#work_buffer
     swi str_cpy
 
+    jsr print_single_line
+
+    ldx save_x
+    pop r0
+    mov a,(r0)
+    add r0,a
+    inc r0
+    dex
+    jne loop
+end:
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    rts
+
+print_single_line:
     ldx #','
     swi str_split,work_buffer
     sta nb_split
@@ -322,20 +373,7 @@ print_all:
     dec nb_split
     bne print_all
     lda #13
-    jsr CHROUT
-
-    ldx save_x
-    pop r0
-    mov a,(r0)
-    add r0,a
-    inc r0
-    dex
-    jne loop
-end:
-    ldx #bios.COLOR_TEXT
-    swi theme_set_color
-    rts
-    
+    jmp CHROUT
 save_x:
     .byte 0
 nb_split:
