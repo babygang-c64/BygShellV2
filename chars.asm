@@ -1,11 +1,9 @@
 //----------------------------------------------------
-// head : print head of file(s)
+// chars : char map / color map / petscii map
 //
 // options : 
-// N = number of lines to print
-// Q = don't print filename
-// V = always print filename
-// P = paginate
+// C = show color map
+// P = show PETSCII map
 //----------------------------------------------------
 
 #import "bios_entries_pp.asm"
@@ -24,6 +22,7 @@ chars:
 
     .label OPT_C=1
     .label OPT_H=2
+    .label OPT_P=4
     
     sec
     swi param_init,buffer,options_chars
@@ -44,6 +43,14 @@ chars:
     jmp end
     
 not_c:
+    lda options_params
+    and #OPT_P
+    beq not_p
+    
+    jsr petscii_map
+    jmp end
+    
+not_p:
     jsr char_map
 
 end:
@@ -86,13 +93,14 @@ current_color:
 //    .byte 3,8,15,1
 
 help_msg:
-    pstring("*chars [-ch]")
+    pstring("*chars [option]")
     pstring(" c = List of colors")
+    pstring(" p = PETSCII chars")
     pstring(" h = Help")
     .byte 0
 
 options_chars:
-    pstring("ch")
+    pstring("chp")
 
     // box draw structure :
     // start_x, start_y
@@ -401,6 +409,104 @@ color_names:
     pstring(" --- 0D - 13 - Light Green")
     pstring(" --- 0E - 14 - Light Blue")
     pstring(" --- 0F - 15 - Light Grey")
+    .byte 0
+}
+
+petscii_map:
+{
+    mov r1,#petscii_data
+    ldy #0
+loop:
+    lda (zr1l),y
+    beq end
+    push r1
+    jsr write_line
+    pop r1
+    lda (zr1l),y
+    add r1,a
+    inc r1
+    jmp loop
+
+end:
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    rts
+    
+write_line:
+    ldy #0
+    sty wrote
+    lda (zr1l),y
+    sta nb_total
+    inc r1
+
+write_loop:
+    lda (zr1l),y
+    cmp #':'
+    bne no_color1
+
+    ldx #bios.COLOR_TITLE
+    swi theme_set_color
+    jmp next_char
+
+no_color1:
+    cmp #'*'
+    bne no_color3
+    
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    jmp next_char
+
+no_color3:
+    cmp #';'
+    bne no_color2
+
+    ldx #bios.COLOR_SUBTITLE
+    swi theme_set_color
+    lda #32
+    
+no_color2:
+    jsr CHROUT
+    inc wrote
+
+next_char:
+    inc r1
+    dec nb_total
+    bne write_loop
+
+    lda wrote
+    cmp #40
+    beq no_nl
+    swi pprint_nl
+no_nl:
+    lda wrote
+    rts
+    
+nb_total:
+    .byte 0
+wrote:
+    .byte 0
+line:
+    .byte 0
+petscii_data:
+    pstring("*PETSCII control chars")
+    pstring(" ")
+    pstring(":03;Stop   :05;White  :08;Disable shift+cmd")
+    pstring(":09;Enable shift+cmd :0D;Return")
+    pstring(":0E;Lowercase charset          :11;Down")
+    pstring(":12;Rvs On :13;Home   :14;Delete :1C;Red")
+    pstring(":1D;Right  :1E;Green  :1F;Blue   :81;Orange")
+    pstring(":83;Shift run/stop   :85;F1     :86;F3")
+    pstring(":87;F5     :88;F7     :89;F2     :8A;F4")
+    pstring(":8B;F6     :8C;F8     :8D;Shift Return")
+    pstring(":8E;Uppercase charset          :90;Black")
+    pstring(":91;Up     :92;RvsOff :93;Clear  :94;Insert")
+    pstring(":95;Brown  :96;Pink   :97;DarkGr :98;Grey")
+    pstring(":99;LGreen :9A;LBlue  :9B;LGrey  :9C;Purple")
+    pstring(":9D;Left   :9E;Yellow :9F;Cyan")
+    pstring(" ")
+    pstring("*Lowercase / Uppercase ")
+    pstring(" ")
+    pstring(":41-5A;a-z :C1-D1;A-Z")
     .byte 0
 }
 

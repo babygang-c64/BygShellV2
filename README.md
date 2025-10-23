@@ -475,6 +475,7 @@ print last lines of files (default = 10 lines)
 
 CHARS displays a character set map by default
 You can display a colour palette with the C option
+You can also display PETSCII control chars with P option
 
 ![Char map](images/Chars.png)
 ![Colorr map](images/CharsC.png)
@@ -484,6 +485,7 @@ You can display a colour palette with the C option
     options :
     H = show help
     C = map of colors
+    P = PETSCII control characters
 ```
 
 **KOALA**
