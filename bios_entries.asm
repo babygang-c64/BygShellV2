@@ -52,7 +52,7 @@
     // RAM entry points
 
     .label bios_exec=$cf68      // SWI entry point
-    .label bios_ram_get_byte=bios_exec+5
+    .label bios_ram_get_byte=bios_exec+6
     .label irq_sub=$cff4        // IRQ sub call
 
     // Conversions

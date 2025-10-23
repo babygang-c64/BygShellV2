@@ -82,7 +82,7 @@
 //===============================================================
 
 .label bios_exec=$cf68
-.label bios_ram_get_byte=bios_exec+5
+.label bios_ram_get_byte=bios_exec+6
 
 .label reset=9
 .label str_split=11
@@ -270,9 +270,17 @@ bios_exec_ref:
 
 ram_get_byte:
     sei
+//    lda #0
+//    sta $d01a
+//    bit $d019
+//    sta $d019
     dec $01
     lda (zr0l),y
+//    pha
     inc $01
+//    lda #1
+//    sta $d01a
+//    pla
     cli
     rts
 end_ref:
@@ -331,6 +339,15 @@ copy_bios_exec:
     sta bios_exec,x
     dex
     bpl copy_bios_exec
+    
+//    ldx #0
+//copy_irq:
+//    lda do_irq_sub,x
+//    sta do_irq_sub,x
+//    lda do_irq_sub+256,x
+//    sta do_irq_sub+256,x
+//    dex
+//    bne copy_irq
     
     // clear swap screen
     mov r0,#swap_screen

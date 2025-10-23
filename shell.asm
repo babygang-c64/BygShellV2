@@ -58,7 +58,7 @@ start_cartridge:
     sta k_flag
     lda #<irq_hook
     sta IIRQ
-    lda #>irq_hook+1
+    lda #>irq_hook
     sta IIRQ+1
     lda #%01111111
     sta $dc0d
@@ -886,7 +886,6 @@ do_irq_sub:
 
 irq_hook:
 {
-    nop
     lda irq_sub+1
     beq no_sub
 
