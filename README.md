@@ -255,6 +255,22 @@ Show / add entry to log
     C = clear log file
 ```
 
+**PAUSE**
+
+Wait for a key to be pressed.
+Key value is returned into SH%
+If parameter is given, it's printed instead of
+default message.
+
+```
+*pause [message] [options]
+
+Wait for key
+    options:
+    H = help
+```
+
+
 **DUMP**
 
 Dump lists standard BASIC variables with values.

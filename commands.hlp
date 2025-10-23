@@ -25,6 +25,7 @@
 - *lsblk : list attached disk devices
 - *menu : user choice menu
 - *mon : invoke Jiffymon if loaded
+- *pause : wait for key
 - *scratch : save / load swap screen
 - *search : search pattern in files
 - *sid : play and show info of SIDs
