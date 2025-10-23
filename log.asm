@@ -45,6 +45,14 @@ log:
     jne help
 
     //------------------------------------------------
+    // clear log option
+    //------------------------------------------------
+    
+    lda options_params
+    and #OPT_C
+    jne clear_log
+
+    //------------------------------------------------
     // if params, process
     //------------------------------------------------
 
@@ -165,6 +173,7 @@ fini:
     swi success
     rts
 
+
 msg_no_log:
     pstring("No log file")
 msg_open:
@@ -195,11 +204,12 @@ help_msg:
     pstring(" a = view all")
     pstring(" n = last N lines")
     pstring(" q = quiet")
+    pstring(" c = clear log")
     pstring(" h = Help")
     .byte 0
 
 options_log:
-    pstring("hqan")
+    pstring("hqacn")
 
 log_name:
     pstring(".log,s")
@@ -210,6 +220,33 @@ nb_lignes:
     .byte 0
 nb_lignes_max:
     .byte 0
+
+//----------------------------------------------------
+// clear_log : delete log file
+//----------------------------------------------------
+
+clear_log:
+{
+    clc
+    ldx #15
+    swi file_open,clear_log_name
+    swi file_close
+    lda options_params
+    and #OPT_Q
+    bne quiet
+    ldx #bios.COLOR_ACCENT
+    swi theme_set_color
+    swi pprint_nl,msg_clear
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+quiet:
+    rts
+    
+clear_log_name:
+    pstring("s:.log")
+msg_clear:
+    pstring("Log cleared")
+}
 
 //----------------------------------------------------
 // tail_log : view last lines

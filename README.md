@@ -252,6 +252,7 @@ Show / add entry to log
     Q = quiet mode
     A = list all log entries
     N = view last N log entries
+    C = clear log file
 ```
 
 **DUMP**
