@@ -490,8 +490,8 @@ line:
 petscii_data:
     pstring("*PETSCII control chars")
     pstring(" ")
-    pstring(":03;Stop   :05;White  :08;Disable shift+cmd")
-    pstring(":09;Enable shift+cmd :0D;Return")
+    pstring(":03;Stop   :05;White  :08;Disable shift+C=")
+    pstring(":09;Enable shift+C=  :0D;Return")
     pstring(":0E;Lowercase charset          :11;Down")
     pstring(":12;Rvs On :13;Home   :14;Delete :1C;Red")
     pstring(":1D;Right  :1E;Green  :1F;Blue   :81;Orange")
