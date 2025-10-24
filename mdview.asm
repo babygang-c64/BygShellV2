@@ -303,29 +303,65 @@ not_init:
     lda #bios.COLOR_TEXT
     sta color
     ldy #0
+    sty spaces
     mov a,(r0)
+    sta lgr
+    bne not_empty
+    rts
+not_empty:
     tax
     iny
     mov a,(r0)
     cmp #'#'
-    beq process_title
+    jeq process_title
     cmp #'>'
-    beq process_citation
+    jeq process_citation
     cmp #'-'
-    beq process_list
+    jeq process_list
     cmp #39
-    beq process_apost
+    bne process_standard
+    lda lgr
+    cmp #3
+    bne process_standard
+    iny
+    mov a,(r0)
+    cmp #39
+    bne process_standard
+    iny
+    mov a,(r0)
+    cmp #39
+    bne process_standard
+    jmp process_code
     
     // standard line
+process_standard:
     ldy #0
+    lda is_code
+    beq code_block
     ldx color
     swi theme_set_color
     swi pprint
     rts
     
+    // code block
+code_block:
+    // code
+    lda #RVSON
+    jsr CHROUT
+    ldx #bios.COLOR_NOTES
+    swi theme_set_color
+    swi pprint
+    lda #RVSOFF
+    jmp CHROUT
+
     // title formating
 process_title:
     dex
+    lda #40
+    sec
+    sbc lgr
+    lsr
+    sta spaces
     lda #bios.COLOR_TITLE
     sta color
     iny
@@ -334,6 +370,8 @@ process_title:
     bne end_title
     iny
     dex
+    lda #0
+    sta spaces
     lda #bios.COLOR_SUBTITLE
     sta color
     mov a,(r0)
@@ -342,6 +380,7 @@ process_title:
     iny
     dex
     lda #bios.COLOR_CONTENT
+    sta color
 end_title:
     jmp color_and_print
 
@@ -351,14 +390,36 @@ process_citation:
     lda #bios.COLOR_NOTES
     sta color
     iny
-    lda #32
-    jsr CHROUT
-    jsr CHROUT
+    lda #2
+    sta spaces
     jmp color_and_print
 
 process_list:
-process_apost:
+    dex
+    iny
+    stx lgr
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    lda #32
+    jsr CHROUT
+    lda #172
+    jsr CHROUT
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    lda #1
+    sta spaces
+    ldx lgr
+    jmp color_and_print
+
+    // Do the print : heading spaces, color and content
 color_and_print:
+    lda spaces
+    beq end_spaces
+    dec spaces
+    lda #32
+    jsr CHROUT
+    jmp color_and_print
+end_spaces:
     stx lgr
     ldx color
     swi theme_set_color
@@ -372,6 +433,16 @@ print_loop:
     ldy #0
     rts
 
+process_code:
+    lda #0
+    sta lgr
+    lda is_code
+    eor #1
+    sta is_code
+    rts
+
+spaces:
+    .byte 0
 lgr:
     .byte 0
 is_code:

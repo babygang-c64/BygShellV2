@@ -7,7 +7,8 @@ nothing much here
 here is some *accent* text
 and some code :
 
-'''this is a code block
+'''
+this is a code block
 now not really code yet
 but that's a small test
 '''
