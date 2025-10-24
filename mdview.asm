@@ -253,11 +253,31 @@ key_home:
     clc
     rts
 
+    //------------------------------------------------
+    // backspace : go one page up
+    //------------------------------------------------
+
+key_backspace:
+    mov r0,#1
+    cmpw current_line,r0
+    beq key_home
+    mov r0,current_line
+    sub r0,#25
+    mov current_line,r0
+    clc
+    rts
+
 nav_keys:
     .byte 32
     .word key_space
+    .byte DOWN
+    .word key_space
     .byte HOME
     .word key_home
+    .byte BACKSPACE
+    .word key_backspace
+    .byte UP
+    .word key_backspace
     .byte 0
 
 current_key:
