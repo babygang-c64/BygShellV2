@@ -75,6 +75,7 @@ copy_to_d64 "jiffymon v2" "jiffymonv2"
 copy_to_d64 commands.hlp commands.hlp
 copy_to_d64 keys.hlp keys.hlp
 copy_to_d64 byg-shell.hlp byg-shell.hlp
+copy_to_d64 mdtest.md test.md
 
 EPOCH=$(date +%s)
 printf '.byte $%02X,$%02X,$%02X,$%02X\n' \
@@ -111,6 +112,7 @@ build_command sys
 build_command date
 build_command log
 build_command pause
+build_command mdview
 
 cp *.hlp bin/
 cat build_pp.asm

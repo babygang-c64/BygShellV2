@@ -1380,6 +1380,7 @@ efface_msg:
 // input : r0 = nodes starting line number
 //         r1 = nodes root
 //         Y = number of lines to fill
+//         X = view offset
 //----------------------------------------------------
 
 do_screen_write_all:
@@ -1407,9 +1408,7 @@ draw:
 
     cmpw total_lines,current_line
     bne draw
-
-    inc $d020
-
+    
 no_more_lines:
     // fill remaining screen space while Y not 0
     mov r1,screen_pos
