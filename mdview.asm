@@ -171,6 +171,7 @@ view_lines:
 
     lda #0
     sta pos_y
+    sta is_ignore
     mov line_y,current_line
 
 loop:
@@ -178,23 +179,30 @@ loop:
     mov r0,line_y
     swi node_goto
     
-//    swi pprint
     jsr format_print_line
+    sta is_ignore
+    bne not_inc
     
     cmpw line_y,total_lines
     beq end_loop
 
-    incw line_y
     inc pos_y
+not_inc:
+    incw line_y
     lda pos_y
     cmp #25
     beq end_loop
+    lda is_ignore
+    bne loop
+
     lda #13
     jsr CHROUT
     jmp loop
 end_loop:
     rts
 
+is_ignore:
+    .byte 0
 line_y:
     .word 0
 pos_y:
@@ -289,7 +297,8 @@ current_key:
 //----------------------------------------------------
 // format_print : format line of text and print
 //
-// c=1 init
+// c=1 init, c=0 process line
+// return : A=0 normal line, A=1 ignore line
 //----------------------------------------------------
 
 format_print_line:
@@ -337,10 +346,11 @@ not_empty:
 process_standard:
     ldy #0
     lda is_code
-    beq code_block
+    bne code_block
     ldx color
     swi theme_set_color
     swi pprint
+    lda #0
     rts
     
     // code block
@@ -352,7 +362,9 @@ code_block:
     swi theme_set_color
     swi pprint
     lda #RVSOFF
-    jmp CHROUT
+    jsr CHROUT
+    lda #0
+    rts
 
     // title formating
 process_title:
@@ -431,6 +443,7 @@ print_loop:
     dex
     bne print_loop
     ldy #0
+    tya
     rts
 
 process_code:
@@ -439,6 +452,7 @@ process_code:
     lda is_code
     eor #1
     sta is_code
+    lda #1
     rts
 
 spaces:
