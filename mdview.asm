@@ -108,7 +108,8 @@ init_mdview:
     dey
     mov current_line,#1
     mov total_lines,#0
-    rts
+    sec
+    jmp format_print_line
 }
 
 //----------------------------------------------------
@@ -177,7 +178,8 @@ loop:
     mov r0,line_y
     swi node_goto
     
-    swi pprint
+//    swi pprint
+    jsr format_print_line
     
     cmpw line_y,total_lines
     beq end_loop
@@ -281,6 +283,100 @@ nav_keys:
     .byte 0
 
 current_key:
+    .byte 0
+}
+
+//----------------------------------------------------
+// format_print : format line of text and print
+//
+// c=1 init
+//----------------------------------------------------
+
+format_print_line:
+{
+    bcc not_init
+    ldy #0
+    sty is_code
+    rts
+
+not_init:
+    lda #bios.COLOR_TEXT
+    sta color
+    ldy #0
+    mov a,(r0)
+    tax
+    iny
+    mov a,(r0)
+    cmp #'#'
+    beq process_title
+    cmp #'>'
+    beq process_citation
+    cmp #'-'
+    beq process_list
+    cmp #39
+    beq process_apost
+    
+    // standard line
+    ldy #0
+    ldx color
+    swi theme_set_color
+    swi pprint
+    rts
+    
+    // title formating
+process_title:
+    dex
+    lda #bios.COLOR_TITLE
+    sta color
+    iny
+    mov a,(r0)
+    cmp #'#'
+    bne end_title
+    iny
+    dex
+    lda #bios.COLOR_SUBTITLE
+    sta color
+    mov a,(r0)
+    cmp #'#'
+    bne end_title
+    iny
+    dex
+    lda #bios.COLOR_CONTENT
+end_title:
+    jmp color_and_print
+
+    // citation formating
+process_citation:
+    dex
+    lda #bios.COLOR_NOTES
+    sta color
+    iny
+    lda #32
+    jsr CHROUT
+    jsr CHROUT
+    jmp color_and_print
+
+process_list:
+process_apost:
+color_and_print:
+    stx lgr
+    ldx color
+    swi theme_set_color
+    ldx lgr
+print_loop:
+    mov a,(r0)
+    jsr CHROUT
+    iny
+    dex
+    bne print_loop
+    ldy #0
+    rts
+
+lgr:
+    .byte 0
+is_code:
+    .byte 0
+color:
     .byte 0
 }
 

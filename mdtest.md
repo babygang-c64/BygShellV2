@@ -1,7 +1,6 @@
 #markdown test file
-
 ##subtitle 1
-
+###subtitle level 2
 standard text paragraph
 nothing much here
 
