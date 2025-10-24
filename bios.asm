@@ -2685,9 +2685,11 @@ do_node_append:
     push r0
     mov r0, (r1)
     jsr node_precalc
+    mov r0, (r1)
+    inc r0
+    mov (r1), r0
     pop r0
     mov (r2),r0
-    incw r1
     rts
 }
 
@@ -2703,7 +2705,7 @@ do_node_remove:
     mov r0, (r1)
     jsr node_precalc
     mov r0, (r2)
-    decw r1
+    decw r1 // ?
     rts
 }
 

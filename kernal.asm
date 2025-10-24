@@ -132,10 +132,11 @@
 .label CTRLT=$14
 .label CTRLU=$15    // home key
 .label CTRLX=$18
-.label CTRLS=$13
+.label CTRLS=$13    // = home
 .label CTRLW=23
 .label RETURN=13
 .label RVSON=18
 .label RVSOFF=146
 .label WHITE=5
 .label LIGHT_GRAY=155
+.label HOME=$13

@@ -1271,7 +1271,7 @@ goto_left:
 
 history:
 {
-.label max_history=10
+.label max_history=15
 
     //--------------------------------------------------------
     // goto : goto pstring at position X, returns address in

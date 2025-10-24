@@ -28,33 +28,19 @@ mdview:
     jeq help
 
     ldy #0
+    jsr init_mdview
+    
     sec
     swi param_process,params_buffer
-
-    ldx #4
-    clc
-    swi file_open
-    jcs error_open
-
-boucle_load:
-    swi file_readline, work_buffer
-    bcs ok_close
-
-    lda options_params
-    and #OPT_A
-    beq not_opt_a
     
-    ldx #bios.ASCII_TO_PETSCII
-    swi str_conv
-    
-not_opt_a:
-    clc
-    mov r0,#work_buffer
-    jsr add_line
-    jmp boucle_load
-    ldx #4
-    swi file_close
-    
+    jsr load_document
+view_loop:
+    jsr view_lines
+    jsr navigate
+    bcc view_loop
+
+end:
+    jsr CLRCHN
     clc
     swi success
     rts
@@ -86,78 +72,196 @@ help_msg:
 options_mdview:
     pstring("a")
 
+nodes_root:
+    .word 0
+data_root:
+    .word 0
+next_data:
+    .word 0
+current_line:
+    .word 0
+total_lines:
+    .word 0
+
 //----------------------------------------------------
-// add_line : add line in r0 to work buffer, if
-// max lines then move out the first one before
+// init_mdview : setup memory for lines and content
 //
-// if C=1 init, X = max_lines
-// uses the free BASIC RAM between STREND and FRETOP
+// nodes_root at STREND for 2 blocks, 
+// with 0 allocated nodes
+// data_root at STREND+$0200
+// next_data ptr at data_root
 //----------------------------------------------------
 
-add_line:
+init_mdview:
 {
-    jcs init
-    lda stored_lines
-    cmp max_lines
-    beq is_max
-    inc stored_lines
-    jmp insert
-
-is_max:
+    mov nodes_root,STREND
+    mov data_root,STREND
+    inc data_root+1
+    inc data_root+1
+    mov next_data,data_root
     ldy #0
-    mov r1,STREND
-    mov a,(r1)
-    add r1,a
-    inc r1    
-    mov r2,next_space
-    sub r2,r1
-    mov cpt_copy,r2
-    mov r2,STREND
-copy:
-    mov a,(r1++)
-    mov (r2++),a
-    decw cpt_copy
-    bne copy
-    mov next_space,r2
-insert:
-    mov r1,next_space
-    swi str_cpy
-    add r1,a
-    mov next_space,r1
+    mov r0,nodes_root
     tya
-    mov (r1),a
+    mov (r0),a
+    iny
+    mov (r0),a
+    dey
+    mov current_line,#1
+    mov total_lines,#0
     rts
-
-init:
-    stx max_lines
-    ldy #0
-    sty stored_lines
-    mov next_space,STREND
-    rts
-
-max_lines:
-    .byte 0
-stored_lines:
-    .byte 0
-next_space:
-    .word 0
-cpt_copy:
-    .word 0
 }
+
+//----------------------------------------------------
+// load_document : open and load markdown document
+//----------------------------------------------------
+
+load_document:
+{
+    ldx #4
+    clc
+    swi file_open
+    jcs error_open
+
+    ldx #4
+    jsr CHKIN
+
+boucle_load:
+    ldx #4
+    swi file_readline, work_buffer
+    bcs ok_close
+    
+    lda options_params
+    and #OPT_A
+    beq not_opt_a
+    
+    ldx #bios.ASCII_TO_PETSCII
+    swi str_conv
+    
+not_opt_a:
+
+    // add node and line 
+    mov r1,nodes_root
+    mov r0,next_data
+    swi node_append
+
+    mov r1,next_data
+    swi str_cpy,#work_buffer
+    add r1,a
+    mov next_data,r1
+    
+    incw total_lines
+    
+    jmp boucle_load
+    
+ok_close:
+    ldx #4
+    swi file_close
+    rts
+}
+
+//----------------------------------------------------
+// view_lines : from current_line, browse content
+//----------------------------------------------------
 
 view_lines:
 {
-    mov r0,STREND
-    ldx add_line.stored_lines
-    beq end
+    lda #147
+    jsr CHROUT
+
+    lda #0
+    sta pos_y
+    mov line_y,current_line
+
 loop:
-    swi pprint_nl
-    add r0,a
-    inc r0
-    dex
-    bne loop
-end:
+    mov r1,nodes_root
+    mov r0,line_y
+    swi node_goto
+    
+    swi pprint
+    
+    cmpw line_y,total_lines
+    beq end_loop
+
+    incw line_y
+    inc pos_y
+    lda pos_y
+    cmp #25
+    beq end_loop
+    lda #13
+    jsr CHROUT
+    jmp loop
+end_loop:
     rts
+
+line_y:
+    .word 0
+pos_y:
+    .byte 0
+}
+
+//----------------------------------------------------
+// navigate : document navigation
+//----------------------------------------------------
+
+navigate:
+{
+    swi key_wait
+    sta current_key
+    bcc key_jump
+    rts
+
+    // A = key pressed, lookup in nav_keys and jump
+key_jump:
+    ldx #0
+test_key:
+    lda nav_keys,x
+    beq key_found
+    cmp current_key
+    beq key_found
+    inx
+    inx
+    inx
+    bne test_key
+    jmp navigate
+
+key_found:
+    lda nav_keys+1,x
+    sta key_jump_addr
+    lda nav_keys+2,x
+    sta key_jump_addr+1
+    jmp key_jump_addr:$FCE2
+
+    //------------------------------------------------
+    // space : move one page down
+    //------------------------------------------------
+    
+key_space:
+    mov r0,current_line
+    add r0,#25
+    cmpw r0,total_lines
+    bcs navigate
+    mov current_line,r0
+    clc
+    rts
+    
+    //------------------------------------------------
+    // home : go top
+    //------------------------------------------------
+
+key_home:
+    mov current_line,#1
+    clc
+    rts
+
+nav_keys:
+    .byte 32
+    .word key_space
+    .byte HOME
+    .word key_home
+    .byte 0
+
+current_key:
+    .byte 0
 }
 
 } // MDVIEW namespace
