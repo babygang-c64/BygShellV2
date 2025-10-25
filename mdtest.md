@@ -1,26 +1,26 @@
 #markdown test file
+
 ##subtitle 1
 ###subtitle level 2
 standard text paragraph
 nothing much here
-
 here is some *accent* text
 and some code :
 
 '''
 this is a code block
-now not really code yet
-but that's a small test
+*mdview <filename> [options]
+Example:
+*mdview -a test.md
 '''
 
 Small list:
 
--one
--two
--three
+-mdview:View markdown files
+-tail  :View last lines of files
+-edit  :Small text editor
 
 And link to [file](thefile)
-
 >citation also
 >that's all for now
 

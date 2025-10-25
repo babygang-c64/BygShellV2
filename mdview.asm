@@ -34,6 +34,7 @@ mdview:
     swi param_process,params_buffer
     
     jsr load_document
+
 view_loop:
     jsr view_lines
     jsr navigate
@@ -90,6 +91,7 @@ total_lines:
 // with 0 allocated nodes
 // data_root at STREND+$0200
 // next_data ptr at data_root
+// string data : pstring
 //----------------------------------------------------
 
 init_mdview:
@@ -100,6 +102,7 @@ init_mdview:
     inc data_root+1
     mov next_data,data_root
     ldy #0
+    sty is_code
     mov r0,nodes_root
     tya
     mov (r0),a
@@ -108,12 +111,24 @@ init_mdview:
     dey
     mov current_line,#1
     mov total_lines,#0
-    sec
-    jmp format_print_line
+    rts
 }
 
 //----------------------------------------------------
 // load_document : open and load markdown document
+//
+// storage : pointers to lines in node list at
+// nodes_root, lines data at data_root as this :
+// 1 byte : type, bitmap
+//      7 = has link
+//      6 = reserved
+//      5 = code block
+//      4 = citation
+//      3 = title 3
+//      2 = title 2
+//      1 = title 1
+//      0 = text
+// 1 byte : max length (for code block)
 //----------------------------------------------------
 
 load_document:
@@ -140,18 +155,21 @@ boucle_load:
     
 not_opt_a:
 
-    // add node and line 
+    mov r1,next_data
+    mov r0,#work_buffer
+    jsr preprocess_and_store
+    bcs no_store
+
+    push r1
+    // add node and line data
     mov r1,nodes_root
     mov r0,next_data
     swi node_append
+    pop r1
 
-    mov r1,next_data
-    swi str_cpy,#work_buffer
-    add r1,a
-    mov next_data,r1
-    
+    mov next_data,r1    
     incw total_lines
-    
+no_store:
     jmp boucle_load
     
 ok_close:
@@ -159,6 +177,153 @@ ok_close:
     swi file_close
     rts
 }
+
+//----------------------------------------------------
+// preprocess_and_store : pre-process an input line
+// and store the data
+// input : r0 = pstring, r1 = data store
+//----------------------------------------------------
+
+.label TYPE_TEXT = 0
+.label TYPE_TITLE1 = 1
+.label TYPE_TITLE2 = 2
+.label TYPE_TITLE3 = 3
+.label TYPE_CITATION = 4
+.label TYPE_LIST = 5
+.label TYPE_CODE = 6
+.label TYPE_LINK = 7
+
+preprocess_and_store:
+{
+    lda is_code
+    beq not_in_code_block
+    jmp process_code
+
+not_in_code_block:
+    ldy #0
+    mov a,(r0)
+    beq force_text
+    iny
+    mov a,(r0)
+    cmp #'#'
+    beq found_title
+    cmp #39
+    beq found_apost
+    cmp #'>'
+    beq found_citation
+    cmp #'-'
+    beq found_list
+
+force_text:
+    lda #TYPE_TEXT
+    ldx #0
+is_text:
+    // is text
+    ldy #0
+    mov (r1++),a
+    tax
+    mov (r1++),a
+    swi str_cpy
+    add r1,a
+    clc
+    rts
+
+found_citation:
+    lda #TYPE_CITATION
+    jmp is_text
+    
+found_list:
+    lda #TYPE_CITATION
+    jmp is_text
+    
+found_title:
+    iny
+    mov a,(r0)
+    cmp #'#'
+    beq found_title2
+    lda #TYPE_TITLE1
+    jmp is_text
+found_title2:
+    iny
+    mov a,(r0)
+    cmp #'#'
+    beq found_title3
+    lda #TYPE_TITLE2
+    jmp is_text
+found_title3:
+    lda #TYPE_TITLE3
+    jmp is_text
+    
+found_apost:
+    ldy #0
+    mov a,(r0)
+    cmp #3
+    bne is_text
+    
+    lda #1
+    sta is_code
+    mov first_code,r1
+    lda #0
+    sta maxlen_code
+    sec
+    rts
+
+end_code:
+    lda #0
+    sta is_code
+    mov r2,first_code
+    
+copy_maxlen:
+    ldy #1
+    lda maxlen_code
+    mov (r2),a
+    iny
+    mov a,(r2)
+    ldy #0
+    add r2,a
+    add r2,#3
+    cmpw r2,r1
+    bne copy_maxlen
+    sec
+    rts
+    
+process_code:
+    ldy #0
+    mov a,(r0)
+    cmp #3
+    bne not_apost
+    iny
+    mov a,(r0)
+    cmp #39
+    bne not_apost
+    jmp end_code
+
+not_apost:
+    ldy #0
+    mov a,(r0)
+    cmp maxlen_code
+    bcc not_more
+    sta maxlen_code
+    cmp #3
+    bne not_more
+    iny
+    mov a,(r0)
+    cmp #39
+    bne not_more
+    jmp end_code
+    
+not_more:
+    lda #TYPE_CODE
+    jmp is_text
+    
+first_code:
+    .word 0
+}
+
+is_code:
+    .byte 0
+maxlen_code:
+    .byte 0
 
 //----------------------------------------------------
 // view_lines : from current_line, browse content
@@ -171,7 +336,6 @@ view_lines:
 
     lda #0
     sta pos_y
-    sta is_ignore
     mov line_y,current_line
 
 loop:
@@ -180,20 +344,15 @@ loop:
     swi node_goto
     
     jsr format_print_line
-    sta is_ignore
-    bne not_inc
     
     cmpw line_y,total_lines
     beq end_loop
 
     inc pos_y
-not_inc:
     incw line_y
     lda pos_y
     cmp #25
     beq end_loop
-    lda is_ignore
-    bne loop
 
     lda #13
     jsr CHROUT
@@ -201,8 +360,6 @@ not_inc:
 end_loop:
     rts
 
-is_ignore:
-    .byte 0
 line_y:
     .word 0
 pos_y:
@@ -232,7 +389,8 @@ test_key:
     inx
     inx
     bne test_key
-    jmp navigate
+    clc
+    rts
 
 key_found:
     lda nav_keys+1,x
@@ -295,174 +453,140 @@ current_key:
 }
 
 //----------------------------------------------------
-// format_print : format line of text and print
+// format_print_line : format line of text and print
 //
-// c=1 init, c=0 process line
-// return : A=0 normal line, A=1 ignore line
 //----------------------------------------------------
 
 format_print_line:
 {
-    bcc not_init
     ldy #0
-    sty is_code
-    rts
-
-not_init:
-    lda #bios.COLOR_TEXT
-    sta color
-    ldy #0
-    sty spaces
     mov a,(r0)
-    sta lgr
-    bne not_empty
-    rts
-not_empty:
+    sta type
+    tay
+    lda colors,y
     tax
-    iny
-    mov a,(r0)
-    cmp #'#'
-    jeq process_title
-    cmp #'>'
-    jeq process_citation
-    cmp #'-'
-    jeq process_list
-    cmp #39
-    bne process_standard
-    lda lgr
-    cmp #3
-    bne process_standard
-    iny
-    mov a,(r0)
-    cmp #39
-    bne process_standard
-    iny
-    mov a,(r0)
-    cmp #39
-    bne process_standard
-    jmp process_code
-    
-    // standard line
-process_standard:
+    swi theme_set_color
+    lda type
+    asl
+    tax
+    lda jmp_type,x
+    sta addr_jmp
+    lda jmp_type+1,x
+    sta addr_jmp+1
+    jmp addr_jmp:$FCE2
+
+print_text:
     ldy #0
-    lda is_code
-    bne code_block
-    ldx color
-    swi theme_set_color
+    add r0,#2
     swi pprint
-    lda #0
-    rts
-    
-    // code block
-code_block:
-    // code
-    lda #RVSON
-    jsr CHROUT
-    ldx #bios.COLOR_NOTES
-    swi theme_set_color
-    swi pprint
-    lda #RVSOFF
-    jsr CHROUT
-    lda #0
     rts
 
-    // title formating
-process_title:
+print_remaining:
+    mov a,(r0)
+    jsr CHROUT
+    iny
     dex
+    bne print_remaining
+    rts
+
+print_title1:
+    ldy #2
     lda #40
     sec
-    sbc lgr
+    sbc (zr0l),y
     lsr
-    sta spaces
-    lda #bios.COLOR_TITLE
-    sta color
-    iny
+    tax
+    jsr spaces
+    jmp print_after1
+    
+print_title2:
+    ldy #2
     mov a,(r0)
-    cmp #'#'
-    bne end_title
-    iny
+    tax
     dex
-    lda #0
-    sta spaces
-    lda #bios.COLOR_SUBTITLE
-    sta color
+    ldy #5
+    jmp print_remaining
+
+print_title3:
+    ldy #2
     mov a,(r0)
-    cmp #'#'
-    bne end_title
-    iny
+    tax
     dex
-    lda #bios.COLOR_CONTENT
-    sta color
-end_title:
-    jmp color_and_print
+    ldy #6
+    jmp print_remaining
 
-    // citation formating
-process_citation:
-    dex
-    lda #bios.COLOR_NOTES
-    sta color
-    iny
-    lda #2
-    sta spaces
-    jmp color_and_print
-
-process_list:
-    dex
-    iny
-    stx lgr
-    ldx #bios.COLOR_CONTENT
-    swi theme_set_color
+print_citation:
     lda #32
     jsr CHROUT
-    lda #172
+    jmp print_after1
+
+print_code:
+    lda #RVSON
+    jsr CHROUT
+    ldy #1
+    sec
+    lda (zr0l),y
+    iny
+    sbc (zr0l),y
+    tax
+    stx lgr
+
+    jsr print_text
+    ldx lgr
+    beq no_spaces
+    jsr spaces
+no_spaces:
+    lda #RVSOFF
+    jmp CHROUT
+
+spaces:
+    lda #32
+    jsr CHROUT
+    dex
+    bne spaces
+    rts
+
+print_list:
+    ldx #bios.COLOR_CONTENT
+    swi theme_set_color
+    lda #'-'
     jsr CHROUT
     ldx #bios.COLOR_TEXT
     swi theme_set_color
-    lda #1
-    sta spaces
-    ldx lgr
-    jmp color_and_print
+    jmp print_after1
 
-    // Do the print : heading spaces, color and content
-color_and_print:
-    lda spaces
-    beq end_spaces
-    dec spaces
-    lda #32
-    jsr CHROUT
-    jmp color_and_print
-end_spaces:
-    stx lgr
-    ldx color
-    swi theme_set_color
-    ldx lgr
-print_loop:
+print_after1:
+    ldy #2
     mov a,(r0)
-    jsr CHROUT
-    iny
+    tax
     dex
-    bne print_loop
-    ldy #0
-    tya
-    rts
+    ldy #4
+    jmp print_remaining
 
-process_code:
-    lda #0
-    sta lgr
-    lda is_code
-    eor #1
-    sta is_code
-    lda #1
-    rts
-
-spaces:
-    .byte 0
 lgr:
     .byte 0
-is_code:
+type:
     .byte 0
-color:
-    .byte 0
+
+colors:
+    .byte bios.COLOR_TEXT
+    .byte bios.COLOR_TITLE
+    .byte bios.COLOR_SUBTITLE
+    .byte bios.COLOR_CONTENT
+    .byte bios.COLOR_NOTES
+    .byte bios.COLOR_TEXT
+    .byte bios.COLOR_NOTES
+    .byte bios.COLOR_TEXT
+
+jmp_type:
+    .word print_text
+    .word print_title1
+    .word print_title2
+    .word print_title3
+    .word print_citation
+    .word print_list
+    .word print_code
+    .word print_text
 }
 
 } // MDVIEW namespace
