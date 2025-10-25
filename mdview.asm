@@ -233,7 +233,7 @@ found_citation:
     jmp is_text
     
 found_list:
-    lda #TYPE_CITATION
+    lda #TYPE_LIST
     jmp is_text
     
 found_title:
@@ -367,6 +367,30 @@ pos_y:
 }
 
 //----------------------------------------------------
+// has_accent : check if there is a *xxx* format in
+// string in R0
+// return : C=1 if found
+//----------------------------------------------------
+
+has_accent:
+{
+    ldy #0
+    lda (zr0),y
+    tay
+    ldx #0
+loop:
+    lda (zr0),y
+    cmp #'*'
+    bne not_accent
+    inx
+not_accent:
+    dey
+    bne loop
+    cpx #2
+    rts
+}
+
+//----------------------------------------------------
 // navigate : document navigation
 //----------------------------------------------------
 
@@ -382,13 +406,14 @@ key_jump:
     ldx #0
 test_key:
     lda nav_keys,x
-    beq key_found
+    beq end_found
     cmp current_key
     beq key_found
     inx
     inx
     inx
     bne test_key
+end_found:
     clc
     rts
 
@@ -454,7 +479,6 @@ current_key:
 
 //----------------------------------------------------
 // format_print_line : format line of text and print
-//
 //----------------------------------------------------
 
 format_print_line:
@@ -476,10 +500,14 @@ format_print_line:
     jmp addr_jmp:$FCE2
 
 print_text:
-    ldy #0
-    add r0,#2
-    swi pprint
+    ldy #2
+    mov a,(r0)
+    cmp #0
+    bne not_empty
     rts
+not_empty:
+    tax
+    iny
 
 print_remaining:
     mov a,(r0)
