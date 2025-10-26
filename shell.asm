@@ -578,29 +578,39 @@ kill_routine:
 }
 
 //---------------------------------------------------------------
-// env : view env info :
+// env : set env info
 // 
-// clipboard, sh%, sh$, bin device, bin path, loaded command
+// bin device, bin path
 //---------------------------------------------------------------
 
 do_env:
 {
     .label OPT_D=1
     .label OPT_P=2
+    .label OPT_U=4
 
     sec
     swi param_init,buffer,options_env
 
-    //-----------------------------------------------------------
-    // -P = read and store BIN PATH, convert ; to :
-    //-----------------------------------------------------------
-    lda options_params
-    and #OPT_P
-    beq no_path
-    
+    lax options_params
+    and #OPT_P+OPT_D
+    beq done
+    txa
+    and #OPT_U
+    bne handle_unset
+
     sec
     swi param_process,work_buffer
     ldy #0
+    
+    lda options_params
+    and #OPT_P
+    beq handle_device
+
+    //-----------------------------------------------------------
+    // -P = read and store BIN PATH, convert ; to :
+    //-----------------------------------------------------------
+
     mov a,(r0)
     tay
     mov a,(r0)
@@ -611,22 +621,36 @@ do_env:
 no_conv:
     mov r1,#bin_path
     swi str_cpy
-    
+
+done:
+    sec
+    rts
+
     //-----------------------------------------------------------
     // -D = read and store BIN DEVICE
     //-----------------------------------------------------------
-no_path:
-    lda options_params
-    and #OPT_D
-    beq no_params
-    
-    sec
-    swi param_process,work_buffer
+handle_device:
     swi str2int
     lda zr1l
     sta bin_device
+    sec
+    rts
 
-no_params:
+    //-----------------------------------------------------------
+    // -U = unset value
+    //-----------------------------------------------------------
+
+handle_unset:
+    ldy #0
+    lax options_params
+    and #OPT_P
+    beq unset_device
+    sty bin_path
+    txa
+    and #OPT_D
+    beq done
+unset_device:
+    sty bin_device
     sec
     rts
 
@@ -635,7 +659,7 @@ carriage_return:
     jmp CHROUT
 
 options_env:
-    pstring("dp")
+    pstring("dpu")
 }
 
 //---------------------------------------------------------------

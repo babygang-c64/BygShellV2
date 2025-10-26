@@ -174,16 +174,60 @@ write_diff:
     and #diff.OPT_Q
     bne no_write
 
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+
     swi pipe_output
     lda #'<'
     jsr CHROUT
     swi pprint_nl,diff.buffer1
     lda #'>'
     jsr CHROUT
-    swi pprint_nl,diff.buffer2
 
+    ldy #0
+    lda diff.buffer1
+    beq remaining
+
+    lda diff.buffer2
+    beq end
+
+write:
+    cpy diff.buffer1
+    bpl remaining
+
+    ldx #bios.COLOR_TEXT
+    lda diff.buffer2+1,y
+    cmp diff.buffer1+1,y
+    beq same_value
+    ldx #bios.COLOR_ACCENT
+same_value:
+    sty save_y
+    swi theme_set_color
+    ldy save_y
+    lda diff.buffer2+1,y
+    jsr CHROUT
+    iny
+    cpy diff.buffer2
+    bne write
+//    swi pprint_nl,diff.buffer2
+    jmp end
+
+remaining:
+    lda diff.buffer2+1,y
+    jsr CHROUT
+    iny
+    cpy diff.buffer2
+    bne remaining
+end:
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    lda #13
+    jsr CHROUT
 no_write:
     rts
+
+save_y:
+    .byte 0
 }
 
 //---------------------------------------------------------------

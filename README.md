@@ -72,16 +72,22 @@ All external commands can :
 when a single address is given you can write bytes just after it. Also view RAM under BASIC
 - KILL : kill the cartridge, reclaim RAM under ROM between $8000-9FFF
 - ENV : view some environment info, change device and path location of external commands
-    -q = quiet mode
     -d <device> = define device for external commands lookup
     -p <device> = define path for external commands lookup, ";" are changed to ":"
+    -u = unset value
     
 Apart from -q option, env options have to be fed one at a time, for example to set the path
 to /bin on device 11 :
 
 ```
-*env -dq 11
-*env -pq //bin/
+*env -d 11
+*env -p //bin/
+```
+
+To unset all :
+
+```
+*env -dpu
 ```
 
 ![Help and M commands](images/help_mem.png)
