@@ -85,7 +85,7 @@ printf '.byte $%02X,$%02X,$%02X,$%02X\n' \
   $(((EPOCH>>16) & 0xFF)) \
   $(((EPOCH>>24) & 0xFF)) > build_pp.asm
 
-build_command cat
+build_command cat -symbolfile
 build_command wc
 build_command search
 build_command hw -symbolfile

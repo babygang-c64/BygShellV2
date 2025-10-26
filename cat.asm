@@ -42,7 +42,26 @@ cat:
     ldx nb_params
     jeq help
 
+
+    mov current_line,#0
     ldy #0
+    sty with_start_line
+    sty with_end_line
+    
+    ldx #'S'
+    swi param_get_value
+    bcc no_start_line
+    mov start_line,r0
+    inc with_start_line
+
+no_start_line:
+    ldx #'E'
+    swi param_get_value
+    bcc no_end_line
+    mov end_line,r0
+    inc with_end_line
+
+no_end_line:
     sec
 boucle_params:
     swi param_process,params_buffer
@@ -75,6 +94,9 @@ do_cat:
     swi file_open
     jcs error
     
+    lda with_start_line
+    bne boucle_cat
+
     jsr option_start_address
 
 boucle_cat:
@@ -94,7 +116,7 @@ boucle_cat:
 
     swi pipe_output
     jsr option_pagination
-    bcs ok_close
+    jcs ok_close
 
     swi print_hex_buffer
     lda #13
@@ -112,8 +134,9 @@ pas_hexdump:
     ldx #4
     jsr CHKIN
     swi file_readline, work_buffer
-    bcs ok_close
-    
+    jcs ok_close
+    incw current_line
+
     lda options_params
     and #OPT_A
     beq pas_opt_a
@@ -126,10 +149,32 @@ pas_opt_a:
     swi pipe_output
 
 affiche_ligne:
+
+    lda with_start_line
+    beq not_with_start_line
+    cmp #2
+    beq not_with_start_line
+
+    cmpw start_line,current_line
+    bne no_print
+    inc with_start_line
+
+not_with_start_line:
     jsr option_numero
     swi pprint, work_buffer
     
+    // if E with value, not $
+    lda with_end_line
+    beq test_e
+    cmp #2
+    beq pas_option_e
+    cmpw end_line,current_line
+    bne pas_option_e
+    lda #1
+    sta with_start_line
+    jmp pas_option_e
 
+test_e:
     // option E = affiche $ en fin de ligne
     lda options_params
     and #OPT_E
@@ -141,8 +186,9 @@ pas_option_e:
     lda #13
     jsr CHROUT
     jsr option_pagination
-    bcs ok_close
-ok_length:
+    jcs ok_close
+
+no_print:
     jmp boucle_cat
 
 help:
@@ -196,17 +242,28 @@ pas_numero:
 help_msg:
     pstring("*cat <filename> [-benpha]")
     pstring(" n = Numbers all lines")
-    pstring(" e = $ At EOL")
+    pstring(" e = $ At EOL / end line")
     pstring(" b = Numbers non empty lines")
     pstring(" p = Paginates output")
     pstring(" h = Hexdump")
     pstring(" s = Start address for hexdump")
+    pstring("     or start line with value")
     pstring(" a = Do ASCII conversion")
     .byte 0
 
 options_cat:
     pstring("benphsa")
-    
+
+start_line:
+    .word 0
+end_line:
+    .word 0
+with_start_line:
+    .byte 0
+with_end_line:
+    .byte 0
+current_line:
+    .word 0
 num_lignes:
     .word 0
 buffer_hexdump:

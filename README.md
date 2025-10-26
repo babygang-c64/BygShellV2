@@ -158,11 +158,14 @@ You can exit CAT in paginate mode with Q, X or run/stop
 print file(s) contents to screen
     options : 
     N = numbers all lines
-    E = print $ at EOL
     B = numbers all non empty lines
+    E=<n> = stop at line <n>
+    S=<m> = start at line <m>
+    E = print $ at EOL
     P = paginates output
     H = hexdump
-    A = read C64 binary start address for hexdump
+    S = read C64 binary start address for hexdump
+    A = convert from ASCII
 ```
 
 **CHECKSUM**
