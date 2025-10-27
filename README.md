@@ -272,6 +272,7 @@ Show / add entry to log
     A = list all log entries
     N = view last N log entries
     C = clear log file
+    D = filter by date, date is YYMMDD
 ```
 
 **PAUSE**
@@ -582,6 +583,8 @@ Expansion still contains bugs
 ```
 
 **XFORM**
+
+![Xform command](images/xform.png)
 
 xForm processes delimited files line by line, using a small set of commands applied to each line.
 (config file not implemented yet)

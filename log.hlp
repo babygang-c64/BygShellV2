@@ -1,0 +1,20 @@
+#log <messages> [-options]
+
+:Log file update
+
+ Log file is name .log and located
+ on the current device. If absent
+ it is created.
+ 
+*Options:
+- q : quiet mode, only add entry
+- c : clear log file
+- a : view all log lines
+- n=<M> : view last M lines
+- d : filter by date, YYMMDD
+- h : help
+
+=Examples:
+ *log "Files created"
+ *log -n=3
+ *log -d 251027

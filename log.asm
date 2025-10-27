@@ -24,6 +24,7 @@ log:
     .label OPT_A=4
     .label OPT_C=8
     .label OPT_N=16
+    .label OPT_D=32
 
     lda #10
     sta nb_lignes_max
@@ -53,16 +54,39 @@ log:
     jne clear_log
 
     //------------------------------------------------
-    // if params, process
+    // Date param
     //------------------------------------------------
 
+    lda options_params
+    and #OPT_D
+    beq not_date
+
+    sec
+    swi param_process,params_buffer
+    ldy #0
+    mov a,(r0)
+    cmp #6
+    beq ok_date
+    
+    mov r0,#msg_invalid_date
+    jmp error_m
+
+ok_date:
+    mov r1,#date_filter
+    swi str_cpy
+    jmp view_tail
+
+    //------------------------------------------------
+    // if params, process
+    //------------------------------------------------
+not_date:
     lda nb_params
     bne no_tail
     
     //------------------------------------------------
     // no params = view tail of log
     //------------------------------------------------
-    
+view_tail:
     ldx #'N'
     swi param_get_value
     bcc no_value
@@ -173,7 +197,10 @@ fini:
     swi success
     rts
 
-
+date_filter:
+    pstring("YYMMDD")
+msg_invalid_date:
+    pstring("Invalid date")
 msg_no_log:
     pstring("No log file")
 msg_open:
@@ -206,10 +233,11 @@ help_msg:
     pstring(" q = quiet")
     pstring(" c = clear log")
     pstring(" h = Help")
+    pstring(" d = Filter by date")
     .byte 0
 
 options_log:
-    pstring("hqacn")
+    pstring("hqacnd")
 
 log_name:
     pstring(".log,s")
@@ -249,6 +277,33 @@ msg_clear:
 }
 
 //----------------------------------------------------
+// cmp_date : apply date filter if defined
+// returns C=0 if in filter or no filter, C=1 else 
+//----------------------------------------------------
+
+cmp_date:
+{
+    lda options_params
+    and #OPT_D
+    beq ok_filter
+
+is_filter:
+    ldy #6
+test_date:
+    lda work_buffer,y
+    cmp date_filter,y
+    bne ko_filter
+    dey
+    bne test_date
+ok_filter:
+    clc
+    rts
+ko_filter:
+    sec
+    rts
+}
+
+//----------------------------------------------------
 // tail_log : view last lines
 //
 // C=0 : last lines, C=1 : all lines
@@ -271,6 +326,9 @@ boucle_tail:
     jsr CHKIN
     swi file_readline, work_buffer
     bcs view_and_close
+    
+    jsr cmp_date
+    bcs boucle_tail
 
     lda is_all_lines
     beq no_print
