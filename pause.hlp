@@ -1,0 +1,13 @@
+#pause [message] [options]
+:
+ Wait for a keypress or timeout
+ By default print message and
+ wait for keypress
+
+*Options:
+- t : timeout in seconds
+- h : help
+
+=Examples:
+ *pause "one minute" -t=60
+ *pause 

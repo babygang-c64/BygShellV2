@@ -281,12 +281,15 @@ Wait for a key to be pressed.
 Key value is returned into SH%
 If parameter is given, it's printed instead of
 default message.
+If T option is used then a timeout in seconds
+is used instead of key press.
 
 ```
 *pause [message] [options]
 
 Wait for key
     options:
+    T = timeout N seconds
     H = help
 ```
 
