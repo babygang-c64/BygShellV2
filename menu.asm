@@ -23,6 +23,7 @@ menu:
 
     .label OPT_L=1
     .label OPT_D=2
+    .label OPT_K=4
     
     sec
     swi param_init,buffer,options_menu
@@ -83,7 +84,7 @@ error:
     rts
 
 options_menu:
-    pstring("ld")
+    pstring("ldk")
 selected_item:
     .byte 0
 max_length:
@@ -103,7 +104,8 @@ string_adr_storage:
     .word string_storage
 string_storage:
     .fill 80,0
-
+letters:
+    .fill 32,0
 
 // get_item : get item at selected_item position in R0
 get_item:
@@ -141,11 +143,17 @@ boucle:
     bcc not_stop
     
 stop:
+    jsr option_key
+    bcs boucle
+
     lda #$ff
     sta selected_item
     jmp fin
     
 not_stop:
+    jsr option_key
+    bcs boucle
+
     cmp #13
     beq fin
     cmp #32
@@ -181,8 +189,40 @@ fin:
     jsr CLRCHN
     clc
     rts
+    
+last_key:
+    .byte 0
+test_stop:
+    .byte 0
 }
 
+option_key:
+{
+    sta last_key
+    lda options_params
+    and #OPT_K
+    beq not_key
+
+    lda last_key
+    ldx #0
+loop:
+    cmp letters,x
+    beq found
+    inx
+    cpx nb_items
+    bne loop
+not_key:
+    lda last_key
+    clc
+    rts
+found:
+    stx menu.selected_item
+    sec
+    rts
+
+last_key:
+    .byte 0
+}
 
 get_max_length:
 {
@@ -208,7 +248,11 @@ boucle:
     mov r0,r1
     
 not_quote:
-    ldy #0
+    ldy #1
+    ldx nb_items
+    mov a,(r0)
+    ldx nb_items
+    sta letters,x
     swi str_len
     cmp max_length
     bcc not_bigger
@@ -473,6 +517,7 @@ help_msg:
     pstring("*menu [item or file pattern] [-options]")
     pstring(" l = Place menu on left")
     pstring(" d = Default selected item")
+    pstring(" k = First letter select")
     .byte 0
 }
 

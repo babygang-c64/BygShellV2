@@ -93,7 +93,7 @@ build_command koala
 build_command head
 build_command mon
 build_command edit -symbolfile
-build_command menu
+build_command menu -symbolfile
 build_command chars
 build_command touch
 build_command diff

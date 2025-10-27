@@ -273,6 +273,7 @@ Show / add entry to log
     N = view last N log entries
     C = clear log file
     D = filter by date, date is YYMMDD
+    S = filter by keyword
 ```
 
 **PAUSE**
@@ -586,6 +587,7 @@ Expansion still contains bugs
     options:
     L = menu on left side (right side by default)
     D = define default selected item (1 if not set)
+    K = use first key of items to navigate
 ```
 
 **XFORM**

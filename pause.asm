@@ -20,6 +20,8 @@ pause:
     .label OPT_H=1
     .label OPT_T=2
 
+    ldy #0
+    sty last_key
     sec
     swi param_init,buffer,options_pause
     jcs error
@@ -79,10 +81,12 @@ wait_timeout:
     
 not_timeout:
     swi key_wait
+    sta last_key
 
 end_wait:
     ldx #bios.COLOR_TEXT
     swi theme_set_color
+    lda last_key
     sta zr0l
     lda #0
     sta zr0h
@@ -135,6 +139,8 @@ end:
     rts
 }
 
+last_key:
+    .byte 0
 seconds:
     .byte 0
 msg_error_timeout:

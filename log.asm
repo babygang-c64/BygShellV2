@@ -18,6 +18,7 @@ log:
 {
     .label work_buffer = $ce00
     .label params_buffer = $cd00
+    .label search_string = $cc80
 
     .label OPT_H=1
     .label OPT_Q=2
@@ -25,6 +26,7 @@ log:
     .label OPT_C=8
     .label OPT_N=16
     .label OPT_D=32
+    .label OPT_S=64
 
     lda #10
     sta nb_lignes_max
@@ -54,9 +56,23 @@ log:
     jne clear_log
 
     //------------------------------------------------
-    // Date param
+    // Search param
     //------------------------------------------------
 
+    lda options_params
+    and #OPT_S
+    beq not_search
+
+    sec
+    swi param_process,params_buffer
+    mov r1,#search_string
+    swi str_cpy
+    jmp view_tail
+
+    //------------------------------------------------
+    // Date param
+    //------------------------------------------------
+not_search:
     lda options_params
     and #OPT_D
     beq not_date
@@ -234,10 +250,11 @@ help_msg:
     pstring(" c = clear log")
     pstring(" h = Help")
     pstring(" d = Filter by date")
+    pstring(" s = Search")
     .byte 0
 
 options_log:
-    pstring("hqacnd")
+    pstring("hqacnds")
 
 log_name:
     pstring(".log,s")
@@ -274,6 +291,28 @@ clear_log_name:
     pstring("s:.log")
 msg_clear:
     pstring("Log cleared")
+}
+
+//----------------------------------------------------
+// cmp_search : apply search filter if defined
+// returns C=0 if in filter or no filter, C=1 else 
+//----------------------------------------------------
+
+cmp_search:
+{
+    lda options_params
+    and #OPT_S
+    beq match
+    
+is_filter:
+    mov r1,#search_string
+    swi str_str,work_buffer
+    bcs match
+    sec
+    rts
+match:
+    clc
+    rts
 }
 
 //----------------------------------------------------
@@ -326,6 +365,9 @@ boucle_tail:
     jsr CHKIN
     swi file_readline, work_buffer
     bcs view_and_close
+    
+    jsr cmp_search
+    bcs boucle_tail
     
     jsr cmp_date
     bcs boucle_tail

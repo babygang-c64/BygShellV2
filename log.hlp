@@ -12,6 +12,7 @@
 - a : view all log lines
 - n=<M> : view last M lines
 - d : filter by date, YYMMDD
+- s : filter by keyword
 - h : help
 
 =Examples:

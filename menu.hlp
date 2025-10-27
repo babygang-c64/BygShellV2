@@ -11,6 +11,8 @@
 - l : show menu on left of screen instead
 -     of right
 - d : define default selected item
+- k : use first letter of items to
+-     navigate
 
 =Examples:
  *menu *.asm
