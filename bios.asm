@@ -1140,6 +1140,25 @@ extract_value:
     dex
     dex
 
+    mov a,(r0)
+    cmp #'$'
+    bne read_number
+    
+    // read hex value
+read_hex:
+    inc r0
+    push r0
+    jsr do_hex2int.direct
+    dex
+    dex
+    dex
+    dex
+    mov r1,r0
+    pop r0
+    add r0,#4
+    jmp end_number
+
+    // read integer number
 read_number:
     mov a,(r0++)
     jsr is_digit
@@ -1167,9 +1186,8 @@ end_number:
     lda #0
     sta options_values,y
     tay
-    
+
     pop r1
-    
     mov a,(r0)
     rts
 
@@ -4014,6 +4032,7 @@ do_hex2int:
     cmp #4
     bne pas4car
 
+direct:
     jsr conv_hex_byte
     pha
     jsr conv_hex_byte
