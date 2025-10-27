@@ -38,6 +38,7 @@ checksum:
     ldx #'V'
     swi param_get_value
     bcc not_v
+    mov control_value,r0
 
 not_v:
     jsr initCRC_total
@@ -81,9 +82,32 @@ end:
     swi pprint_nl,msg_total
 
 not_total:
-    swi pipe_end
+
+    lda options_params
+    and #OPT_V
+    beq not_verif_value
+    
+    cmpw crc_total_value,control_value
+    beq control_ok
+
+    ldx #bios.COLOR_ACCENT
+    swi theme_set_color
+
+    mov r0,#msg_control_ko
+    jsr msg_if_not_quiet
+    mov r0,#0
+    jmp return_with_value
+control_ok:
+    mov r0,#msg_control_ok
+    jsr msg_if_not_quiet
+    mov r0,#1
+    jmp return_with_value
+
+not_verif_value:
     mov r0,crc_value
+return_with_value:
     swi return_int
+    swi pipe_end
     clc
     rts
 
@@ -99,11 +123,26 @@ error:
     sec
     swi error
     rts
+    
+msg_if_not_quiet:
+    lda options_params
+    and #OPT_Q
+    bne is_quiet
+    swi pprint_nl
+is_quiet:
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    rts
 
 help:
     swi pprint_lines,help_msg
     sec
     rts
+
+msg_control_ok:
+    pstring("[ OK ]")
+msg_control_ko:
+    pstring("[FAIL]")
 
 help_msg:
     pstring("*checksum <files...> [options]")
@@ -121,7 +160,15 @@ msg_total:
     pstring("--TOTAL--")
 options_checksum:
     pstring("qtvc")
+
+control_value:
+    .word 0
     
+//----------------------------------------------------
+// do_checksum : calculate checksum for file with
+// filename in R0
+//----------------------------------------------------
+
 do_checksum:
 {
     mov nb_bytes,#0
