@@ -282,7 +282,7 @@ Key value is returned into SH%
 If parameter is given, it's printed instead of
 default message.
 If T option is used then a timeout in seconds
-is used instead of key press.
+is used instead of key press.th
 
 ```
 *pause [message] [options]
@@ -353,6 +353,8 @@ Selects a theme colorscheme
     L = list available themes
     T = test a theme
     S = select a theme
+    R = reset theme
+    C = view current theme name
 ```
 
 **JOIN**

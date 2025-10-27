@@ -1,0 +1,14 @@
+#theme <theme> [-options]
+:
+ Select color scheme
+
+*Options:
+- r : Reset to default theme
+- l : List themes
+- s : Interactive theme select
+- t : Test theme
+- c : View current theme
+
+=Examples:
+ *theme monokai
+ *theme -s

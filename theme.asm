@@ -19,12 +19,21 @@ theme:
     .label OPT_T=2
     .label OPT_S=4
     .label OPT_C=8
+    .label OPT_R=16
     
     //-- init options
     sec
     swi param_init,buffer,options_theme
     jcs help
 
+    lda options_params
+    and #OPT_R
+    beq not_reset
+    
+    jsr restore_colors
+    jmp end
+    
+not_reset:
     lda options_params
     and #OPT_C
     beq not_current
@@ -164,7 +173,7 @@ save_colors:
     clc
     swi theme
     rts
-    
+
 restore_colors:
     mov r0,#themes_colors
     sec
@@ -182,7 +191,7 @@ last_key:
 
     //-- options available
 options_theme:
-    pstring("ltsc")
+    pstring("ltscr")
 
 msg_not_found:
     pstring("Theme not found")
@@ -193,6 +202,7 @@ msg_help:
     pstring(" -t : test themes")
     pstring(" -s : interactive select")
     pstring(" -c : current theme")
+    pstring(" -r : reset theme")
     .byte 0
 
 msg_current:
