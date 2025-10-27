@@ -10,8 +10,9 @@
 *Options:
 - l : show menu on left of screen instead
 -     of right
+- d : define default selected item
 
 =Examples:
  *menu *.asm
  *menu Cancel OK:? sh%
- 
+ *menu one two three four -d=2

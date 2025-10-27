@@ -585,6 +585,7 @@ Expansion still contains bugs
     
     options:
     L = menu on left side (right side by default)
+    D = define default selected item (1 if not set)
 ```
 
 **XFORM**

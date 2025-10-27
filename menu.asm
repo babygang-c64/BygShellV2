@@ -22,6 +22,7 @@ menu:
     .label save_screen = $7D00
 
     .label OPT_L=1
+    .label OPT_D=2
     
     sec
     swi param_init,buffer,options_menu
@@ -36,6 +37,15 @@ menu:
     sty string_storage
     mov menu_data_ptr,#menu_data
     jsr get_max_length
+    
+    ldx #'D'
+    swi param_get_value
+    bcc no_value
+    ldx zr0l
+    dex
+    stx selected_item
+
+no_value:
     jsr navigation
     
     lda selected_item
@@ -73,7 +83,7 @@ error:
     rts
 
 options_menu:
-    pstring("l")
+    pstring("ld")
 selected_item:
     .byte 0
 max_length:
@@ -460,8 +470,9 @@ help:
     rts
     
 help_msg:
-    pstring("*menu [item or file pattern] [-l]")
+    pstring("*menu [item or file pattern] [-options]")
     pstring(" l = Place menu on left")
+    pstring(" d = Default selected item")
     .byte 0
 }
 
