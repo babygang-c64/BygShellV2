@@ -172,13 +172,22 @@ print file(s) contents to screen
 **CHECKSUM**
 
 CHECKSUM performs a CRC16 on files, returns last one in SH%
+If checksum is done on multiple files, returns the last one,
+if total option is used (-t) then returns a value for all files.
+If V option is used, check if total or last CRC16 equals the
+given value, if same return 1 into SH%, otherwise return 0.
+V parameter accepts 4 characters hexadecimal numbers when
+prefixed with "$"
 
 ```
-*checksum <file> [<file> ...] [-q]
+*checksum <file> [<file> ...] [options]
 
 Calculates a CRC16 on files
     options :
     Q = don't print output
+    T = calculate total CRC16 for all files
+    V=<value> = check if total CRC16 equals value,
+                returns 1/0 result into SH%
 ```
 
 **WC**

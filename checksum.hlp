@@ -5,6 +5,11 @@
 *Options:
 - q : quiet mode, return single CRC16
 -     value into SH%
+- t : calculate a total CRC16 for
+-     multiple files
+- v=<n> : check if CRC16 equals n
+-     sets 1 into SH% if OK,
+-     and 0 if KO 
 
 =Examples:
  *checksum *.asm
