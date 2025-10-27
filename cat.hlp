@@ -9,9 +9,14 @@
 - p : paginate
 - h : hexdump
 - s : PRG start addr for hex
-- a = Convert ASCII file
+- a : Convert ASCII file
+- s=<n> : start at line n
+- e=<m> : end at line m
+- z : squeeze empty lines
 
 =Examples:
  *cat -hpa edit.prg
  *cat -n *.asm > dump.lst
  *cat error >> log
+ *cat -s=5 -e=8 -a test.txt
+ 

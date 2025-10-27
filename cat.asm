@@ -32,7 +32,13 @@ cat:
     .label OPT_H=16
     .label OPT_S=32
     .label OPT_A=64
+    .label OPT_Z=1
 
+    mov r0,#buffer
+    mov r1,#options_more
+    jsr param_more_options
+    sta more_options
+    
     sec
     swi param_init,buffer,options_cat
     jcs error
@@ -47,6 +53,7 @@ cat:
     ldy #0
     sty with_start_line
     sty with_end_line
+    sty was_empty
     
     ldx #'S'
     swi param_get_value
@@ -136,7 +143,26 @@ pas_hexdump:
     swi file_readline, work_buffer
     jcs ok_close
     incw current_line
+    
+    lda more_options
+    and #OPT_Z
+    beq test_a
 
+    mov r0,#work_buffer
+    jsr str_empty
+    bcc not_empty
+
+    lda was_empty
+    jne boucle_cat
+
+    inc was_empty
+    jmp test_a
+    
+not_empty:
+    ldy #0
+    sty was_empty
+    
+test_a:
     lda options_params
     and #OPT_A
     beq pas_opt_a
@@ -240,9 +266,10 @@ pas_numero:
 
 
 help_msg:
-    pstring("*cat <filename> [-benpha]")
+    pstring("*cat <filename> [option]")
     pstring(" n = Numbers all lines")
     pstring(" e = $ At EOL / end line")
+    pstring(" z = squeeze empty lines")
     pstring(" b = Numbers non empty lines")
     pstring(" p = Paginates output")
     pstring(" h = Hexdump")
@@ -254,6 +281,13 @@ help_msg:
 options_cat:
     pstring("benphsa")
 
+more_options:
+    .byte 0
+options_more:
+    pstring("z")
+
+was_empty:
+    .byte 0
 start_line:
     .word 0
 end_line:
@@ -328,6 +362,116 @@ cpt_ligne:
     .byte 0
 is_break:
     .byte 0
+}
+
+//----------------------------------------------------
+// str_empty : check if R0 is empty (size zero or
+// only spaces)
+// returns C=1 if empty
+//----------------------------------------------------
+
+str_empty:
+{
+    ldy #0
+    lda (zr0l),y
+    beq is_empty
+    tay
+loop:
+    lda (zr0l),y
+    cmp #32
+    bne not_empty
+    dey
+    bne loop
+is_empty:
+    sec
+    rts
+not_empty:
+    clc
+    rts
+}
+
+//----------------------------------------------------
+// param_more_options : extract options from params
+// buffer in r0, list of options in r1, return in A
+//----------------------------------------------------
+
+param_more_options:
+{
+    lda nb_params
+    sta cpt_params
+    ldy #0
+    mov r2,r0
+    sty options
+    lda (zr0l),y
+    beq end
+    lda (zr1l),y
+    beq end
+
+loop:
+    lda (zr0l),y
+    cmp #2
+    bne not_option
+    iny
+    lda (zr0l),y
+    cmp #'-'
+    bne not_option
+    
+    // check if in list, get position
+    iny
+    lda (zr0l),y
+    sta option_char
+
+    ldy #0
+    lda (zr1l),y
+    tay
+
+test_option:
+    lda (zr1l),y
+    cmp option_char
+    beq found_option
+    dey
+    bpl test_option
+
+    // not option, copy and loop
+not_option:
+    ldy #0
+    lda (zr0),y
+    tax
+copy_param:
+    mov a,(r0++)
+    mov (r2++),a
+    dex
+    bpl copy_param
+next_param:
+    dec cpt_params
+    bpl loop
+
+    // end, return options
+end:
+    lda options
+    rts
+
+    // found ? set bit and ignore
+found_option:
+    dey
+    lda options
+    ora bits,y
+    sta options
+    ldy #0
+    add r0,#3
+    dec nb_params
+    dec cpt_params
+    bmi end
+    bpl loop
+
+cpt_params:
+    .byte 0
+options:
+    .byte 0
+option_char:
+    .byte 0
+bits:
+    .byte 1,2,4,8,16,32,64,128
 }
 
 } // CAT namespace

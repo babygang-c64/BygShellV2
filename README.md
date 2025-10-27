@@ -166,6 +166,7 @@ print file(s) contents to screen
     H = hexdump
     S = read C64 binary start address for hexdump
     A = convert from ASCII
+    Z = squeeze empty lines to single lines
 ```
 
 **CHECKSUM**
