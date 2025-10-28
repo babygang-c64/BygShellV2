@@ -124,6 +124,7 @@ CTRL-K-C   : copy whole current line to clipboard
 CTRL-K-V   : paste from clipboard
 CTRL-K-DEL : delete from cursor position to end of line
 CTRL-K-B   : delete from cursor position to start of line
+CTRL-K-Y   : delete whole lines
 CTRL-K-HOME: delete all lines except current physical one
 CTRL-K-S   : swap screens
 CTRL-K-R   : history walk through (only for shell commands)

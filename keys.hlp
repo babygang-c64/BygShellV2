@@ -18,6 +18,7 @@
 - DEL: delete from cursor position to 
 -      the end of line
 - B: delete to start of line
+- Y: delete whole line
 - HOME : delete all lines except the
 -        current physical one
 - S: swap screens

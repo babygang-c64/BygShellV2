@@ -1023,6 +1023,7 @@ ctrl_keys:
     .byte 13    // S
     .byte $11   // R
     .byte $1c   // B
+    .byte 25    // Y
 ctrl_keys_hi:
     .byte >do_key_a-1
     .byte >do_key_e-1
@@ -1034,6 +1035,7 @@ ctrl_keys_hi:
     .byte >do_key_up_arrow-1
     .byte >do_key_r-1
     .byte >do_delete_to_start-1
+    .byte >do_delete_line-1
 ctrl_keys_lo:
     .byte <do_key_a-1
     .byte <do_key_e-1
@@ -1045,6 +1047,7 @@ ctrl_keys_lo:
     .byte <do_key_up_arrow-1
     .byte <do_key_r-1
     .byte <do_delete_to_start-1
+    .byte <do_delete_line-1
 
     //-----------------------------------
     // A = goto start of logical line
@@ -1085,11 +1088,19 @@ copie:
     rts
 
     //-----------------------------------
+    // Y = delete whole line
+    //-----------------------------------
+
+do_delete_line:
+    jsr do_key_backspace
+    jmp do_delete_to_start
+
+    //-----------------------------------
     // V = paste buffer from $a000
     // jmp paste_buffer
     // R = paste buffer from $a100
     //-----------------------------------
-    
+
     //-----------------------------------
     // BACKSPACE = delete to end of line
     //-----------------------------------
