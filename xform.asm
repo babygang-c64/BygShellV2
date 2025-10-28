@@ -30,6 +30,13 @@ xform:
     ldx nb_params
     jeq help
 
+    lda options_params
+    and #OPT_F
+    beq no_ini_file
+
+    jsr process_ini_file
+
+no_ini_file:
     swi pipe_init
     jcs error_params
 
@@ -918,5 +925,77 @@ no_action:
     rts
 }
 
+//----------------------------------------------------
+// process_ini_file : rebuild params from ini file
+//----------------------------------------------------
+process_ini_file:
+{
+    ldx #0
+    stx work_buffer
+    stx nb_params
+    ldx #2
+    swi lines_goto, buffer
+
+    mov r1,#work_buffer
+    swi str_cpy
+    add r1,a
+    inc nb_params
+
+    ldx #4
+    mov r0,#work_buffer
+    clc
+    swi file_open
+    jcs error_open
+
+    ldx #1
+    swi lines_goto, buffer
+    mov a,(r0)
+    add r0,a
+    inc r0
+    mov r1,r0
+
+loop:
+    ldx #4
+    jsr CHKIN
+    swi file_readline, buffer_line
+    bcs end_loop
+    cmp #0
+    beq loop
+    lda buffer_line+1
+    cmp #'#'
+    beq loop
+
+    swi str_cpy
+    pha
+    
+    mov r0,r1
+    ldx #32
+    clc
+    swi str_split
+    clc
+    adc nb_params
+    sta nb_params
+    
+    pla
+    add r1,a
+    bne loop
+
+end_loop:
+    ldx #4
+    swi file_close
+    tya
+    mov a,(r1)
+    
+    clc
+    rts
+
+error_open:
+    swi pprint_nl,msg_error_open
+    sec
+    rts
+
+msg_error_open:
+    pstring("Config file")
+}
 
 } // xform
