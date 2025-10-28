@@ -42,6 +42,8 @@ view_loop:
 
 end:
     jsr CLRCHN
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
     clc
     swi success
     rts
@@ -192,6 +194,7 @@ ok_close:
 .label TYPE_LIST = 5
 .label TYPE_CODE = 6
 .label TYPE_LINK = 7
+.label TYPE_LINE = 8
 
 preprocess_and_store:
 {
@@ -233,6 +236,17 @@ found_citation:
     jmp is_text
     
 found_list:
+    iny
+    mov a,(r0)
+    cmp #'-'
+    bne is_list
+    iny
+    mov a,(r0)
+    cmp #'-'
+    bne is_list
+    lda #TYPE_LINE
+    jmp is_text
+is_list:
     lda #TYPE_LIST
     jmp is_text
     
@@ -342,7 +356,8 @@ loop:
     mov r1,nodes_root
     mov r0,line_y
     swi node_goto
-    
+    lda #0
+    sta is_nl
     jsr format_print_line
     
     cmpw line_y,total_lines
@@ -354,12 +369,21 @@ loop:
     cmp #25
     beq end_loop
 
+    lda is_nl
+    beq do_nl
+    lda #0
+    sta is_nl
+    beq loop
+do_nl:
     lda #13
     jsr CHROUT
     jmp loop
+
 end_loop:
     rts
 
+is_nl:
+    .byte 0
 line_y:
     .word 0
 pos_y:
@@ -574,6 +598,20 @@ spaces:
     bne spaces
     rts
 
+print_lines:
+    ldy #40
+line:
+    lda #$c0
+    jsr CHROUT
+    dey
+    bne line
+    dex
+    dex
+    dex
+    lda #1
+    sta view_lines.is_nl
+    rts
+    
 print_list:
     ldx #bios.COLOR_CONTENT
     swi theme_set_color
@@ -605,6 +643,7 @@ colors:
     .byte bios.COLOR_TEXT
     .byte bios.COLOR_NOTES
     .byte bios.COLOR_TEXT
+    .byte bios.COLOR_SUBTITLE
 
 jmp_type:
     .word print_text
@@ -615,6 +654,7 @@ jmp_type:
     .word print_list
     .word print_code
     .word print_text
+    .word print_lines
 }
 
 } // MDVIEW namespace

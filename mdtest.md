@@ -32,6 +32,7 @@ And link to [file](thefile)
 
 We'll see how we're going to do the
 internal links to titles
+---
 something like [[new title]] ?
 Probably
 
