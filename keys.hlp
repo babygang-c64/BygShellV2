@@ -10,9 +10,9 @@
 -    logical screen line
 - E: go to the end of the current
 -    logical screen line
-- C: copy to clipboard from cursor
+- L: copy to clipboard from cursor
 -    position to start of logical line
-- D: copy whole current line to the
+- C: copy whole current line to the
 -    clipboard
 - V: paste clipboard content
 - DEL: delete from cursor position to 
@@ -20,7 +20,7 @@
 - B: delete to start of line
 - HOME : delete all lines except the
 -        current physical one
-- ^: swap screens
+- S: swap screens
 - R: walk through shell history 
 
 =Notes:

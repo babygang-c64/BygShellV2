@@ -1015,12 +1015,12 @@ goto_key:
 ctrl_keys:
     .byte $0a   // A
     .byte $0e   // E
-    .byte $14   // C
+    .byte 42    // L
     .byte $1f   // V
     .byte $00   // Backspace
-    .byte $12   // D
+    .byte $14   // C
     .byte $33   // Home
-    .byte $36   // Up arrow
+    .byte 13    // S
     .byte $11   // R
     .byte $1c   // B
 ctrl_keys_hi:

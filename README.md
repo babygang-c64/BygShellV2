@@ -119,13 +119,13 @@ Existing shortcuts :
 ```
 CTRL-K-A   : go to the start of current logical screen line
 CTRL-K-E   : go to the end of the current logical screen line
-CTRL-K-C   : copy to clipboard from cursor position to start of logical line
-CTRL-K-D   : copy whole current line to clipboard
+CTRL-K-L   : copy to clipboard from cursor position to start of logical line
+CTRL-K-C   : copy whole current line to clipboard
 CTRL-K-V   : paste from clipboard
 CTRL-K-DEL : delete from cursor position to end of line
 CTRL-K-B   : delete from cursor position to start of line
 CTRL-K-HOME: delete all lines except current physical one
-CTRL-K-^   : swap screens (up arrow)
+CTRL-K-S   : swap screens
 CTRL-K-R   : history walk through (only for shell commands)
 ```
 

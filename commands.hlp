@@ -30,8 +30,9 @@
 - *search : search pattern in files
 - *sid : play and show info of SIDs
 - *sys : show system info
-- *theme : change colour scheme
 - *tail : show last lines of files
+- *theme : change colour scheme
+- *touch : create new files
 - *test : check if file(s) exist
 - *touch : create new empty files
 - *wc : word and line count

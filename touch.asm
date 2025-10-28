@@ -21,7 +21,7 @@ touch:
     .label OPT_S = 2
     .label OPT_B = 4
     .label OPT_T = 8
-
+    .label OPT_C = 16
 
     //-- init options
     sec
@@ -76,6 +76,9 @@ ok_suffix:
     ldx #5
     jsr CHKOUT
     
+    // clipboard ?
+    jsr option_clipboard
+
     // fill file ?
     lda options_params
     and #OPT_S
@@ -142,14 +145,10 @@ help:
     clc
     rts
 
-    clc
-    swi error
-    rts
-
     
     //-- options available
 options_touch:
-    pstring("psbt")
+    pstring("psbtc")
 
 help_hw:
     pstring("*touch <file> : Create empty file")
@@ -157,11 +156,44 @@ help_hw:
     pstring(" -s : size in bytes")
     pstring(" -b : filler byte")
     pstring(" -t : text file")
+    pstring(" -c : fill with clipboard")
     .byte 0
 
+lgr_clipboard:
+    .byte 0
 fill_byte:
     .byte 33
 fill_size:
     .word 0
+
+//----------------------------------------------------
+// option_clipboard : write clipboard content
+//----------------------------------------------------
+
+option_clipboard:
+{
+    lda options_params
+    and #OPT_C
+    beq not_clipboard
+    ldy #0
+    mov r0,#bios.clipboard
+    jsr bios.bios_ram_get_byte
+    sta lgr_clipboard
+    beq not_clipboard
+
+write_clipboard:
+    iny
+    jsr bios.bios_ram_get_byte
+    tax
+    swi screen_to_petscii
+    jsr CHROUT
+    dec lgr_clipboard
+    bne write_clipboard
+    lda #13
+    jmp CHROUT
+
+not_clipboard:
+    rts
+}
 
 }
