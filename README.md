@@ -480,6 +480,7 @@ print first lines of files
     Q = no filename
     V = always print filename
     P = paginate output
+    S = skip N lines
 ```
 
 **TAIL**

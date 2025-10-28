@@ -27,6 +27,7 @@ head:
     .label OPT_V=4
     .label OPT_P=8
     .label OPT_A=16
+    .label OPT_S=32
 
     lda #11
     sta nb_lignes_max
@@ -41,6 +42,10 @@ head:
 
     ldx nb_params
     jeq help
+
+    ldx #'S'
+    swi param_get_value
+    mov nb_skip,r0
 
     ldx #'N'
     swi param_get_value
@@ -87,6 +92,13 @@ boucle_head:
     swi file_readline, work_buffer
     bcs ok_close
 
+    lda nb_skip
+    ora nb_skip+1
+    beq no_skip
+    decw nb_skip
+    jmp boucle_head
+
+no_skip:
     lda options_params
     and #OPT_A
     beq not_opt_a
@@ -138,16 +150,17 @@ option_pagination:
     rts
 
 help_msg:
-    pstring("*head <filename> [-nqvp]")
+    pstring("*head <filename> [-options]")
     pstring(" n = Number of lines")
     pstring(" q = No filename")
     pstring(" v = Always filename")
     pstring(" p = Paginate output")
     pstring(" a = Convert ASCII")
+    pstring(" s = Skip N lines")
     .byte 0
 
 options_head:
-    pstring("nqvpa")
+    pstring("nqvpas")
     
 cpt_ligne:
     .byte 0
@@ -155,7 +168,8 @@ nb_lignes:
     .byte 0
 nb_lignes_max:
     .byte 0
-
+nb_skip:
+    .word 0
 
 //----------------------------------------------------
 // do_name : affichage du nom
@@ -222,32 +236,15 @@ do_pagination:
 
     lda #0
     sta cpt_ligne
-    swi pprint, msg_suite
-    swi key_wait
-    stc is_break
-    jsr efface_msg_suite
-    ldc is_break
+    swi screen_pause
     rts
 
 pas_opt_p:
     clc
     rts
 
-efface_msg_suite:
-    ldy #6
-    lda #20
-efface_msg:
-    jsr CHROUT
-    dey
-    bne efface_msg
-    rts
-
 cpt_ligne:
     .byte 0
-is_break:
-    .byte 0
-msg_suite:
-    pstring("<MORE>")
 }
 
 } // CAT namespace

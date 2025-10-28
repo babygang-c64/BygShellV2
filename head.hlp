@@ -9,6 +9,7 @@
 - v : always print filenames
 - p : paginate output
 - a : do ASCII conversion
+- s=N : skip N lines
 
 =Examples:
  *head test -v
