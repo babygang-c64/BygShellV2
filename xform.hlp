@@ -23,13 +23,14 @@
  and lines starting with # too
 
  Example sequence :
- # Extract only games names from
- # comma delimited file
+ # Extract only games names and ids
+ # from comma delimited file to
+ # $ delimited file
 
  sep ,
  sel 2
- lower
- filter game
+ filter 1 demo
  sel 1,3
+ sep $
  write 
  
