@@ -26,6 +26,7 @@ search:
     .label OPT_C=8
     .label OPT_A=16
     .label OPT_P=32
+    .label OPT_I=64
 
     ldy #0
     sty line
@@ -45,7 +46,15 @@ search:
     swi param_top
     mov r1,#search_string
     swi str_cpy
+    
+    lda options_params
+    and #OPT_I
+    beq not_i
 
+    ldx #bios.PETSCII_TO_LOWER
+    swi str_conv,search_string
+
+not_i:
     sec
 boucle_params:
     swi param_process,params_buffer
@@ -84,6 +93,7 @@ help_msg:
     pstring(" c = Count lines matching")
     pstring(" a = Convert from ASCII")
     pstring(" p = Use standard prefix for matches")
+    pstring(" i = Ignore case")
     .byte 0
 
 options_list:
@@ -126,6 +136,14 @@ boucle_read:
     swi str_conv,work_buffer
 not_a:
 
+    lda options_params
+    and #OPT_I
+    beq not_i
+
+    ldx #bios.PETSCII_TO_LOWER
+    swi str_conv,work_buffer
+
+not_i:
     incw line
 
     mov r0,#work_buffer

@@ -1640,6 +1640,16 @@ conv_ascii_to_lower:
     .byte $00
 .label ASCII_TO_LOWER = conv_ascii_to_lower - table_conv
 
+conv_petscii_to_lower:
+    .byte $c1, $db, <(-$80)  // A-Z: sub $80
+    .byte $00
+.label PETSCII_TO_LOWER = conv_petscii_to_lower - table_conv
+
+conv_petscii_to_upper:
+    .byte $41, $5b, $80  // a-z: add $80
+    .byte $00
+.label PETSCII_TO_UPPER = conv_petscii_to_upper - table_conv
+
 conv_petscii_to_screen:
     .byte $41, $5b, <(-$40)  // a-z: substract $40
     .byte $c1, $db, <(-$80)  // A-Z: substract $80
@@ -1655,6 +1665,8 @@ conv_petscii_to_screen:
 .print "ASCII_TO_UPPER=$"+ASCII_TO_UPPER
 .print "ASCII_TO_LOWER=$"+ASCII_TO_LOWER
 .print "PETSCII_TO_SCREEN=$"+PETSCII_TO_SCREEN
+.print "PETSCII_TO_LOWER=$"+PETSCII_TO_LOWER
+.print "PETSCII_TO_UPPER=$"+PETSCII_TO_UPPER
 }
 
 //----------------------------------------------------

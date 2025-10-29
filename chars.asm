@@ -506,7 +506,7 @@ petscii_data:
     pstring(" ")
     pstring("*Lowercase / Uppercase ")
     pstring(" ")
-    pstring(":41-5A;a-z :C1-D1;A-Z")
+    pstring(":41-5A;a-z :C1-DA;A-Z")
     .byte 0
 }
 

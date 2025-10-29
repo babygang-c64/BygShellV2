@@ -63,7 +63,9 @@
     .label ASCII_TO_SCREEN=24
     .label ASCII_TO_UPPER=28
     .label ASCII_TO_LOWER=32
-    .label PETSCII_TO_SCREEN=36
+    .label PETSCII_TO_LOWER=36
+    .label PETSCII_TO_UPPER=40
+    .label PETSCII_TO_SCREEN=44
     
     // Color theme
     
