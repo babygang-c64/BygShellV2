@@ -16,6 +16,7 @@ pstring("search")
 search:
 {
     .label work_buffer = $ce00
+    .label copy_buffer = $cc00
     .label search_string = $cd00
     .label params_buffer = $cd80
     .label filename = $cbe0
@@ -128,6 +129,9 @@ boucle_read:
     swi str_conv,work_buffer
 not_a:
 
+    mov r1,#copy_buffer
+    swi str_cpy,work_buffer
+
     lda options_params
     and #OPT_I
     beq not_i
@@ -165,7 +169,7 @@ found:
     swi pprint_int
     lda #':'
     jsr CHROUT
-    swi pprint_nl,work_buffer
+    swi pprint_nl,copy_buffer
     jmp boucle_read
 
 not_p:
