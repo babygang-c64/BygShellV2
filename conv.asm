@@ -22,6 +22,7 @@ conv:
     .label OPT_S = 4
     .label OPT_U = 8
     .label OPT_L = 16
+    .label OPT_H = 32
 
     ldy #0
     sty format_in
@@ -32,6 +33,10 @@ conv:
     sec
     swi param_init,buffer,options_conv
     jcs help
+
+    lda options_params
+    and #OPT_H
+    jne help_conv
 
     swi pipe_init
     jcs error
@@ -102,14 +107,14 @@ help:
     clc
     rts
 
+help_conv:
+    swi pprint_lines, list_conversions
     clc
-    swi error
     rts
 
-    
     //-- options available
 options_conv:
-    pstring("pasul")
+    pstring("pasulh")
 
 msg_help:
     pstring("*conv <file(s)> -<in format> -<out format>")
@@ -118,6 +123,7 @@ msg_help:
     pstring(" -s : Screen codes")
     pstring(" -u : Uppercase")
     pstring(" -l : Lowercase")
+    pstring(" -h : List conversions")
     .byte 0
 
 msg_format:
@@ -138,6 +144,22 @@ conversions:
     .byte bios.ASCII_TO_LOWER
     .text "PS" 
     .byte bios.PETSCII_TO_SCREEN
+    .text "PU" 
+    .byte bios.PETSCII_TO_UPPER
+    .text "PL" 
+    .byte bios.PETSCII_TO_LOWER
+    .byte 0
+
+list_conversions:
+    pstring("AP - ASCII   to PETSCII")
+    pstring("SA - SCREEN  to ASCII")
+    pstring("SP - SCREEN  to PETSCII")
+    pstring("AS - ASCII   to SCREEN")
+    pstring("AU - ASCII   to UPPER")
+    pstring("AL - ASCII   to LOWER")
+    pstring("PS - PETSCII to SCREEN")
+    pstring("PU - PETSCII to UPPER")
+    pstring("PL - PETSCII to LOWER")
     .byte 0
 
 format_in:
