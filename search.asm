@@ -46,15 +46,7 @@ search:
     swi param_top
     mov r1,#search_string
     swi str_cpy
-    
-    lda options_params
-    and #OPT_I
-    beq not_i
 
-    ldx #bios.PETSCII_TO_LOWER
-    swi str_conv,search_string
-
-not_i:
     sec
 boucle_params:
     swi param_process,params_buffer
@@ -97,7 +89,7 @@ help_msg:
     .byte 0
 
 options_list:
-    pstring("nlvcap")
+    pstring("nlvcapi")
 
 line:
     .word 0
@@ -139,11 +131,10 @@ not_a:
     lda options_params
     and #OPT_I
     beq not_i
-
     ldx #bios.PETSCII_TO_LOWER
     swi str_conv,work_buffer
-
 not_i:
+
     incw line
 
     mov r0,#work_buffer
@@ -158,7 +149,7 @@ found:
     
     lda options_params
     and #OPT_C
-    bne boucle_read
+    jne boucle_read
 
     swi pipe_output
 
