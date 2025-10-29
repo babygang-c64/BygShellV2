@@ -1,0 +1,16 @@
+#conv <file> [-from] [-to]
+
+:Convert file from charset to another
+ From and to options are a single letter
+ Only a subset of possibilites is 
+ supported, check the list with -h
+
+*Options:
+- a : ASCII
+- p : PETSCII
+- l : Lower
+- u : Upper
+- h : show conversions list
+
+=Examples:
+ *conv test.txt -a -p

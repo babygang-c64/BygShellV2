@@ -392,8 +392,9 @@ search for pattern in files
     P = use filename:line#: prefix
     
 Note:
-    patterns rely only on * character at the moment,
-    you should also use * on start / end when needed
+    patterns use * character for zero or more chars,
+    and # character for a single char.
+    you should use * on start / end when needed.
 ```
 
 **SID**

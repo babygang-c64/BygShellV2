@@ -1,6 +1,8 @@
 #search <string> <files> [-options]
 
 :Search string pattern into files (text)
+ Pattern can use * for multiple chars
+ and # for a single char
 
 *Options:
 - n : Print line number with matching 
@@ -13,5 +15,5 @@
 - i : Ignore case
 
 =Examples:
- *search *error* *.log -p
+ *search *err##* *.log -api
  *search -c *.sid listing
