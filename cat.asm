@@ -7,7 +7,7 @@
 // B = numbers non empty lines
 // P = paginates output
 // H = hexdump
-// A = reads start address in file for hexdump
+// S = reads start address in file for hexdump
 // > = outputs to file
 //----------------------------------------------------
 
@@ -126,6 +126,7 @@ boucle_cat:
     jcs ok_close
 
     swi print_hex_buffer
+    add r1,#8
     lda #13
     jsr CHROUT
     jmp boucle_cat
