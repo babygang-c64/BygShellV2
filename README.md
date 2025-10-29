@@ -388,6 +388,8 @@ search for pattern in files
     L = print only line number
     V = lines not matching
     C = count lines matching
+    A = convert from ASCII
+    P = use filename:line#: prefix
     
 Note:
     patterns rely only on * character at the moment,

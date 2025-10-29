@@ -82,6 +82,10 @@ do_tail:
     swi pipe_output
     jsr option_name
 
+    sec
+    ldx #5
+    jsr progress
+
 boucle_tail:
     jsr STOP
     jeq ok_close
@@ -91,6 +95,9 @@ boucle_tail:
     swi file_readline, work_buffer
     bcs ok_close
 
+    clc
+    jsr progress
+    
     lda options_params
     and #OPT_A
     beq not_opt_a
@@ -112,6 +119,11 @@ help:
 ok_close:
     ldx #4
     swi file_close
+    
+    sec
+    ldx #0
+    jsr progress
+    
     jsr view_lines
     rts
 
@@ -141,7 +153,7 @@ no_paginate:
 }
 
 help_msg:
-    pstring("*tail <filename> [-nqvp]")
+    pstring("*tail <filename> [-options]")
     pstring(" n = Number of lines")
     pstring(" q = No filename")
     pstring(" v = Always filename")
@@ -290,6 +302,11 @@ cpt_copy:
     .word 0
 }
 
+//----------------------------------------------------
+// view_lines : print the stored lines, paginate if
+// needed
+//----------------------------------------------------
+
 view_lines:
 {
     mov r0,STREND
@@ -308,6 +325,91 @@ loop:
     bne loop
 end:
     rts
+}
+
+//----------------------------------------------------
+// progress : progress animation
+//
+// C=1 : init, X = steps, C=0 : run, 
+// C= 1 and X = 0 : end
+//----------------------------------------------------
+
+progress:
+{
+    bcc not_init
+    stx progress_skip
+    cpx #0
+    beq progress_end
+    ldx #3
+    jsr CHKOUT
+    swi pprint,progress_msg
+    ldx #8
+start_of_line:
+    lda #LEFT
+    jsr CHROUT
+    dex
+    bne start_of_line
+    stx progress_pos
+    stx progress_nb
+not_init:
+    ldx #3
+    jsr CHKOUT
+
+    ldx #bios.COLOR_ACCENT
+    swi theme_set_color
+    lda progress_nb
+    bne not_anim
+    
+    lda progress_skip
+    sta progress_nb
+anim:
+    ldx progress_pos
+    lda progress_anim,x
+    bne anim_ok
+    sta progress_pos
+    beq anim
+anim_ok:
+    jsr CHROUT
+    lda #LEFT
+    jsr CHROUT
+    inc progress_pos
+
+not_anim:
+    dec progress_nb
+    swi pipe_output
+    rts
+
+progress_end:
+    ldx #3
+    jsr CHKOUT
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    ldx #8
+pre_erase:
+    lda #RIGHT
+    jsr CHROUT
+    dex
+    bne pre_erase
+
+    ldx #8
+erase:
+    lda #BACKSPACE
+    jsr CHROUT
+    dex
+    bne erase
+    swi pipe_output
+    rts
+
+progress_skip:
+    .byte 0
+progress_pos:
+    .byte 0
+progress_nb:
+    .byte 0
+progress_msg:
+    pstring(" Working")
+progress_anim:
+    .byte 172,187,190,188,0
 }
 
 } // TAIL namespace

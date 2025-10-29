@@ -8,7 +8,9 @@
 - l : Only print matching line number
 - v : Select lines not matching
 - c : Count matching lines
+- a : Convert from ASCII
+- p : Use filename/line/content prefix
 
 =Examples:
- *search *error* *.log -n
+ *search *error* *.log -p
  *search -c *.sid listing

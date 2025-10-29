@@ -151,7 +151,7 @@ options_touch:
     pstring("psbtc")
 
 help_hw:
-    pstring("*touch <file> : Create empty file")
+    pstring("*touch <file> [-options]")
     pstring(" -p : create PRG file")
     pstring(" -s : size in bytes")
     pstring(" -b : filler byte")

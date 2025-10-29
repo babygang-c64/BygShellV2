@@ -5,6 +5,8 @@
  Log file is name .log and located
  on the current device. If absent
  it is created.
+ Date and search cannot be used
+ together.
  
 *Options:
 - q : quiet mode, only add entry

@@ -171,6 +171,7 @@ control_value:
 
 do_checksum:
 {
+
     mov nb_bytes,#0
     ldx #4
     clc
@@ -178,8 +179,12 @@ do_checksum:
     jcs checksum_file_not_found
 
     jsr initCRC
+
+    sec
+    ldx #1
+    jsr progress
     
-    lda #200
+    lda #128
     sta buffer1
 
 process:
@@ -189,6 +194,9 @@ process:
     bcs end_process
     jsr do_calc
     
+    clc
+    jsr progress
+
     lda buffer1
     add nb_bytes,a
     lda buffer1
@@ -196,7 +204,7 @@ process:
     
     jmp process
 
-do_calc:    
+do_calc:
     ldy #0
 calc:
     lda buffer1+1,y
@@ -222,6 +230,10 @@ no_data:
     ldy #0
     ldx #4
     swi file_close
+    
+    sec
+    ldx #0
+    jsr progress
     
     lda options_params
     and #OPT_Q
@@ -327,3 +339,88 @@ no_add_total:
     bne bitloop_total
     sta crc_total_value+1
     rts
+
+//----------------------------------------------------
+// progress : progress animation
+//
+// C=1 : init, X = steps, C=0 : run, 
+// C= 1 and X = 0 : end
+//----------------------------------------------------
+
+progress:
+{
+    bcc not_init
+    stx progress_skip
+    cpx #0
+    beq progress_end
+    ldx #3
+    jsr CHKOUT
+    swi pprint,progress_msg
+    ldx #8
+start_of_line:
+    lda #LEFT
+    jsr CHROUT
+    dex
+    bne start_of_line
+    stx progress_pos
+    stx progress_nb
+not_init:
+    ldx #3
+    jsr CHKOUT
+
+    ldx #bios.COLOR_ACCENT
+    swi theme_set_color
+    lda progress_nb
+    bne not_anim
+    
+    lda progress_skip
+    sta progress_nb
+anim:
+    ldx progress_pos
+    lda progress_anim,x
+    bne anim_ok
+    sta progress_pos
+    beq anim
+anim_ok:
+    jsr CHROUT
+    lda #LEFT
+    jsr CHROUT
+    inc progress_pos
+
+not_anim:
+    dec progress_nb
+    swi pipe_output
+    rts
+
+progress_end:
+    ldx #3
+    jsr CHKOUT
+    ldx #bios.COLOR_TEXT
+    swi theme_set_color
+    ldx #8
+pre_erase:
+    lda #RIGHT
+    jsr CHROUT
+    dex
+    bne pre_erase
+
+    ldx #8
+erase:
+    lda #BACKSPACE
+    jsr CHROUT
+    dex
+    bne erase
+    swi pipe_output
+    rts
+
+progress_skip:
+    .byte 0
+progress_pos:
+    .byte 0
+progress_nb:
+    .byte 0
+progress_msg:
+    pstring(" Working")
+progress_anim:
+    .byte 172,187,190,188,0
+}
