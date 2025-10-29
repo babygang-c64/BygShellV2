@@ -10,6 +10,7 @@
 - c : Count matching lines
 - a : Convert from ASCII
 - p : Use filename/line/content prefix
+- i : Ignore case
 
 =Examples:
  *search *error* *.log -p
