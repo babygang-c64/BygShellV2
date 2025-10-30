@@ -115,6 +115,7 @@ build_command date
 build_command log
 build_command pause
 build_command mdview -symbolfile
+build_command help
 
 cp *.hlp bin/
 cat build_pp.asm

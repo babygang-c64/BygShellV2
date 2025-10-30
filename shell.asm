@@ -502,7 +502,6 @@ not_found:
 //---------------------------------------------------------------
 
 internal_commands:
-    pstring("help")
     pstring("m")
     pstring("env")
     pstring("kill")
@@ -510,7 +509,6 @@ internal_commands:
     .byte 0
 
 internal_commands_jump:
-    .word do_help
     .word do_memory
     .word do_env
     .word do_kill
@@ -660,119 +658,6 @@ carriage_return:
 
 options_env:
     pstring("dpu")
-}
-
-//---------------------------------------------------------------
-// help : internal help command
-//---------------------------------------------------------------
-
-do_help:
-{
-.label nb_lines = zr1l
-
-    lda nb_params
-    bne help_with_file
-
-help_help:
-    swi pprint_nl,internal_commands_help
-    sec
-    rts
-
-help_with_file:
-    jsr currdevice.save
-    mov r0, #buffer
-    swi str_next
-
-    jsr get_bin_name
-    
-    mov r1,#suffix_help
-    swi str_cat
-    
-    push r0
-    jsr get_bin_device
-    stx CURRDEVICE
-    pop r0
-    clc
-    ldx #4
-    swi file_open
-    bcs not_found
-
-    jsr help_init
-help_file:
-    jsr CHRIN
-    cmp #$0a
-    bne do_color
-    jsr do_env.carriage_return
-    jmp help_continue
-do_color:
-    jsr change_color
-    swi file_readline, work_buffer
-    bcs help_end
-    ldx #bios.do_str_conv.ASCII_TO_PETSCII
-    swi str_conv
-    swi pprint_nl, work_buffer
-help_continue:
-    dec nb_lines
-    bne help_file
-    swi screen_pause
-    bcs help_end
-    jsr help_init
-    bne help_file
-
-help_init:
-    ldx #4
-    jsr CHKIN
-    lda #23
-    sta nb_lines
-    rts
-    
-help_end:
-    swi theme_normal
-    ldx #4
-    swi file_close
-    jsr currdevice.restore
-
-help_return:
-    sec
-    rts
-not_found:
-    sec
-    mov r1,#$fffe
-    swi error,error_help
-    rts
-    
-lookup:
-    mov r1, r0
-    mov r0, #internal_commands
-    
-    swi lines_find
-    jcc help_help
-    mov r0, #internal_commands_help
-    swi lines_goto
-    swi pprint_nl
-    sec
-    rts
-
-change_color:
-    ldx #5
-test_color:
-    cmp color_chars,x
-    beq color_ok
-    dex
-    bpl test_color
-    jmp CHROUT
-color_ok:
-    inx
-    inx
-    jmp bios.do_theme.set_color
-
-suffix_help:
-    pstring(".hlp")
-error_help:
-    pstring("Not found")
-
-color_chars:
-    .text "_:#-*="
 }
 
 //---------------------------------------------------------------
