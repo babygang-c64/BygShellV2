@@ -81,7 +81,7 @@
 // BIOS functions list
 //===============================================================
 
-.label bios_exec=$cf68
+.label bios_exec=$cf40
 .label bios_ram_get_byte=bios_exec+6
 
 .label reset=9
@@ -270,18 +270,23 @@ bios_exec_ref:
 
 ram_get_byte:
     sei
-//    lda #0
-//    sta $d01a
-//    bit $d019
-//    sta $d019
     dec $01
     lda (zr0l),y
-//    pha
     inc $01
-//    lda #1
-//    sta $d01a
-//    pla
     cli
+    rts
+    
+bios_exec_bank_ref:
+    sta bios_exec+4
+    lda $de00
+    sta bios_exec+(restore-bios_exec_ref)
+    lda bank_target:#0
+    sta $de00
+    jsr bios_exec+3
+    pha
+    lda restore:#0
+    sta $de00
+    pla
     rts
 end_ref:
 

@@ -1,6 +1,6 @@
-#sid <PSIDfile> [-options]
+#Show info or play SID file
 
-:Show info or play SID file.
+:sid <PSIDfile> [-options]
  Plays song 1 by default
 
 *Options:

@@ -1,9 +1,9 @@
-#conv <file> [-from] [-to]
-
-:Convert file from charset to another
+#Convert file from charset to another
  From and to options are a single letter
  Only a subset of possibilites is 
  supported, check the list with -h
+
+:conv <file> [-from] [-to]
 
 *Options:
 - a : ASCII

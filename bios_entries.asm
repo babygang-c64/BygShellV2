@@ -51,7 +51,7 @@
 
     // RAM entry points
 
-    .label bios_exec=$cf68      // SWI entry point
+    .label bios_exec=$cf40      // SWI entry point
     .label bios_ram_get_byte=bios_exec+6
     .label irq_sub=$cff4        // IRQ sub call
 
@@ -78,7 +78,9 @@
     .label COLOR_CONTENT=6
     .label COLOR_NOTES=7
 
-    // BIOS entries
+    //===========================================================
+    // BIOS entries bank 0
+    //===========================================================
 
     .label reset=9
     .label str_split=11
@@ -166,6 +168,12 @@
     .label theme_get_color=169
     .label theme_set_color=171
     .label screen_clear=173
+    
+    //===========================================================
+    // BIOS entries bank 1
+    //===========================================================
+
+    .label test=$0100+9
 }
 
 //===============================================================
@@ -195,8 +203,43 @@
 // bios : call bios function without parameters
 //===============================================================
 
-.macro bios(bios_func)
+.macro bios_old(bios_func)
 {
     lda #bios_func
     jsr bios.bios_exec
+}
+
+//===============================================================
+// bios_bank
+//===============================================================
+
+.macro bios(value16) 
+{
+    .var offset = value16 & $FF
+    .var bank = (value16 >> 8) & $FF
+    
+    .if (bank == 0) {
+        // Bank 0 : appel direct sans changement de bank
+        lda #offset
+        jsr bios.bios_exec
+    } else {
+        //.print "*** bank="+bank
+        //.print "*** offset="+offset
+        // Autre bank : patch et appel complet
+        lda #bank
+        sta bios.bios_exec+($c8-$af)
+        
+        lda #offset
+        jsr bios.bios_exec+6+9
+    }
+}
+
+.macro bios0(value)
+{
+    
+    lda #0
+    sta bios.bios_exec+($c8-$af)
+    
+    lda #value
+    jsr bios.bios_exec+6+9
 }

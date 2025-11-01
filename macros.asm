@@ -930,6 +930,28 @@ done:
     beq branch
 }
 
+//---------------------------------------------------------------
+// OPT : subroutine if option is set in options_params
+//---------------------------------------------------------------
+
+.macro opt(option, action, routine)
+{
+    .label options_params=$02fe
+
+    lda options_params
+    and #option
+    beq no_jump
+    .if (action == 0)
+    {
+        jsr routine
+    }
+    else
+    {
+        jmp routine
+    }
+no_jump:
+}
+
 //===============================================================
 // General purpose macros
 //===============================================================

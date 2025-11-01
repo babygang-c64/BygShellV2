@@ -1,6 +1,6 @@
-#cat <files> [-options]
-
-:Print file(s) on screen.
+#Print file(s) content
+ 
+:cat <files> [-options]
 
 *Options:
 - n : # all lines

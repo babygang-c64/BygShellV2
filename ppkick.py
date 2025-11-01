@@ -206,6 +206,21 @@ def handle_swi(elems):
         return f"call_bios2(bios.{v0}, {elems[3]}, {elems[5]})"
     raise ValueError(f"Invalid SWI instruction: {' '.join(elems)}")
 
+def handle_swi0(elems):
+    _, v0 = param_type(elems[1])
+    if len(elems) == 2:
+        return f"bios0(bios.{v0})"
+    raise ValueError(f"Invalid SWI instruction: {' '.join(elems)}")
+
+def handle_opt(elems):
+    _, v0 = param_type(elems[1])
+    if len(elems) == 5:
+        if elems[3] == 'jsr':
+            return f"opt({v0}, 0, {elems[4]})"
+        else:
+            return f"opt({v0}, 1, {elems[4]})"
+    raise ValueError(f"Invalid OPT instruction: {' '.join(elems)}")
+
 
 # --------------------------------------------------------------------
 # Dispatch table
@@ -231,6 +246,8 @@ handlers = {
     "jcc":  lambda e: handle_simple(e, "jcc"),
     "jcs":  lambda e: handle_simple(e, "jcs"),
     "swi":  handle_swi,
+    "opt":  handle_opt,
+    "swi0":  handle_swi0,
     "cmpw": handle_cmpw,
     "beqw": handle_brw,
     "bnew": handle_brw,

@@ -1,4 +1,6 @@
-#menu [item of file pattern] [-options]
+#Create a menu from items
+
+:menu [item of file pattern] [-options]
 
 :Creates a menu combining items and
 :filenames, provides menu to user 

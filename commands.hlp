@@ -1,14 +1,14 @@
-#List of commands
+#List of shell commands
 
 *Internal commands
-- *help : help for internal 
--         external commands 
 - *m : memory hexdump and modify
 - *env : view and set environment
 -        variables
 - *kill : kill cartridge and reset
 
 *External commands
+- *help : help for internal 
+-         external commands 
 - *cat : print file content
 - *chars : char and colour maps
 - *checksum : calculate CRC16 on files

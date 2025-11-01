@@ -1,6 +1,6 @@
-#theme <theme> [-options]
-:
- Select color scheme
+#Select color scheme
+
+:theme <theme> [-options]
 
 *Options:
 - r : Reset to default theme

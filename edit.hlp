@@ -1,6 +1,6 @@
-#edit [<file>] [options]
+#Small text editor
 
-:Small text editor
+:edit [<file>] [options]
 
 * Options
 - A : ASCII input file, convert to PETSCII

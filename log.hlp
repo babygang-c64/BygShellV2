@@ -1,6 +1,6 @@
-#log <messages> [-options]
+#Update and manage log file
 
-:Log file update
+:log <messages> [-options]
 
  Log file is name .log and located
  on the current device. If absent

@@ -1,6 +1,6 @@
-#checksum <files> [-options]
+#Calculate CRC16 for file(s)
 
-:Calculates CRC16 for files.
+:checksum <files> [-options]
 
 *Options:
 - q : quiet mode, return single CRC16

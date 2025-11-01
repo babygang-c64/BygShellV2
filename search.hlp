@@ -1,6 +1,6 @@
-#search <string> <files> [-options]
+#Search string pattern into files
 
-:Search string pattern into files (text)
+:search <string> <files> [-options]
  Pattern can use * for multiple chars
  and # for a single char
 

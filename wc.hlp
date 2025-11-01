@@ -1,6 +1,6 @@
-#wc <files> [-options]
+#Count lines and words of files
 
-:Count lines and words of files.
+:wc <files> [-options]
  All values are counted by default.
 
 *Options:

@@ -50,12 +50,21 @@ rm ${disk} -f
 uv run ppkick.py shell.asm shell_pp.asm
 uv run ppkick.py bios.asm bios_pp.asm
 uv run ppkick.py bios_entries.asm bios_entries_pp.asm
+uv run ppkick.py bios_bank1.asm bios_bank1_pp.asm
 
 kickass shell_pp.asm -symbolfile
 dd if=shell_pp.prg of=bygshell.bin bs=1 skip=2
+
+kickass bios_bank1_pp.asm -symbolfile
+dd if=bios_bank1_pp.prg of=bank1.bin bs=1 skip=2
+
 kickass cartridge_header.asm -binfile -o bygshell.crt
+kickass cartridge_bank1.asm -binfile -o bank1_crt.bin
+
 cp shell_pp.prg bin/shell.prg
 cat bygshell.bin >> bygshell.crt
+cat bank1_crt.bin >> bygshell.crt
+cat bank1.bin >> bygshell.crt
 
 rm -f ${disk}
 ${VICE_PATH}/c1541 -format "byg-shell",2025 d64 ${disk} -silent
@@ -66,6 +75,7 @@ copy_to_d64 test "test.txt"
 copy_to_d64 test2 "test2.txt"
 copy_to_d64 test3 "test3.txt"
 copy_to_d64 xftest.txt "xftest.ini"
+copy_to_d64 .index.hlp ".index.hlp"
 copy_to_d64 list.csv "disks.csv"
 copy_to_d64 cartridge_header.asm "crt.asm"
 copy_to_d64 cat.asm "cat.asm"
@@ -115,7 +125,7 @@ build_command date
 build_command log
 build_command pause
 build_command mdview -symbolfile
-build_command help
+build_command help -symbolfile
 
 cp *.hlp bin/
 cat build_pp.asm

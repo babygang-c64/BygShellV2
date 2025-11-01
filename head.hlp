@@ -1,6 +1,7 @@
-#head <files> [-options]
+#Print first lines of file(s)
 
-:Print first lines of file(s).
+:head <files> [-options]
+
 :Defaults to 10 lines.
 
 *Options:

@@ -1,6 +1,6 @@
-#join <source files> <target> [-options]
+#Concatenate file(s)
 
-:Concatenate file(s).
+:join <source files> <target> [-options]
 
 *Options:
 - a : append and not replace target file

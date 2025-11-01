@@ -1,6 +1,6 @@
-#diff <file A> <file B> [-options]
+#Compare content of files
 
-:Compare two files contents.
+:diff <file A> <file B> [-options]
 
 *Options:
 - n=N  : stop after N differences

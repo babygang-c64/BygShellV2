@@ -1,6 +1,7 @@
-#touch <files> [-options]
+#Create new file, empty or not
+
+:touch <files> [-options]
 :
- Create new file, empty or not
  By default creates empty SEQ files
 
 *Options:

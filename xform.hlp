@@ -1,8 +1,7 @@
-#xform <file> [processes]
-#      <file> -f <init file>
-:
- Apply processes on delimited
- files.
+#Apply processes on delimited files
+
+:xform <file> [processes]
+:      <file> -f <init file>
 
 *Available commands :
 - head <n> : process only N lines

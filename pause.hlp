@@ -1,6 +1,7 @@
-#pause [message] [options]
+#Wait for a keypress or timeout
+
+:pause [message] [options]
 :
- Wait for a keypress or timeout
  By default print message and
  wait for keypress
 

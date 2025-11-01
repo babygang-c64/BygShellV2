@@ -1,6 +1,6 @@
-#lsblk [-options]
+#List and identifies connected devices.
 
-:List and identifies connected devices.
+:lsblk [-options]
  Returns the list in SH$
  
 *Options:

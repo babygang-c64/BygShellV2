@@ -1,5 +1,6 @@
-#chars [-options]
+#Display char and color info
 
+:chars [-options]
 :Displays screencode char map or a
 :color map (char map is default)
 

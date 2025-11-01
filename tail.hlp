@@ -1,6 +1,7 @@
-#tail <files> [-options]
+#Print last lines of file(s)
 
-:Print last lines of file(s).
+:tail <files> [-options]
+
 :Defaults to 10 lines.
 
 *Options:
