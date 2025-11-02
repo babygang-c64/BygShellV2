@@ -469,10 +469,10 @@ cursor_y:
 
 show_index:
 {
-
-    jsr draw_index_screen
     jsr read_index
     bcs error
+    lda #1
+    sta pos_index
 do_show:
     ldy #0
     mov r0,STREND
@@ -480,14 +480,17 @@ do_show:
     mov a,(r0)
     sta nb_entries
     incw top_entries
+    jsr draw_index_screen
 help_loop:
     jsr navigate
     bcs quit
-    jsr redraw_index_screen
+    jsr draw_index_screen
     jmp help_loop
 
 quit:
     jsr CLRCHN
+    lda #147
+    jsr CHROUT
     clc
     rts
 
@@ -511,8 +514,6 @@ loop_line:
     rts
     
 draw_index_screen:
-    lda #3
-    sta pos_index
     ldy #0
     sty cursor_x
     sty cursor_y
@@ -523,25 +524,13 @@ draw_index_screen:
     lda #RVSON
     jsr CHROUT
     swi pprint,title_index
-    ldx #bios.COLOR_TEXT
-    swi theme_set_color
-    lda #RVSOFF
-    jsr CHROUT
-    lda #$dd
-    sta $0400+40-6
-    rts
-
-redraw_index_screen:
     ldy #0
-    sty cursor_x
-    sty cursor_y
-    lda #147
-    jsr CHROUT
-    ldx #bios.COLOR_CONTENT
-    swi theme_set_color
-    lda #RVSON
-    jsr CHROUT
-    swi pprint,title_index
+    sty zr0h
+    ldx nb_entries
+    dex
+    stx zr0l
+    ldx #%10011111
+    swi pprint_int
     ldx #bios.COLOR_TEXT
     swi theme_set_color
     lda #RVSOFF
@@ -691,7 +680,7 @@ current_line:
 start_line:
     .byte 0
 title_index:
-    pstring("HELP INDEX                        -12345")
+    pstring("HELP INDEX                        -")
 }
 
 screen_adr:

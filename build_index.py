@@ -23,6 +23,7 @@ with open(".index.hlp", "wb") as hout:
     hout.write(bytes([0]))
     hout.write(bytes([16]))
     hout.write(bytes([len(results)]))
+    results.sort(key=lambda x: x[0])
     for item in results:
         for elem in item: 
             hout.write(bytes([len(elem)]))
