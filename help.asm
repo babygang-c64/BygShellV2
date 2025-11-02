@@ -21,7 +21,6 @@ help:
 
     .label OPT_H=1
     .label OPT_I=2
-    .label OPT_R=4
     
     sec
     swi param_init,buffer,options_help
@@ -33,7 +32,6 @@ help:
     
     opt OPT_H, jmp show_help
     opt OPT_I, jmp show_index
-    opt OPT_R, jmp build_index
 
     lda nb_params
     jeq show_index
@@ -69,7 +67,6 @@ help_msg:
     pstring("*help [topic] [-options]")
     pstring(" h : show help")
     pstring(" i : show index")
-    pstring(" r : rebuild index")
     .byte 0
 
 options_help:
