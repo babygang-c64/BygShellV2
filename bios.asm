@@ -39,6 +39,8 @@
 .label clipboard=$a080      // clipboard content
 .label swap_screen=$a100    // swap screen a100 to a4ff
 .label history_buffer=$a500 // history buffer
+.label return_stack_ptr=$a700
+.label return_stack=$a701
 .label theme_name=$a7f0     // theme name
 .label date_time=$a7e8      // date and time
 .label directory_root=$a800 // directory data for params
@@ -314,6 +316,11 @@ do_reset:
     sta history_buffer
     sta history_buffer+1
     sta history_buffer+2
+    
+    // stack_return
+    
+    lda #1
+    sta return_stack_ptr
 
     // TOD : time of day
 

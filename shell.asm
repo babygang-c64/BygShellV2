@@ -505,17 +505,142 @@ internal_commands:
     pstring("m")
     pstring("env")
     pstring("kill")
-    pstring("run")
+    pstring("def")
+    pstring("call")
+    pstring("ret")
     .byte 0
 
 internal_commands_jump:
     .word do_memory
     .word do_env
     .word do_kill
-    .word do_run
+    .word do_call.do_def
+    .word do_call
+    .word do_ret
 
-internal_commands_help:
-    pstring("*help <cmd>")
+//---------------------------------------------------------------
+// def : define BASIC subroutine
+// call : lookup BASIC subroutine
+//---------------------------------------------------------------
+
+do_ret:
+{
+    ldy #0
+    mov r0,#return_stack_ptr
+    jsr bios.bios_ram_get_byte
+    tay
+    cmp #1
+    beq do_call.do_def
+    dey
+    jsr bios.bios_ram_get_byte
+    sta $15
+    dey
+    jsr bios.bios_ram_get_byte
+    sta $14
+    jmp do_call.do_goto
+}
+
+
+do_call:
+{
+    clc
+    swi param_init,buffer
+    swi str_next,buffer
+    mov r1,$0801
+    ldy #0
+test_line:
+    lda zr1l
+    ora zr1h
+    bne not_end
+do_def:
+    sec
+    rts
+
+not_end:
+    ldy #4
+    lda (zr1l),y
+    cmp #$ac
+    beq is_star
+not_star:
+    jsr next_line
+    jmp test_line
+is_star:
+    iny
+    lda (zr1l),y
+    cmp #$96
+    bne not_star
+    push r1
+    add r1,#6
+    ldy #0
+    mov a,(r0)
+    tay
+compare:
+    lda (zr0l),y
+    cmp (zr1l),y
+    beq not_different
+    pop r1
+    jmp not_star
+not_different:
+    dey
+    bne compare
+
+    pop r1
+    jsr next_line
+    ldy #2
+    lda (zr1l),y
+    sta $14
+    iny
+    lda (zr1l),y
+    sta $15
+
+    lda $3a
+    cmp #$ff
+    beq do_goto_direct
+    lda $3e
+    cmp #$ff
+    beq do_goto_direct
+    sta zr1h
+
+    lda $3d
+    sta zr1l
+    inc r1
+    jsr next_line
+    ldy #2
+    lda (zr1l),y
+    pha
+    iny
+    lda (zr1l),y
+    sta zr1h
+    pla
+    sta zr1l
+
+    ldy #0
+    mov r0,#return_stack_ptr
+    jsr bios.bios_ram_get_byte
+    tay
+    lda zr1l
+    sta (zr0l),y
+    iny
+    lda zr1h
+    sta (zr0l),y
+    iny
+do_goto:
+    sty return_stack_ptr
+do_goto_direct:
+    jmp $a8a3   // GOTO
+
+next_line:
+    ldy #0
+    lda (zr1l),y
+    pha
+    iny
+    lda (zr1l),y
+    sta zr1h
+    pla
+    sta zr1l
+    rts
+}
+
 
 //---------------------------------------------------------------
 // kill/run : kill cartridge, reset
@@ -532,36 +657,9 @@ reset_c64:
     jmp $e453 // sys init basic vectors
 }
 
-do_run:
-{
-    lda $0805
-    cmp #$9e
-    bne do_kill.not_sys
-    
-    mov $7a,#$0806
-    jsr $ad8a
-    jsr $b7f7
-
-    mov $0805,$14
-    mov $0807,$2d
-
-    sei
-    jsr $fda3
-    jsr $fd50
-    jsr $fd15
-    jsr $ff5b
-    jsr reset_c64
-    mov r0,$0805
-    mov $2d,$0807
-    sec
-}
 do_kill:
 {
-    bcs run
-not_sys:
     mov r0,#$fce2
-run:
-    mov $02e5,r0
     ldx #4
 copy:
     lda kill_routine,x
