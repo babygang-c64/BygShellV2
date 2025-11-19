@@ -7,6 +7,8 @@
 
 #importonce
 
+#import "macros.asm"
+
 .encoding "ascii"
 
 * = * "bios vectors"
@@ -44,6 +46,11 @@
 .label theme_name=$a7f0     // theme name
 .label date_time=$a7e8      // date and time
 .label directory_root=$a800 // directory data for params
+
+// Under cartridge ROM
+
+.label datapool_size = 16
+.label datapool_root   = $8000
 
 // flags definitions
 
@@ -173,6 +180,11 @@
 .label theme_set_color=171
 .label screen_clear=173
 
+// Bank 1
+
+.label test=$0100+9
+.label datapool_init=$0100+11
+
 //===============================================================
 // bios_jmp : bios jump table
 //===============================================================
@@ -266,6 +278,7 @@ bios_jmp:
 
     // bios_exec : executes BIOS function, function # in A
 
+
 bios_exec_ref:
     sta bios_exec+4
     jmp (bios_jmp)
@@ -278,17 +291,20 @@ ram_get_byte:
     cli
     rts
     
-bios_exec_bank_ref:
-    sta bios_exec+4
+exec_bank:
+    sei
+    pha
     lda $de00
-    sta bios_exec+(restore-bios_exec_ref)
+    sta $cf62 // restore
     lda bank_target:#0
     sta $de00
-    jsr bios_exec+3
+    pla
+    jsr bios_exec
     pha
     lda restore:#0
     sta $de00
     pla
+    cli
     rts
 end_ref:
 
@@ -351,16 +367,7 @@ copy_bios_exec:
     sta bios_exec,x
     dex
     bpl copy_bios_exec
-    
-//    ldx #0
-//copy_irq:
-//    lda do_irq_sub,x
-//    sta do_irq_sub,x
-//    lda do_irq_sub+256,x
-//    sta do_irq_sub+256,x
-//    dex
-//    bne copy_irq
-    
+
     // clear swap screen
     mov r0,#swap_screen
     sec
@@ -4207,6 +4214,50 @@ return_var_int:
 } // namespace bios
 
 //===============================================================
+// bios_bank
+//===============================================================
+
+.namespace bios_exec {
+  .label exec_bank=$cf4f     
+  .label bank_target=$cf58   
+  .label restore=$cf62       
+  .label ram_get_byte=$cf46
+  .label exec=$cf40
+}
+
+.macro bios(value16) 
+{
+    .var offset = value16 & $FF
+    .var bank = (value16 >> 8) & $FF
+    
+    .if (bank == 0) {
+        // Bank 0 : appel direct sans changement de bank
+        lda #offset
+        jsr bios.bios_exec
+    } else {
+        //.print "*** bank="+bank
+        //.print "*** offset="+offset
+        // Autre bank : patch et appel complet
+        lda #bank
+        sta bios_exec.bank_target
+        
+        lda #offset
+        jsr bios_exec.exec_bank
+    }
+}
+
+.macro bios0(value)
+{
+    
+    lda #0
+    sta bios_exec.bank_target
+    
+    lda #value
+    jsr bios_exec.exec_bank
+}
+
+
+//===============================================================
 // call_bios : call bios function with word parameter in r0
 //===============================================================
 
@@ -4229,15 +4280,6 @@ return_var_int:
     jsr bios.bios_exec
 }
 
-//===============================================================
-// bios : call bios function without parameters
-//===============================================================
-
-.macro bios(bios_func)
-{
-    lda #bios_func
-    jsr bios.bios_exec
-}
 
 
 //===============================================================

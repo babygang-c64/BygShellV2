@@ -71,6 +71,12 @@ All external commands can :
 - M : memory dump / write, takes one start address or start / end address and
 when a single address is given you can write bytes just after it. Also view RAM under BASIC
 - KILL : kill the cartridge, reclaim RAM under ROM between $8000-9FFF
+- DEF <name> : define BASIC subroutine, uses own stack, don't support BASIC keywords in names
+- CALL <name> : call BASIC subroutine
+- RET : return from BASIC subroutine
+
+![Basic subroutines](images/def_call_ret.png)
+
 - ENV : view some environment info, change device and path location of external commands
     -d <device> = define device for external commands lookup
     -p <device> = define path for external commands lookup, ";" are changed to ":"

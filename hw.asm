@@ -38,9 +38,37 @@ hw:
 {
     .label OPT_D=1
     .label work_buffer = $ce00
+    .label my_list_heap = $8000
 
+    ldx #2
+    mov r0,#my_list_root
+    mov r1,#my_list_heap
+    swi list_init
+    
+//    ldx retour
+//    mov r0,#my_list_root
+//    swi list_alloc
 
+    mov r0,#my_list_root
+    mov r1,#retour
+    swi list_insert
+    stc $0428
+    mov $0400,r0
+    
+
+    swi pprint_nl,retour
     rts
+retour:
+    pstring("Retour OK")
+
+my_list_root:
+{
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .byte 0
+}
 
 view:
 {

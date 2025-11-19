@@ -52,6 +52,7 @@ uv run ppkick.py bios.asm bios_pp.asm
 uv run ppkick.py bios_entries.asm bios_entries_pp.asm
 uv run ppkick.py bios_bank1.asm bios_bank1_pp.asm
 
+kickass bios_exec.asm -symbolfile
 kickass shell_pp.asm -symbolfile
 dd if=shell_pp.prg of=bygshell.bin bs=1 skip=2
 
@@ -75,7 +76,6 @@ copy_to_d64 test "test.txt"
 copy_to_d64 test2 "test2.txt"
 copy_to_d64 test3 "test3.txt"
 copy_to_d64 xftest.txt "xftest.ini"
-copy_to_d64 .index.hlp ".index.hlp"
 copy_to_d64 list.csv "disks.csv"
 copy_to_d64 cartridge_header.asm "crt.asm"
 copy_to_d64 cat.asm "cat.asm"
@@ -84,6 +84,8 @@ copy_to_d64 bygp1.kla "bygp1.kla"
 copy_to_d64 cupid2021a.kla "cupid2021a.kla"
 copy_to_d64 commando.sid "commando.sid"
 copy_to_d64 "jiffymon v2" "jiffymonv2"
+copy_to_d64 .index.hlp ".index.hlp"
+copy_to_d64 env.hlp env.hlp
 copy_to_d64 commands.hlp commands.hlp
 copy_to_d64 keys.hlp keys.hlp
 copy_to_d64 byg-shell.hlp byg-shell.hlp

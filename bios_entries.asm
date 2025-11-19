@@ -174,7 +174,54 @@
     //===========================================================
 
     .label test=$0100+9
+    .label list_init=$0100+11
+    .label list_insert=$0100+13
+    .label list_alloc=$0100+15
 }
+
+//===============================================================
+// bios_bank
+//===============================================================
+
+.namespace bios_exec {
+  .label exec_bank=$cf4f     
+  .label bank_target=$cf58   
+  .label restore=$cf62       
+  .label ram_get_byte=$cf46
+  .label exec=$cf40
+}
+
+.macro bios(value16) 
+{
+    .var offset = value16 & $FF
+    .var bank = (value16 >> 8) & $FF
+    
+    .if (bank == 0) {
+        // Bank 0 : appel direct sans changement de bank
+        lda #offset
+        jsr bios.bios_exec
+    } else {
+        //.print "*** bank="+bank
+        //.print "*** offset="+offset
+        // Autre bank : patch et appel complet
+        lda #bank
+        sta bios_exec.bank_target
+        
+        lda #offset
+        jsr bios_exec.exec_bank
+    }
+}
+
+.macro bios0(value)
+{
+    
+    lda #0
+    sta bios_exec.bank_target
+    
+    lda #value
+    jsr bios_exec.exec_bank
+}
+
 
 //===============================================================
 // call_bios : call bios function with word parameter in r0
@@ -197,49 +244,4 @@
     mov r1, #word_param2
     lda #bios_func
     jsr bios.bios_exec
-}
-
-//===============================================================
-// bios : call bios function without parameters
-//===============================================================
-
-.macro bios_old(bios_func)
-{
-    lda #bios_func
-    jsr bios.bios_exec
-}
-
-//===============================================================
-// bios_bank
-//===============================================================
-
-.macro bios(value16) 
-{
-    .var offset = value16 & $FF
-    .var bank = (value16 >> 8) & $FF
-    
-    .if (bank == 0) {
-        // Bank 0 : appel direct sans changement de bank
-        lda #offset
-        jsr bios.bios_exec
-    } else {
-        //.print "*** bank="+bank
-        //.print "*** offset="+offset
-        // Autre bank : patch et appel complet
-        lda #bank
-        sta bios.bios_exec+($c8-$af)
-        
-        lda #offset
-        jsr bios.bios_exec+6+9
-    }
-}
-
-.macro bios0(value)
-{
-    
-    lda #0
-    sta bios.bios_exec+($c8-$af)
-    
-    lda #value
-    jsr bios.bios_exec+6+9
 }

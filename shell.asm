@@ -84,6 +84,8 @@ copy_hook:
     dex
     bpl copy_hook
     
+//    swi test
+    
     jmp READY
 
 brk_hook:

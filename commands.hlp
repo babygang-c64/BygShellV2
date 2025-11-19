@@ -5,6 +5,9 @@
 - *env : view and set environment
 -        variables
 - *kill : kill cartridge and reset
+- *def : define basic subroutine
+- *call : call basic subroutine
+- *ret : return from subroutine
 
 *External commands
 - *help : help for internal 
