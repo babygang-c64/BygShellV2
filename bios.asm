@@ -93,7 +93,9 @@
 .label bios_exec=$cf40
 .label bios_ram_get_byte=bios_exec+6
 .label bios_basic_hook_exec=bios_exec+6+29
-.label bios_change_and_jump=bios_exec+6+29+10
+.label bios_change_and_jump=bios_exec+6+29+16
+.label bios_basic_ieval_exec=bios_exec+6+29+16+6
+
 
 .label reset=9
 .label str_split=11
@@ -318,22 +320,31 @@ change_and_go:
     
     // 29 bytes free
 
-    // 10 bytes
+    // 16 bytes
 
 basic_hook_exec:
-    lda #0
-    pha
-    lda #0
-    pha
+    ldy #$fb
+hook_jump:
     ldx #0
-    php
+    stx $de00
+    lda $9f00,y
     pha
+    lda $9f00-1,y
+    pha
+    rts
+
+    // 6 bytes
 
 change_and_jump:
     pla
     plp
     stx $de00
     rts
+
+ieval_exec:
+    ldy #$fd
+    bne hook_jump
+
 
 end_ref:
 

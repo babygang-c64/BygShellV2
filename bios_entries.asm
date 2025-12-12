@@ -54,7 +54,7 @@
     .label bios_exec=$cf40      // SWI entry point
     .label bios_ram_get_byte=bios_exec+6
     .label bios_basic_hook_exec=bios_exec+6+29
-    .label bios_change_and_jump=bios_exec+6+29+10
+    .label bios_change_and_jump=bios_exec+6+29+16
     .label irq_sub=$cff4        // IRQ sub call
 
     // Conversions

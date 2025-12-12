@@ -67,27 +67,25 @@ start_cartridge:
     
     // change basic IEVAL to our routine for $
 
-    lda #<basic_ieval
-//    sta IEVAL
-    lda #>basic_ieval
-//    sta IEVAL+1
+    lda #<bios.bios_basic_ieval_exec
+    sta IEVAL
+    lda #>bios.bios_basic_ieval_exec
+    sta IEVAL+1
     
     // BIOS reset and start message
     
     jsr bios.do_reset
     
-    lda #>basic_hook-1
-    sta bios.bios_basic_hook_exec+1
-    lda #<basic_hook-1
-    sta bios.bios_basic_hook_exec+4
+//    lda #<basic_hook
+//    sta bios.bios_basic_hook_exec+6
+//    lda #>basic_hook
+//    sta bios.bios_basic_hook_exec+7
     
     // change basic IGONE hook to our routine
     
     lda #<bios.bios_basic_hook_exec
-//    lda #<basic_hook
     sta IGONE
     lda #>bios.bios_basic_hook_exec
-//    lda #>basic_hook
     sta IGONE+1
     
     lda #23
@@ -97,15 +95,21 @@ start_cartridge:
     swi theme_normal
     
     // change IRQ hook to our routine
-
-    jmp no_irq //tmp
+    jmp no_irq
     sei
     lda #0
     sta k_flag
-    lda #<irq_hook
-    sta IIRQ
+
     lda #>irq_hook
+//    sta bios.bios_irq_hook_exec+6
+    lda #<irq_hook
+//    sta bios.bios_irq_hook_exec+7
+
+//    lda #<bios.bios_irq_hook_exec
+    sta IIRQ
+//    lda #><bios.bios_irq_hook_exec
     sta IIRQ+1
+
     lda #%01111111
     sta $dc0d
     and $d011
@@ -1014,7 +1018,11 @@ lbl_ea61:
 
 end_irq:
     asl $d019
-    jmp $ea7e
+    
+    // deactivate cartridge and jump to kernal routine
+    push_rts_address($EA7E)
+    jmp bios.bios_change_and_jump+2
+//    jmp $ea7e
     
 ctrl_k:
     lda SHFLAG
@@ -1482,8 +1490,12 @@ basic_ieval:
     cmp #'$'
     beq test_dollar
 not_ok_dollar:
+    push_rts_address($ae8d)
     jsr CHRGOT
-    jmp $ae8d   //** todo : deactivate and jump
+    ldx #$ff
+    jmp bios.bios_change_and_jump+2
+
+//    jmp $ae8d   //** todo : deactivate and jump
 
 test_dollar:
     lda PNTR
@@ -1531,8 +1543,20 @@ not_alpha2:
     ldx #$90
     sec
     jsr $bc49
-    jmp CHRGET  //** todo : deactivate and jump
+
+    push_rts_address(CHRGET)
+    ldx #$ff
+    jmp bios.bios_change_and_jump+2
+
+//    jmp CHRGET  //** todo : deactivate and jump
 }
 
 shell_top:
-.fill $a000-*, $00
+.fill $9ffa-*, $00
+
+adr_basic_hook:
+    .word basic_hook-1
+adr_eval_hook:
+    .word basic_ieval-1
+adr_irq_hook:
+    .word irq_hook-1
