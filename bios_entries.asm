@@ -51,7 +51,7 @@
 
     // RAM entry points
 
-    .label bios_exec=$cf40      // SWI entry point
+    .label bios_exec=$cf38      // SWI entry point
     .label bios_ram_get_byte=bios_exec+6
     .label bios_basic_hook_exec=bios_exec+6+29
     .label bios_change_and_jump=bios_exec+6+29+16
@@ -190,10 +190,10 @@
 //===============================================================
 
 .namespace bios_exec {
-  .label exec_bank=$cf4f     
-  .label bank_target=exec_bank+3
-  .label ram_get_byte=$cf46
-  .label exec=$cf40
+  .label exec_bank=$cf4f-8
+  .label bank_target=exec_bank+3-8
+  .label ram_get_byte=$cf46-8
+  .label exec=$cf38
 }
 
 .macro bios(value16) 

@@ -90,11 +90,12 @@
 // BIOS functions list
 //===============================================================
 
-.label bios_exec=$cf40
+.label bios_exec=$cf38
 .label bios_ram_get_byte=bios_exec+6
 .label bios_basic_hook_exec=bios_exec+6+29
 .label bios_change_and_jump=bios_exec+6+29+16
 .label bios_basic_ieval_exec=bios_exec+6+29+16+6
+.label bios_irq_hook_exec=bios_exec+6+29+16+6+4
 
 
 .label reset=9
@@ -341,8 +342,16 @@ change_and_jump:
     stx $de00
     rts
 
+    // 4 bytes
+
 ieval_exec:
     ldy #$fd
+    bne hook_jump
+
+    // 4 bytes
+
+irq_exec:
+    ldy #$ff
     bne hook_jump
 
 
@@ -4326,11 +4335,11 @@ return_var_int:
 //===============================================================
 
 .namespace bios_exec {
-  .label exec_bank=$cf4f     
-  .label bank_target=$cf58   
-  .label restore=$cf62       
-  .label ram_get_byte=$cf46
-  .label exec=$cf40
+  .label exec_bank=$cf4f-8
+  .label bank_target=$cf58-8
+  .label restore=$cf62-8
+  .label ram_get_byte=$cf46-8
+  .label exec=$cf38
 }
 
 .macro bios(value16) 

@@ -42,8 +42,8 @@
 //
 // B000- : datapool_root
 //
-// CF00-CF3F : work buffer
-// CF40-CF7F : bios_exec
+// CF00-CF37 : work buffer
+// CF38-CF7F : bios_exec
 // CF80-CFXX : buffer
 // CFF0-CFF3 : theme_colors
 // CFF4-CFF5 : irq_sub
@@ -76,11 +76,6 @@ start_cartridge:
     
     jsr bios.do_reset
     
-//    lda #<basic_hook
-//    sta bios.bios_basic_hook_exec+6
-//    lda #>basic_hook
-//    sta bios.bios_basic_hook_exec+7
-    
     // change basic IGONE hook to our routine
     
     lda #<bios.bios_basic_hook_exec
@@ -95,19 +90,15 @@ start_cartridge:
     swi theme_normal
     
     // change IRQ hook to our routine
-    jmp no_irq
+
     sei
     lda #0
     sta k_flag
 
-    lda #>irq_hook
-//    sta bios.bios_irq_hook_exec+6
-    lda #<irq_hook
-//    sta bios.bios_irq_hook_exec+7
 
-//    lda #<bios.bios_irq_hook_exec
+    lda #<bios.bios_irq_hook_exec
     sta IIRQ
-//    lda #><bios.bios_irq_hook_exec
+    lda #>bios.bios_irq_hook_exec
     sta IIRQ+1
 
     lda #%01111111
@@ -121,7 +112,7 @@ start_cartridge:
     lda #255
     sta $d012
     cli
-no_irq: //tmp
+
 //      lda #<brk_hook
 //      sta CBINV
 //      lda #>brk_hook
@@ -1019,10 +1010,11 @@ lbl_ea61:
 end_irq:
     asl $d019
     
+    
     // deactivate cartridge and jump to kernal routine
-    push_rts_address($EA7E)
-    jmp bios.bios_change_and_jump+2
-//    jmp $ea7e
+//    push_rts_address($EA7E)
+//    jmp bios.bios_change_and_jump+2
+    jmp $ea7e
     
 ctrl_k:
     lda SHFLAG
