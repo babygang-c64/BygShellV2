@@ -53,6 +53,8 @@
 
     .label bios_exec=$cf40      // SWI entry point
     .label bios_ram_get_byte=bios_exec+6
+    .label bios_basic_hook_exec=bios_exec+6+29
+    .label bios_change_and_jump=bios_exec+6+29+10
     .label irq_sub=$cff4        // IRQ sub call
 
     // Conversions
@@ -168,6 +170,8 @@
     .label theme_get_color=169
     .label theme_set_color=171
     .label screen_clear=173
+    .label pprint_color=175
+    .label pprint_lines_color=177
     
     //===========================================================
     // BIOS entries bank 1
@@ -177,6 +181,8 @@
     .label list_init=$0100+11
     .label list_insert=$0100+13
     .label list_alloc=$0100+15
+    .label list_search=$0100+17
+    .label list_delete=$0100+19
 }
 
 //===============================================================
@@ -185,8 +191,7 @@
 
 .namespace bios_exec {
   .label exec_bank=$cf4f     
-  .label bank_target=$cf58   
-  .label restore=$cf62       
+  .label bank_target=exec_bank+3
   .label ram_get_byte=$cf46
   .label exec=$cf40
 }

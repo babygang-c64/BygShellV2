@@ -40,6 +40,11 @@ hw:
     .label work_buffer = $ce00
     .label my_list_heap = $8000
 
+    mov r0,#chaine_couleur
+    swi pprint_color
+    lda #13
+    jsr CHROUT
+
     ldx #2
     mov r0,#my_list_root
     mov r1,#my_list_heap
@@ -52,14 +57,50 @@ hw:
     mov r0,#my_list_root
     mov r1,#retour
     swi list_insert
+
+    mov r0,#my_list_root
+    mov r1,#chaine2
+    swi list_insert
+
+    mov r0,#my_list_root
+    mov r1,#chaine3
+    swi list_insert
+
+    mov r0,#my_list_root
+    mov r1,#chaine4
+    swi list_insert
+    
+    mov r0,#my_list_root
+    mov r1,#chaine2
+    swi list_search
     stc $0428
     mov $0400,r0
-    
 
-    swi pprint_nl,retour
+    mov r0,#my_list_root
+    mov r1,#chaine4
+    swi list_search
+    stc $0428+1
+    mov $0402,r0
+
+    mov r0,#my_list_root
+    mov r1,#my_list_root
+    swi list_search
+    stc $0428+2
+    mov $0404,r0
+
     rts
+
 retour:
-    pstring("Retour OK")
+    pstring("retour ok")
+chaine2:
+    pstring("pstring2")
+chaine3:
+    pstring("troisieme")
+chaine4:
+    pstring("et quatre")
+chaine_couleur:
+    pstring("un %2deux%4 100%% trois%3")
+
 
 my_list_root:
 {

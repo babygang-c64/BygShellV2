@@ -18,6 +18,42 @@
 
 #import "bios_pp.asm"
 
+//---------------------------------------------------------------
+// RAM usage map
+//
+// 02A7- : vars
+// 02E0 : options_values
+// 02FA-02FB : directory_ptr
+// 02FC : k_flag
+// 02FD : scan_params
+// 02FE : options_params
+// 02FF : nb_params
+// 
+// A000 : bin_device
+// A001 : bin_path
+// A080 : clipboard
+// A100-A4FF : swap screen
+// A500-A6FF : history buffer
+// A700 : return_stack_ptr
+// A701-A7EF : return_stack
+// A7F0- : theme_name
+// A7F8-A7FF : date and time
+// A800-AFFF : directory data
+//
+// B000- : datapool_root
+//
+// CF00-CF3F : work buffer
+// CF40-CF7F : bios_exec
+// CF80-CFXX : buffer
+// CFF0-CFF3 : theme_colors
+// CFF4-CFF5 : irq_sub
+// CFF6-CFFB : conv buffer
+// CFFC : tmpC (carry save)
+// CFFD : in_quotes
+// CFFE : type
+// CFFF : is_filter
+//---------------------------------------------------------------
+
 .label work_buffer=$cf00
 
 start_cartridge:
@@ -25,26 +61,35 @@ start_cartridge:
     stx $d016
     jsr reset_c64
     jsr $e3bf // sys init ram
+    lda #$a0
+    sta $38
     jsr $e422 // start message
     
-    // change basic IGONE hook to our routine
-    
-    lda #<basic_hook
-    sta IGONE
-    lda #>basic_hook
-    sta IGONE+1
-    
-
     // change basic IEVAL to our routine for $
 
     lda #<basic_ieval
-    sta IEVAL
+//    sta IEVAL
     lda #>basic_ieval
-    sta IEVAL+1
+//    sta IEVAL+1
     
     // BIOS reset and start message
     
     jsr bios.do_reset
+    
+    lda #>basic_hook-1
+    sta bios.bios_basic_hook_exec+1
+    lda #<basic_hook-1
+    sta bios.bios_basic_hook_exec+4
+    
+    // change basic IGONE hook to our routine
+    
+    lda #<bios.bios_basic_hook_exec
+//    lda #<basic_hook
+    sta IGONE
+    lda #>bios.bios_basic_hook_exec
+//    lda #>basic_hook
+    sta IGONE+1
+    
     lda #23
     sta $d018
     swi theme_accent
@@ -53,6 +98,7 @@ start_cartridge:
     
     // change IRQ hook to our routine
 
+    jmp no_irq //tmp
     sei
     lda #0
     sta k_flag
@@ -71,38 +117,41 @@ start_cartridge:
     lda #255
     sta $d012
     cli
+no_irq: //tmp
+//      lda #<brk_hook
+//      sta CBINV
+//      lda #>brk_hook
+//      sta CBINV+1
     
-    lda #<brk_hook
-    sta CBINV
-    lda #>brk_hook
-    sta CBINV+1
+//      ldx #32
+//  copy_hook:
+//      lda brk_hook,x
+//      sta brk_hook,x
+//      dex
+//      bpl copy_hook
     
-    ldx #32
-copy_hook:
-    lda brk_hook,x
-    sta brk_hook,x
-    dex
-    bpl copy_hook
+    push_rts_address(READY)
+    ldx #$ff
+    jmp bios.bios_change_and_jump+2
     
-//    swi test
-    
-    jmp READY
+//    jmp READY   //** todo : deactivate and jump
 
-brk_hook:
-    tsx
-    lda $0105,x
-    sec
-    sbc #1
-    sta zr0l
-    lda $0106,x
-    sbc #0
-    sta zr0h
-    lda #$37
-    sta $01
-    clc
-    swi pprint_hex
-    swi screen_pause
-    jmp READY
+// brk_hook : standby for not writing to cartridge RAM zone for now
+//  brk_hook:
+//      tsx
+//      lda $0105,x
+//      sec
+//      sbc #1
+//      sta zr0l
+//      lda $0106,x
+//      sbc #0
+//      sta zr0h
+//      lda #$37
+//      sta $01
+//      clc
+//      swi pprint_hex
+//      swi screen_pause
+//      jmp READY
 
 start_message:
     .byte 16
@@ -114,6 +163,11 @@ start_message:
     .byte '.'
     .byte bios.VERSION_MIN+$30
 
+    //-----------------------------------------------------------
+    // basic_hook : modified BASIC IGONE routine to trap shell
+    // commands starting with '*'
+    //-----------------------------------------------------------
+
 basic_hook:
     jsr CHRGET
     php
@@ -121,8 +175,20 @@ basic_hook:
     beq process_shell
     cmp #42
     beq process_shell
-    plp
-    jmp GONE3
+//    plp
+
+    tay
+    pla
+    tax
+    push_rts_address(GONE3)
+    txa
+    pha
+    tya
+    pha
+    ldx #$ff
+    jmp bios.bios_change_and_jump
+
+//    jmp GONE3   //** todo : deactivate and jump
 
 process_shell:
     plp
@@ -170,9 +236,12 @@ not_supp:
     stx buffer
 
     jsr exec_command
-    
-    sec
-    jmp NEWSTT
+
+    push_rts_address(NEWSTT)
+    ldx #$ff
+    jmp bios.bios_change_and_jump+2
+
+//    jmp NEWSTT  //** todo : deactivate and jump
 
 do_token:
     jsr token_lookup
@@ -652,6 +721,7 @@ reset_c64:
 {
     jsr $fda3   // prepare IRQ
     jsr $fd50   // init memory
+    // todo : restore MEMSIZ to $A000
     jsr $fd15   // init I/O
     jsr $ff5b   // init video
     cli
@@ -661,8 +731,7 @@ reset_c64:
 
 do_kill:
 {
-    mov r0,#$fce2
-    ldx #4
+    ldx #7
 copy:
     lda kill_routine,x
     sta $02e0,x
@@ -672,7 +741,7 @@ copy:
 kill_routine:
     sei
     stx $de00
-    .byte $4c
+    jmp $fce2
 }
 
 //---------------------------------------------------------------
@@ -1414,7 +1483,8 @@ basic_ieval:
     beq test_dollar
 not_ok_dollar:
     jsr CHRGOT
-    jmp $ae8d
+    jmp $ae8d   //** todo : deactivate and jump
+
 test_dollar:
     lda PNTR
     bne not_ok_dollar
@@ -1461,8 +1531,7 @@ not_alpha2:
     ldx #$90
     sec
     jsr $bc49
-    jmp CHRGET
-    
+    jmp CHRGET  //** todo : deactivate and jump
 }
 
 shell_top:

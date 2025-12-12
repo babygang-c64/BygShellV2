@@ -219,7 +219,7 @@ no_print:
     jmp boucle_cat
 
 help:
-    swi pprint_lines,help_msg
+    swi pprint_lines_color,help_msg
     sec
     rts
 
@@ -267,16 +267,16 @@ pas_numero:
 
 
 help_msg:
-    pstring("*cat <filename> [option]")
-    pstring(" n = Numbers all lines")
-    pstring(" e = $ At EOL / end line")
-    pstring(" z = squeeze empty lines")
-    pstring(" b = Numbers non empty lines")
-    pstring(" p = Paginates output")
-    pstring(" h = Hexdump")
-    pstring(" s = Start address for hexdump")
+    pstring("%4*cat %7<filename> %5[option]")
+    pstring("%5 n %7=%6 Numbers all lines")
+    pstring("%5 e %7=%6 $ At EOL / end line")
+    pstring("%5 z %7=%6 squeeze empty lines")
+    pstring("%5 b %7=%6 Numbers non empty lines")
+    pstring("%5 p %7=%6 Paginates output")
+    pstring("%5 h %7=%6 Hexdump")
+    pstring("%5 s %7=%6 Start address for hexdump")
     pstring("     or start line with value")
-    pstring(" a = Do ASCII conversion")
+    pstring("%5 a %7=%6 Do ASCII conversion%3")
     .byte 0
 
 options_cat:

@@ -11,7 +11,7 @@
 // ZP pseudo registers
 //
 // 8x16bits registers r0 to r7
-// ztmp -> b0/b1 for swap
+// ztmp -> fb/fc for swap
 // r0 : $03
 // r1 : $05
 // r2 : $96
@@ -964,6 +964,13 @@ no_jump:
 {
 wait:
     inc $d020
-    jmp wait    
+    jmp wait
 }
 
+.macro push_rts_address(addr)
+{
+    lda #>addr-1
+    pha
+    lda #<addr-1
+    pha
+}

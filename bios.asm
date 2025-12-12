@@ -50,7 +50,7 @@
 // Under cartridge ROM
 
 .label datapool_size = 16
-.label datapool_root   = $8000
+.label datapool_root   = $B000
 
 // flags definitions
 
@@ -92,6 +92,8 @@
 
 .label bios_exec=$cf40
 .label bios_ram_get_byte=bios_exec+6
+.label bios_basic_hook_exec=bios_exec+6+29
+.label bios_change_and_jump=bios_exec+6+29+10
 
 .label reset=9
 .label str_split=11
@@ -179,6 +181,8 @@
 .label theme_get_color=169
 .label theme_set_color=171
 .label screen_clear=173
+.label pprint_color=175
+.label pprint_lines_color=177
 
 // Bank 1
 
@@ -273,16 +277,20 @@ bios_jmp:
     .word do_theme.get_color
     .word do_theme.set_color
     .word do_screen_clear
+    .word do_pprint_color
+    .word do_pprint_lines_color
 
 * = * "BIOS code"
 
     // bios_exec : executes BIOS function, function # in A
 
 
+    // 6 bytes
 bios_exec_ref:
     sta bios_exec+4
     jmp (bios_jmp)
 
+    // 9 bytes
 ram_get_byte:
     sei
     dec $01
@@ -291,21 +299,42 @@ ram_get_byte:
     cli
     rts
     
+    // 20 bytes
 exec_bank:
     sei
     pha
-    lda $de00
-    sta $cf62 // restore
     lda bank_target:#0
     sta $de00
     pla
     jsr bios_exec
     pha
-    lda restore:#0
+    lda bank_restore:#0
+    
+change_and_go:
     sta $de00
     pla
     cli
     rts
+    
+    // 29 bytes free
+
+    // 10 bytes
+
+basic_hook_exec:
+    lda #0
+    pha
+    lda #0
+    pha
+    ldx #0
+    php
+    pha
+
+change_and_jump:
+    pla
+    plp
+    stx $de00
+    rts
+
 end_ref:
 
 //===============================================================
@@ -1984,6 +2013,54 @@ vide:
     clc
     rts
 }
+
+//----------------------------------------------------
+// pprint_color : print PSTRING with color attributes
+// 
+// input : R0 = PSTRING
+// output : A = pstring length
+//----------------------------------------------------
+
+do_pprint_color:
+{
+    txa
+    pha
+    ldy #0
+    mov a, (r0)
+    beq vide
+    tax
+boucle:
+    iny
+    lda (zr0),y
+    cmp #'%'
+    bne standard
+    dex
+    iny
+    lda (zr0),y
+    cmp #'%'
+    beq standard
+    sec
+    sbc #'0'
+    stx ztmp
+    tax
+    swi theme_set_color
+    ldx ztmp
+    jmp suite
+
+standard:
+    jsr CHROUT
+suite:
+    dex
+    bne boucle
+vide:
+    ldy #0
+    pla
+    tax
+    mov a,(r0)
+    clc
+    rts
+}
+
 
 //----------------------------------------------------
 // file_exists : test if files exists using file_open
@@ -3835,6 +3912,26 @@ do_pprint_lines:
     beq fini
 print_lines:
     swi pprint_nl
+    swi str_next
+    bcc print_lines
+fini:
+    rts
+}
+
+//---------------------------------------------------------------
+// pprint_lines_color : print a series of PSTRING
+// 
+// input : R0 = 1st PSTRING, stops with 0
+//---------------------------------------------------------------
+
+do_pprint_lines_color:
+{
+    swi str_len
+    beq fini
+print_lines:
+    swi pprint_color
+    lda #13
+    jsr CHROUT
     swi str_next
     bcc print_lines
 fini:
