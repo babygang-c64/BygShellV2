@@ -90,13 +90,12 @@
 // BIOS functions list
 //===============================================================
 
-.label bios_exec=$cf38
+.label bios_exec=$cf30
 .label bios_ram_get_byte=bios_exec+6
-.label bios_basic_hook_exec=bios_exec+6+29
-.label bios_change_and_jump=bios_exec+6+29+16
-.label bios_basic_ieval_exec=bios_exec+6+29+16+6
-.label bios_irq_hook_exec=bios_exec+6+29+16+6+4
-
+.label bios_set_bank=bios_exec+6+29
+.label bios_irq_call=bios_exec+6+29+6
+.label bios_ieval_call=bios_irq_call+16+3
+.label bios_igone_call=bios_ieval_call+4
 
 .label reset=9
 .label str_split=11
@@ -321,38 +320,12 @@ change_and_go:
     
     // 29 bytes free
 
-    // 16 bytes
-
-basic_hook_exec:
-    ldy #$fb
-hook_jump:
-    ldx #0
-    stx $de00
-    lda $9f00,y
-    pha
-    lda $9f00-1,y
-    pha
-    rts
-
     // 6 bytes
 
-change_and_jump:
-    pla
-    plp
+set_bank:
+    ldx cart_bank:#0
     stx $de00
     rts
-
-    // 4 bytes
-
-ieval_exec:
-    ldy #$fd
-    bne hook_jump
-
-    // 4 bytes
-
-irq_exec:
-    ldy #$ff
-    bne hook_jump
 
 
 end_ref:
@@ -4335,11 +4308,11 @@ return_var_int:
 //===============================================================
 
 .namespace bios_exec {
-  .label exec_bank=$cf4f-8
-  .label bank_target=$cf58-8
-  .label restore=$cf62-8
-  .label ram_get_byte=$cf46-8
-  .label exec=$cf38
+  .label exec_bank=$cf4f-16
+  .label bank_target=$cf58-16
+  .label restore=$cf62-16
+  .label ram_get_byte=$cf46-16
+  .label exec=$cf30
 }
 
 .macro bios(value16) 

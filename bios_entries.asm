@@ -51,10 +51,12 @@
 
     // RAM entry points
 
-    .label bios_exec=$cf38      // SWI entry point
+    .label bios_exec=$cf30      // SWI entry point
     .label bios_ram_get_byte=bios_exec+6
-    .label bios_basic_hook_exec=bios_exec+6+29
-    .label bios_change_and_jump=bios_exec+6+29+16
+    .label bios_set_bank=bios_exec+6+29
+    .label bios_irq_call=bios_exec+6+29+6
+    .label bios_ieval_call=bios_irq_call+16+3
+    .label bios_igone_call=bios_ieval_call+4
     .label irq_sub=$cff4        // IRQ sub call
 
     // Conversions
@@ -190,10 +192,10 @@
 //===============================================================
 
 .namespace bios_exec {
-  .label exec_bank=$cf4f-8
-  .label bank_target=exec_bank+3-8
-  .label ram_get_byte=$cf46-8
-  .label exec=$cf38
+  .label exec_bank=$cf4f-16
+  .label bank_target=exec_bank+3-16
+  .label ram_get_byte=$cf46-16
+  .label exec=$cf30
 }
 
 .macro bios(value16) 

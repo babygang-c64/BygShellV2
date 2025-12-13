@@ -42,8 +42,8 @@
 //
 // B000- : datapool_root
 //
-// CF00-CF37 : work buffer
-// CF38-CF7F : bios_exec
+// CF00-CF2F : work buffer
+// CF30-CF7F : bios_exec
 // CF80-CFXX : buffer
 // CFF0-CFF3 : theme_colors
 // CFF4-CFF5 : irq_sub
@@ -61,26 +61,26 @@ start_cartridge:
     stx $d016
     jsr reset_c64
     jsr $e3bf // sys init ram
-    lda #$a0
-    sta $38
+//    lda #$a0
+//    sta $38
     jsr $e422 // start message
     
     // change basic IEVAL to our routine for $
 
-    lda #<bios.bios_basic_ieval_exec
+    lda #<basic_ieval
     sta IEVAL
-    lda #>bios.bios_basic_ieval_exec
+    lda #>basic_ieval
     sta IEVAL+1
     
     // BIOS reset and start message
     
     jsr bios.do_reset
-    
+        
     // change basic IGONE hook to our routine
     
-    lda #<bios.bios_basic_hook_exec
+    lda #<basic_hook
     sta IGONE
-    lda #>bios.bios_basic_hook_exec
+    lda #>basic_hook
     sta IGONE+1
     
     lda #23
@@ -90,15 +90,16 @@ start_cartridge:
     swi theme_normal
     
     // change IRQ hook to our routine
+    // set starting bank to 0
 
     sei
     lda #0
     sta k_flag
+    sta bios.bios_set_bank+1
 
-
-    lda #<bios.bios_irq_hook_exec
+    lda #<irq_hook
     sta IIRQ
-    lda #>bios.bios_irq_hook_exec
+    lda #>irq_hook
     sta IIRQ+1
 
     lda #%01111111
@@ -109,10 +110,10 @@ start_cartridge:
     sta $dd0d
     lda #1
     sta $d01a
-    lda #255
+    lda #250
     sta $d012
-    cli
 
+    cli
 //      lda #<brk_hook
 //      sta CBINV
 //      lda #>brk_hook
@@ -125,11 +126,7 @@ start_cartridge:
 //      dex
 //      bpl copy_hook
     
-    push_rts_address(READY)
-    ldx #$ff
-    jmp bios.bios_change_and_jump+2
-    
-//    jmp READY   //** todo : deactivate and jump
+    jmp READY
 
 // brk_hook : standby for not writing to cartridge RAM zone for now
 //  brk_hook:
@@ -170,20 +167,9 @@ basic_hook:
     beq process_shell
     cmp #42
     beq process_shell
-//    plp
-
-    tay
-    pla
-    tax
-    push_rts_address(GONE3)
-    txa
-    pha
-    tya
-    pha
-    ldx #$ff
-    jmp bios.bios_change_and_jump
-
-//    jmp GONE3   //** todo : deactivate and jump
+    
+    plp
+    jmp GONE3
 
 process_shell:
     plp
@@ -232,11 +218,8 @@ not_supp:
 
     jsr exec_command
 
-    push_rts_address(NEWSTT)
-    ldx #$ff
-    jmp bios.bios_change_and_jump+2
-
-//    jmp NEWSTT  //** todo : deactivate and jump
+    sec
+    jmp NEWSTT
 
 do_token:
     jsr token_lookup
@@ -968,7 +951,6 @@ stop:
     dec $d020
 
 no_sub:
-
     jsr $ffea
     lda $cc
     bne lbl_ea61
@@ -1009,11 +991,6 @@ lbl_ea61:
 
 end_irq:
     asl $d019
-    
-    
-    // deactivate cartridge and jump to kernal routine
-//    push_rts_address($EA7E)
-//    jmp bios.bios_change_and_jump+2
     jmp $ea7e
     
 ctrl_k:
@@ -1482,12 +1459,8 @@ basic_ieval:
     cmp #'$'
     beq test_dollar
 not_ok_dollar:
-    push_rts_address($ae8d)
     jsr CHRGOT
-    ldx #$ff
-    jmp bios.bios_change_and_jump+2
-
-//    jmp $ae8d   //** todo : deactivate and jump
+    sjmp $ae8d
 
 test_dollar:
     lda PNTR
@@ -1536,19 +1509,8 @@ not_alpha2:
     sec
     jsr $bc49
 
-    push_rts_address(CHRGET)
-    ldx #$ff
-    jmp bios.bios_change_and_jump+2
-
-//    jmp CHRGET  //** todo : deactivate and jump
+    jmp CHRGET
 }
 
 shell_top:
-.fill $9ffa-*, $00
-
-adr_basic_hook:
-    .word basic_hook-1
-adr_eval_hook:
-    .word basic_ieval-1
-adr_irq_hook:
-    .word irq_hook-1
+.fill $a000-*, $00
